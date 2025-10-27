@@ -154,3 +154,19 @@
 - Cập nhật `popup.html`: Thay đổi cấu trúc header, dùng icon ⚙️ cho nút cài đặt.
 - Cập nhật `styles.css`: Thêm style cho `.header-container`, `h1` và `#open-settings-link` trong header mới.
 
+## v1.26.0 – 2025-10-28
+- Thêm tính năng Context Menu "Send to Field" cho text và hình ảnh.
+- Cập nhật `manifest.json`: Thêm quyền `contextMenus`.
+- Cập nhật `background.js`:
+    - Thêm logic tạo context menu gốc (`onInstalled`, `onStartup`).
+    - Thêm listener (`onMessage`) để nhận danh sách fields từ `popup.js` và cập nhật menu con động.
+    - Lưu danh sách fields cuối cùng vào `storage` để khôi phục khi khởi động Chrome.
+    - Thêm listener (`onClicked`) để xử lý click context menu, lấy nội dung (text/image URL) và gửi message đến `popup.js`.
+    - Tùy chọn mở sidebar khi context menu được click.
+- Cập nhật `popup.js`:
+    - Sửa `createFieldsForModel` để gửi message chứa `fieldNames` và `modelName` cho `background.js` khi Note Type thay đổi.
+    - Thêm listener (`onMessage`) để nhận message từ `background.js` và điền nội dung (text hoặc thẻ `<img>` cho ảnh) vào textarea tương ứng.
+    - Trigger `input` event để textarea tự động mở rộng.
+    - Tùy chọn tự động mở field nếu đang bị thu gọn.
+
+
