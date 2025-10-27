@@ -54,7 +54,7 @@ label {
   min-height: 60px;
 }
 
-/* --- [THÊM MỚI] Kiểu Autocomplete --- */
+/* --- Kiểu Autocomplete --- */
 .autocomplete-container {
   position: relative;
 }
@@ -79,10 +79,15 @@ label {
   cursor: pointer;
 }
 
-.suggestion-item:hover, .suggestion-item.active {
+/* [THÊM MỚI] class này để highlight */
+.suggestion-item.active {
+  background-color: #e0e0e0;
+}
+
+.suggestion-item:hover {
   background-color: #f0f0f0;
 }
-/* --- [HẾT THÊM MỚI] --- */
+/* --- Hết phần Autocomplete --- */
 
 .fields-container {
   max-height: 300px;
