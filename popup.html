@@ -10,42 +10,36 @@
   <div class="container">
     <h1>AnkiVN - Muahaha</h1>
     
-    <!-- Deck Selection -->
     <div class="form-group">
       <label for="deck-select">Chọn Deck:</label>
+      <input type="text" id="deck-search" class="form-control search-input" placeholder="🔍 Tìm Deck...">
       <select id="deck-select" class="form-control">
         <option value="">-- Chọn Deck --</option>
       </select>
     </div>
 
-    <!-- Note Type Selection -->
     <div class="form-group">
       <label for="model-select">Chọn Note Type:</label>
+      <input type="text" id="model-search" class="form-control search-input" placeholder="🔍 Tìm Note Type...">
       <select id="model-select" class="form-control">
         <option value="">-- Chọn Note Type --</option>
       </select>
     </div>
 
-    <!-- Fields Container -->
     <div id="fields-container" class="fields-container">
-      <!-- Fields sẽ được tạo động ở đây -->
-    </div>
+      </div>
 
-    <!-- Tags Input -->
     <div class="form-group">
       <label for="tags-input">Nhập Tags:</label>
       <input type="text" id="tags-input" class="form-control" list="tags-datalist" placeholder="Nhập tags, phân cách bằng dấu cách">
       <datalist id="tags-datalist">
-        <!-- Tags gợi ý sẽ được thêm động -->
-      </datalist>
+        </datalist>
     </div>
 
-    <!-- Add Note Button -->
     <div class="form-group">
       <button id="add-note-btn" class="btn-primary">Thêm vào Anki</button>
     </div>
 
-    <!-- Status Message -->
     <div id="status-message" class="status-message"></div>
   </div>
 
