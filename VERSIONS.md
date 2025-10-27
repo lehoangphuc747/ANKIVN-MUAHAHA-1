@@ -117,5 +117,9 @@
     - Sửa `addNoteToAnki` để đọc cài đặt Random ID Field từ storage, tạo ID mới và gán vào field tương ứng trước khi gửi note đến Anki.
 - Cập nhật `styles.css`: Thêm style cơ bản cho khu vực Random ID trong Settings.
 
+## v1.20.0 – 2025-10-28
+- Cập nhật `popup.js`: Sửa hàm `showStatus` để thông báo thành công tự động biến mất sau 4 giây.
+- Cung cấp lại toàn bộ code `popup.js` (v1.19.0 + sửa lỗi tự ẩn thông báo) để khắc phục lỗi mất chức năng autocomplete/search có thể do copy thiếu code trước đó.
+
 
 
