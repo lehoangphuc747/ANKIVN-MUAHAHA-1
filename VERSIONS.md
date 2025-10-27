@@ -27,3 +27,8 @@
 ## v1.5.0 – 2025-08-29
 - Added model change event listener to dynamically create fields based on selected model
 - Added createFieldsForModel function to generate input fields for each field name
+
+## v1.6.0 – 2025-08-30
+- Added addNoteToAnki function to handle note creation
+- Added click event listener for add-note-btn with full validation
+- Implemented note creation with fields and tags processing

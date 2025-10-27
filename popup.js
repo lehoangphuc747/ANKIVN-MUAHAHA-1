@@ -113,11 +113,79 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
     });
 
+    // Thêm event listener cho nút thêm note
+    document.getElementById('add-note-btn').addEventListener('click', addNoteToAnki);
+
   } catch (error) {
     console.error('Error initializing popup:', error);
     showStatus('Không thể kết nối với Anki-Connect. Hãy đảm bảo Anki đang chạy và plugin Anki-Connect đã được cài đặt.', 'error');
   }
 });
+
+// Hàm thêm note vào Anki
+async function addNoteToAnki() {
+  try {
+    // Hiển thị thông báo đang xử lý
+    showStatus('Đang thêm...', 'info');
+
+    // Lấy giá trị từ form
+    const deckName = document.getElementById('deck-select').value;
+    const modelName = document.getElementById('model-select').value;
+    const tagsInput = document.getElementById('tags-input').value;
+
+    // Kiểm tra dữ liệu bắt buộc
+    if (!deckName || !modelName) {
+      throw new Error('Vui lòng chọn deck và note type');
+    }
+
+    // Tạo object fields từ các input
+    const fields = {};
+    const fieldInputs = document.querySelectorAll('.field-input');
+    
+    fieldInputs.forEach(input => {
+      const fieldName = input.id.replace('field-', '');
+      fields[fieldName] = input.value;
+    });
+
+    // Kiểm tra xem có field nào được điền không
+    const hasContent = Object.values(fields).some(value => value.trim() !== '');
+    if (!hasContent) {
+      throw new Error('Vui lòng nhập nội dung cho ít nhất một field');
+    }
+
+    // Xử lý tags (phân tách bằng dấu cách hoặc phẩy)
+    const tagsArray = tagsInput
+      .split(/[\s,]+/)
+      .filter(tag => tag.trim() !== '')
+      .map(tag => tag.trim());
+
+    // Tạo payload
+    const params = {
+      note: {
+        deckName: deckName,
+        modelName: modelName,
+        fields: fields,
+        tags: tagsArray
+      }
+    };
+
+    // Gọi API thêm note
+    const result = await invoke('addNote', params);
+
+    // Thành công
+    showStatus('Thêm thành công! Note ID: ' + result, 'success');
+
+    // Xóa nội dung các ô input (giữ nguyên deck và model)
+    fieldInputs.forEach(input => {
+      input.value = '';
+    });
+    document.getElementById('tags-input').value = '';
+
+  } catch (error) {
+    console.error('Error adding note:', error);
+    showStatus('Lỗi: ' + error.message, 'error');
+  }
+}
 
 // Hàm hiển thị thông báo
 function showStatus(message, type = 'info') {
@@ -125,5 +193,3 @@ function showStatus(message, type = 'info') {
   statusElement.textContent = message;
   statusElement.className = `status-message ${type}`;
 }
-
-// Các hàm khác sẽ được thêm sau
