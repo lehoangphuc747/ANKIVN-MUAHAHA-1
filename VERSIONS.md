@@ -127,6 +127,14 @@
     - Khắc phục lỗi nút "Lưu Cài đặt" không hoạt động (cung cấp lại hàm `saveSettings` đầy đủ).
     - Thêm nhiều `console.log` để hỗ trợ debug.
 
+## v1.22.0 – 2025-10-28
+- Cải thiện UI/UX phần nhập liệu Fields trong Sidebar (`popup.js`, `styles.css`):
+    - **Header Clickable:** Toàn bộ header (icon + label) của field giờ đây có thể click để thu gọn/mở rộng.
+    - **Textarea `rows="2"`:** Giảm chiều cao mặc định của textarea.
+    - **Visual Feedback:** Label của field sẽ hơi mờ đi khi field được thu gọn.
+    - **Auto-Expand Textarea:** Textarea tự động tăng chiều cao khi nội dung vượt quá kích thước hiện tại.
+    - Cập nhật `popup.js`: Viết lại `createFieldsForModel` và `toggleFieldCollapse`, thêm hàm `autoExpandTextarea`.
+    - Cập nhật `styles.css`: Thay đổi style cho `.field-header`, `.collapse-toggle`, `.field-input`, `.field-group.collapsed`.
 
 
 
