@@ -20,15 +20,130 @@ async function invoke(action, params = {}) {
 
 
 // --- Hàm createFieldsForModel (Đã cập nhật UI v1.22.0) ---
-async function createFieldsForModel(modelName) { /* ... giữ nguyên code v1.22.0 ... */ }
+async function createFieldsForModel(modelName) {
+    currentModelName = modelName;
+    try {
+        const fieldNames = await invoke('modelFieldNames', { modelName: modelName });
+        if(fieldNames === null) throw new Error("modelFieldNames returned null."); // Thêm kiểm tra lỗi
+
+        const fieldsContainer = document.getElementById('fields-container');
+        fieldsContainer.innerHTML = '';
+
+        const hiddenFieldsStorageKey = `hiddenFields_${modelName}`;
+        const hiddenData = await chrome.storage.local.get(hiddenFieldsStorageKey);
+        const hiddenFields = hiddenData[hiddenFieldsStorageKey] || {};
+
+        const collapseStorageKey = `collapsedFields_${modelName}`;
+        const collapseData = await chrome.storage.local.get(collapseStorageKey);
+        const collapsedFields = collapseData[collapseStorageKey] || {};
+
+        fieldNames.forEach(fieldName => {
+            const fieldId = `field-${fieldName}`;
+            const isHidden = hiddenFields[fieldName] || false;
+            const isCollapsed = collapsedFields[fieldName] || false;
+
+            const fieldGroup = document.createElement('div');
+            fieldGroup.className = `form-group field-group ${isCollapsed ? 'collapsed' : ''} ${isHidden ? 'field-hidden-by-setting' : ''}`;
+            fieldGroup.dataset.fieldName = fieldName; // Lưu tên field vào group để toggle dễ hơn
+
+            const fieldHeader = document.createElement('div');
+            fieldHeader.className = 'field-header';
+            fieldHeader.addEventListener('click', toggleFieldCollapse); // Gắn event vào header
+
+            const toggle = document.createElement('span');
+            toggle.className = 'collapse-toggle';
+            toggle.textContent = '▶'; // Đổi thành chevron
+            toggle.style.pointerEvents = 'none'; // Không cho click vào icon nữa
+
+            const label = document.createElement('label');
+            label.textContent = fieldName; // Bỏ dấu ':' nếu muốn gọn hơn
+            // label.htmlFor = fieldId; // Không cần htmlFor vì click vào header rồi
+            label.style.pointerEvents = 'none'; // Không cho click vào label nữa
+
+            const input = document.createElement('textarea');
+            input.id = fieldId;
+            input.className = 'form-control field-input';
+            input.placeholder = `Nội dung ${fieldName}...`;
+            input.rows = 2; // [THAY ĐỔI] Giảm số dòng mặc định
+            input.addEventListener('input', autoExpandTextarea); // [THÊM MỚI] Gắn event auto-expand
+
+            // Khôi phục trạng thái collapse
+            if (isCollapsed) {
+                input.style.display = 'none';
+                label.style.opacity = '0.6';
+                toggle.style.transform = 'rotate(-90deg)';
+            } else {
+                 toggle.style.transform = 'rotate(0deg)'; // Đặt lại trạng thái mở
+            }
+
+            fieldHeader.appendChild(toggle);
+            fieldHeader.appendChild(label);
+            fieldGroup.appendChild(fieldHeader);
+            fieldGroup.appendChild(input);
+            fieldsContainer.appendChild(fieldGroup);
+
+             // [QUAN TRỌNG] Gọi autoExpand một lần ban đầu nếu có nội dung sẵn (ít khi xảy ra khi mới tạo)
+             // Hoặc để tính chiều cao đúng cho placeholder nhiều dòng
+            autoExpandTextarea({ target: input });
+
+        });
+
+    } catch (error) {
+        console.error('Error creating fields:', error);
+        showStatus('Không thể tải fields: ' + error.message, 'error'); // Hiển thị lỗi rõ hơn
+    }
+ }
 // --- Hàm toggleFieldCollapse (Đã cập nhật UI v1.22.0) ---
-async function toggleFieldCollapse(event) { /* ... giữ nguyên code v1.22.0 ... */ }
+async function toggleFieldCollapse(event) {
+    const fieldHeader = event.currentTarget; // Lấy header được click
+    const fieldGroup = fieldHeader.closest('.field-group');
+    if (!fieldGroup) return;
+
+    const fieldName = fieldGroup.dataset.fieldName;
+    const targetTextarea = fieldGroup.querySelector('.field-input');
+    const toggleIcon = fieldHeader.querySelector('.collapse-toggle');
+    const label = fieldHeader.querySelector('label');
+
+    if (!targetTextarea || !fieldName || !toggleIcon || !label) return;
+
+    const isCurrentlyCollapsed = fieldGroup.classList.contains('collapsed');
+    const newState = !isCurrentlyCollapsed; // Trạng thái mới
+
+    // Cập nhật giao diện
+    fieldGroup.classList.toggle('collapsed', newState);
+    if (newState) {
+        targetTextarea.style.display = 'none';
+        label.style.opacity = '0.65'; // Đã sửa trong styles.css v1.23
+        toggleIcon.style.transform = 'rotate(-90deg)';
+    } else {
+        targetTextarea.style.display = '';
+        label.style.opacity = '1';
+        toggleIcon.style.transform = 'rotate(0deg)';
+        // [QUAN TRỌNG] Trigger auto-expand khi mở ra để tính lại chiều cao
+        autoExpandTextarea({ target: targetTextarea });
+    }
+
+    // Lưu trạng thái mới vào storage
+    const storageKey = `collapsedFields_${currentModelName}`;
+    try {
+        const currentState = await chrome.storage.local.get(storageKey);
+        const updatedState = currentState[storageKey] || {};
+        updatedState[fieldName] = newState;
+        await chrome.storage.local.set({ [storageKey]: updatedState });
+    } catch (error) { console.error('Error saving collapse state:', error); }
+ }
 // --- Hàm autoExpandTextarea (Đã thêm ở v1.22.0) ---
-function autoExpandTextarea(event) { /* ... giữ nguyên code v1.22.0 ... */ }
+function autoExpandTextarea(event) {
+    const textarea = event.target;
+    textarea.style.height = 'auto'; // Reset chiều cao để tính toán lại
+    textarea.style.height = (textarea.scrollHeight + 2) + 'px';
+ }
 // --- Hàm openOptionsPage (không đổi) ---
 function openOptionsPage() { chrome.runtime.openOptionsPage(); }
 // --- Hàm generateRandomId (không đổi) ---
-function generateRandomId(length = 14) { /* ... giữ nguyên code ... */ }
+function generateRandomId(length = 14) {
+    let result = ''; const characters = '0123456789'; const charactersLength = characters.length; for (let i = 0; i < length; i++) { result += characters.charAt(Math.floor(Math.random() * charactersLength)); } return result;
+}
 
 
 // --- Hàm setupAutocomplete (Đảm bảo giống hệt settings.js) ---
@@ -77,44 +192,38 @@ document.addEventListener('DOMContentLoaded', async function() {
         allDecks = await invoke('deckNames');
         allModels = await invoke('modelNames');
 
-        // Kiểm tra kết quả invoke
         if (allDecks === null || allModels === null) {
              console.error("Failed to load decks or models. Autocomplete might not work.");
-             // Không throw lỗi, nhưng hiển thị lỗi qua showStatus đã được gọi trong invoke
-             allDecks = Array.isArray(allDecks) ? allDecks : []; // Đảm bảo là mảng
-             allModels = Array.isArray(allModels) ? allModels : []; // Đảm bảo là mảng
+             allDecks = Array.isArray(allDecks) ? allDecks : [];
+             allModels = Array.isArray(allModels) ? allModels : [];
         } else {
-             console.log("Decks loaded for sidebar:", allDecks); // DEBUG
-             console.log("Models loaded for sidebar:", allModels); // DEBUG
+             console.log("Decks loaded for sidebar:", allDecks);
+             console.log("Models loaded for sidebar:", allModels);
         }
 
-        // Gọi setupAutocomplete sau khi đã có dữ liệu (hoặc mảng rỗng)
         setupAutocomplete('deck-search', 'deck-suggestions', allDecks);
         setupAutocomplete('model-search', 'model-suggestions', allModels, (selectedModel) => {
-            console.log(`Sidebar autocomplete selected: ${selectedModel}`); // DEBUG
+            console.log(`Sidebar autocomplete selected: ${selectedModel}`);
             if (selectedModel) createFieldsForModel(selectedModel);
             else document.getElementById('fields-container').innerHTML = '';
         });
 
-        // Tải tags (không cần autocomplete phức tạp)
         const tags = await invoke('getTags');
         const tagsDatalist = document.getElementById('tags-datalist');
-        if (Array.isArray(tags)) { // Kiểm tra tags có phải là mảng không
+        if (Array.isArray(tags)) {
            tags.forEach(tag => { const option = document.createElement('option'); option.value = tag; tagsDatalist.appendChild(option); });
         } else {
             console.warn("invoke('getTags') did not return an array:", tags);
         }
 
-
         document.getElementById('add-note-btn').addEventListener('click', addNoteToAnki);
         document.getElementById('open-settings-link').addEventListener('click', openOptionsPage);
 
     } catch (error) {
-        // Lỗi này chủ yếu xảy ra nếu invoke bị throw (đã sửa) hoặc lỗi DOM khác
         console.error("Unexpected error during sidebar init:", error);
         showStatus('Lỗi không xác định khi khởi tạo sidebar.', 'error');
     }
 });
 
-// --- Hàm thêm note vào Anki (không đổi từ v1.19.0) ---
-async function addNoteToAnki() { /* ... giữ nguyên code ... */ }
+// --- Hàm thêm note vào Anki (không đổi) ---
+async function addNoteToAnki() { /* ... giữ nguyên code v1.19.0 ... */ }
