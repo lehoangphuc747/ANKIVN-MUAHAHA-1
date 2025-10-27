@@ -154,21 +154,26 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             if (content) {
                 console.log(`Attempting to store image via Anki-Connect: ${content}`);
                 // Tạo tên file gợi ý (Anki-Connect có thể đổi nếu trùng)
-                let filename = `ankivn_img_${Date.now()}.${content.split('.').pop().split(/#|\?/)[0] || 'jpg'}`;
-                 // Rút gọn tên file nếu quá dài (tùy chọn)
-                 if (filename.length > 50) filename = filename.substring(filename.length - 50);
+                let fileExtension = content.split('.').pop().split(/#|\?/)[0] || 'jpg';
+                // Đảm bảo extension hợp lệ (ví dụ cơ bản)
+                if (fileExtension.length > 5 || !/^[a-zA-Z0-9]+$/.test(fileExtension)) {
+                     fileExtension = 'jpg'; // Mặc định là jpg nếu extension lạ
+                }
+                let filename = `ankivn_img_${Date.now()}.${fileExtension}`;
+
 
                 try {
+                    // *** THÊM filename VÀO ĐÂY ***
                     const storedFilename = await invoke('storeMediaFile', {
                         url: content,
-                        // filename: filename // Có thể bỏ filename để Anki tự tạo tên duy nhất dựa trên URL hash
+                        filename: filename // Tham số bắt buộc
                     });
+                    // *** HẾT PHẦN THÊM ***
 
                     if (storedFilename) {
-                        finalContentToSend = `<img src="${storedFilename}">`; // Tạo thẻ img
-                        console.log(`Image stored successfully as "${storedFilename}". HTML tag: ${finalContentToSend}`);
+                        finalContentToSend = `<img src="${storedFilename}">`;
+                        console.log(`Image stored as "${storedFilename}". Tag: ${finalContentToSend}`);
                     } else {
-                        // Trường hợp invoke thành công nhưng không trả về filename (ít xảy ra)
                         throw new Error("storeMediaFile did not return a filename.");
                     }
                 } catch (ankiconnectError) {

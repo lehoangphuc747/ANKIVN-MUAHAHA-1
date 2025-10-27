@@ -214,8 +214,10 @@
 
 ## v1.33.0 – 2025-10-28
 - Sửa lỗi Sidebar (`popup.js`):
-    - Khắc phục lỗi Autocomplete (Deck/Note Type) không hoạt động và không hiện Fields sau khi chọn Note Type bằng cách sửa lại luồng xử lý lỗi trong `DOMContentLoaded` và đảm bảo callback của `setupAutocomplete` được gọi đúng.
-    - Khắc phục lỗi nút Settings (⚙️) không hoạt động.
-    - Sửa lỗi icon Collapse không cập nhật đúng khi mở field (`toggleFieldCollapse`).
-    - Thêm nhiều log debug và kiểm tra `null`/`Array.isArray` để tăng độ ổn định.
-- Cập nhật `VERSIONS.md` để phản ánh đúng các sửa lỗi.
+    - Khắc phục lỗi Autocomplete (tìm kiếm Deck/Note Type) không hoạt động do xử lý lỗi `invoke` chưa đúng. Hoàn trả `invoke` về trạng thái ném lỗi (throw error) và xử lý lỗi trong `DOMContentLoaded`.
+    - Đảm bảo `createFieldsForModel` được gọi đúng sau khi chọn Note Type từ autocomplete.
+    - Khắc phục lỗi nút Settings (⚙️) không hoạt động bằng cách thêm lại event listener bị thiếu trong `DOMContentLoaded`.
+    - Thêm kiểm tra dữ liệu (`null`, `Array.isArray`) và log debug chi tiết hơn.
+- Sửa lỗi Gửi Ảnh (`background.js`):
+    - Khắc phục lỗi action `storeMediaFile` của Anki-Connect thiếu tham số `filename` bắt buộc.
+    - Thêm `filename: filename` vào params khi gọi `invoke('storeMediaFile', ...)`.
