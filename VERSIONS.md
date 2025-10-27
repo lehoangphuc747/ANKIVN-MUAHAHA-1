@@ -55,3 +55,8 @@
   - Thêm sự kiện `keydown` để hỗ trợ điều hướng bằng phím mũi tên (lên/xuống) và chọn bằng phím Enter.
   - Thêm logic đóng gợi ý khi click ra ngoài.
 - Cập nhật `styles.css`: Thêm class `.suggestion-item.active` để tô sáng mục đang chọn bằng bàn phím.
+
+## v1.12.0 – 2025-10-28
+- Nâng cấp logic tìm kiếm trong `popup.js` (hàm `setupAutocomplete`).
+- Thay vì `includes(value)`, logic mới sẽ tách `value` thành các từ khóa và kiểm tra `every(keyword => target.includes(keyword))`.
+- Cho phép người dùng tìm kiếm "k quyển 1" để khớp với "(Korean) Tiếng Hàn Tổng Hợp::Quyển 1".
