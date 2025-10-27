@@ -83,3 +83,10 @@
     - Thay thế dropdown chọn Note Type bằng ô input autocomplete (sử dụng lại hàm `setupAutocomplete`).
 - Tối ưu giao diện Sidebar (`popup.html`, `styles.css`):
     - Thay đổi layout để label ("Deck:", "Note:") và input tương ứng nằm trên cùng một hàng.
+
+## v1.16.0 – 2025-10-28
+- Tối ưu UI trang Cài đặt (`settings.html`, `settings.js`, `styles.css`):
+    - Hiển thị danh sách field checkbox thành 2 cột để tiết kiệm không gian.
+    - Thêm nút "Chọn tất cả" và "Bỏ chọn tất cả" để thao tác nhanh hơn.
+    - Cập nhật `settings.js` để xử lý logic cho các nút mới và hiển thị 2 cột.
+    - Cập nhật `settings.html` và style CSS tương ứng.
