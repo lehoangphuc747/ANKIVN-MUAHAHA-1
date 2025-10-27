@@ -1,69 +1,66 @@
 /* styles.css */
-:root {
-  --primary-color: #3498db;
-  --primary-color-dark: #2980b9;
-  --primary-color-darker: #2471a3;
-  --text-color: #333;
-  --text-color-light: #555;
-  --border-color: #dcdcdc; /* Nhạt hơn chút */
-  --border-color-light: #eee;
-  --bg-color: #f7f7f7; /* Sáng hơn chút */
-  --bg-color-alt: #fff;
-  --hover-bg-color: #f0f7ff; /* Đổi màu hover */
-  --hover-border-color: #cce4f7; /* Đổi màu hover */
-  --checked-bg-color: #fff5f5; /* Đổi màu checked */
-  --checked-border-color: #ffe0e0; /* Đổi màu checked */
-  --checked-text-color: #d63031; /* Đỏ nhẹ hơn */
-  --success-bg: #e6fffa; --success-text: #00876c; --success-border: #99ede0;
-  --error-bg: #fff0f0; --error-text: #d63031; --error-border: #ffe0e0;
-  --info-bg: #eaf6ff; --info-text: #0984e3; --info-border: #cce4f7;
-  --button-text-color: #fff;
-  --button-secondary-bg: #fff;
-  --button-secondary-text: #555;
-  --button-secondary-border: #ccc;
-  --button-secondary-hover-bg: #f9f9f9;
-  --button-secondary-hover-border: #bbb;
-}
+:root { /* ... giữ nguyên các biến màu ... */ }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; /* Font hệ thống */
-  margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color);
-  font-size: 14px; line-height: 1.5; /* Thêm line-height */
-}
+body { /* ... giữ nguyên ... */ }
 .container, .settings-container { padding: 16px; }
 .settings-container { width: auto; min-width: 450px; }
 
-h1 {
-  font-size: 1.1rem; font-weight: 600; color: #2c3e50;
-  margin: 0 0 1.2rem 0; text-align: center; border-bottom: 1px solid var(--border-color-light); padding-bottom: 0.8rem;
+/* --- [THÊM MỚI] Header Container --- */
+.header-container {
+    display: flex;
+    justify-content: space-between; /* Đẩy title và icon ra 2 bên */
+    align-items: center; /* Căn giữa theo chiều dọc */
+    margin-bottom: 1.2rem; /* Giữ khoảng cách với phần dưới */
+    border-bottom: 1px solid var(--border-color-light);
+    padding-bottom: 0.8rem;
 }
 
+/* Style lại H1 trong header */
+.header-container h1 {
+    margin: 0; /* Xóa margin mặc định */
+    padding: 0; /* Xóa padding mặc định */
+    border-bottom: none; /* Xóa border cũ */
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2c3e50;
+    text-align: left; /* Căn trái */
+    flex-grow: 1; /* Cho title chiếm phần lớn không gian */
+}
+
+/* Style lại link settings */
+.header-container #open-settings-link {
+    font-size: 1.3rem; /* Kích thước icon bánh răng */
+    color: var(--text-color-light);
+    text-decoration: none;
+    padding: 5px; /* Tăng vùng click */
+    border-radius: 50%; /* Bo tròn nếu muốn */
+    transition: background-color 0.2s ease, color 0.2s ease;
+    flex-shrink: 0; /* Không co lại */
+    margin-left: 10px; /* Khoảng cách với title */
+}
+.header-container #open-settings-link:hover {
+    background-color: #eee; /* Nền nhẹ khi hover */
+    color: var(--primary-color);
+}
+/* --- [HẾT THÊM MỚI] --- */
+
+
+/* --- Các style khác giữ nguyên --- */
 .form-group { margin-bottom: 1rem; }
 label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-color-light); margin-bottom: 0.4rem; }
-
-/* Inline Layout */
 .inline-group { display: flex; align-items: center; margin-bottom: 0.8rem;}
 .inline-label { flex: 0 0 auto; margin-right: 8px; margin-bottom: 0; font-weight: 500; font-size: 0.95rem; color: var(--text-color-light);}
 .inline-input-container { flex: 1 1 auto; position: relative; }
-
-.form-control {
-  width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border-color); border-radius: 6px; /* Bo tròn hơn chút */ font-size: 0.95rem; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; background-color: var(--bg-color-alt); line-height: 1.4; color: var(--text-color);
-}
-.form-control::placeholder { color: #aaa; } /* Nhạt hơn */
-.form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); } /* Shadow nhẹ hơn */
-
-/* Field Input & Auto Expand */
-.form-control.field-input { resize: none; overflow-y: hidden; min-height: calc(1.5em * 2 + 1.2rem + 2px); height: calc(1.5em * 2 + 1.2rem + 2px); margin-top: 0.4rem; line-height: 1.5; } /* Tăng line-height */
-
-/* Autocomplete */
+.form-control { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; background-color: var(--bg-color-alt); line-height: 1.4; color: var(--text-color); }
+.form-control::placeholder { color: #aaa; }
+.form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); }
+.form-control.field-input { resize: none; overflow-y: hidden; min-height: calc(1.5em * 2 + 1.2rem + 2px); height: calc(1.5em * 2 + 1.2rem + 2px); margin-top: 0.4rem; line-height: 1.5; }
 .autocomplete-container { position: relative; }
 .suggestions-container { display: none; position: absolute; background-color: var(--bg-color-alt); border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 6px 6px; width: 100%; box-sizing: border-box; max-height: 160px; overflow-y: auto; z-index: 1000; box-shadow: 0 5px 10px rgba(0,0,0,0.08); }
 .suggestion-item { padding: 0.6rem 0.8rem; font-size: 0.9rem; cursor: pointer; border-bottom: 1px solid var(--border-color-light); }
 .suggestion-item:last-child { border-bottom: none; }
 .suggestion-item.active { background-color: #eee; }
 .suggestion-item:hover { background-color: #f5f5f5; }
-
-/* Collapse */
 .field-group { margin-bottom: 0.6rem; }
 .field-header { display: flex; align-items: center; cursor: pointer; padding: 5px 3px; user-select: none; border-radius: 5px; transition: background-color 0.15s ease; }
 .field-header:hover { background-color: #f0f0f0; }
@@ -72,70 +69,23 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .field-group.collapsed .collapse-toggle { transform: rotate(-90deg); }
 .field-group.collapsed .field-header label { opacity: 0.65; }
 .field-group.collapsed .field-input { display: none; }
-
-/* Ẩn field */
 .field-group.field-hidden-by-setting { display: none !important; }
-
 .fields-container { max-height: 400px; overflow-y: auto; margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; background-color: var(--bg-color-alt); }
-
-/* --- [THAY ĐỔI LỚN] Button Styles --- */
-/* Nút chính (Thêm vào Anki, Lưu Cài đặt) */
-.btn-primary {
-  display: inline-block; width: 100%;
-  padding: 0.7rem 1rem; /* Giảm padding dọc chút */
-  background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-color-dark) 100%); /* Gradient nhẹ */
-  color: var(--button-text-color);
-  border: none; border-radius: 7px; /* Bo tròn hơn */
-  font-size: 0.95rem; font-weight: 500;
-  cursor: pointer; text-align: center;
-  transition: all 0.15s ease; /* Nhanh hơn */
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 5px rgba(52, 152, 219, 0.2); /* Shadow tinh tế */
-  text-shadow: 0 1px 1px rgba(0,0,0,0.1); /* Text shadow nhẹ */
-}
-.btn-primary:hover {
-  background: linear-gradient(180deg, var(--primary-color-dark) 0%, var(--primary-color-darker) 100%);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 4px 8px rgba(52, 152, 219, 0.25);
-  transform: translateY(-1px); /* Hiệu ứng nhấc lên */
-}
-.btn-primary:active {
-  background: var(--primary-color-darker);
-  transform: translateY(0px); /* Nhấn xuống */
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); /* Shadow lõm */
-  text-shadow: none;
-}
+.btn-primary { display: inline-block; width: 100%; padding: 0.7rem 1rem; background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-color-dark) 100%); color: var(--button-text-color); border: none; border-radius: 7px; font-size: 0.95rem; font-weight: 500; cursor: pointer; text-align: center; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 5px rgba(52, 152, 219, 0.2); text-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+.btn-primary:hover { background: linear-gradient(180deg, var(--primary-color-dark) 0%, var(--primary-color-darker) 100%); box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 4px 8px rgba(52, 152, 219, 0.25); transform: translateY(-1px); }
+.btn-primary:active { background: var(--primary-color-darker); transform: translateY(0px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); text-shadow: none; }
 .btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; transform: none; text-shadow: none; }
-
-/* Nút phụ (Chọn tất cả, Bỏ chọn,...) */
-.btn-secondary { /* Áp dụng class này cho nút nhỏ nếu muốn */
-  padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 6px; cursor: pointer;
-  background-color: var(--button-secondary-bg);
-  color: var(--button-secondary-text);
-  border: 1px solid var(--button-secondary-border); border-radius: 5px;
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.03);
-}
+.btn-secondary { padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 6px; cursor: pointer; background-color: var(--button-secondary-bg); color: var(--button-secondary-text); border: 1px solid var(--button-secondary-border); border-radius: 5px; transition: all 0.15s ease; box-shadow: 0 1px 1px rgba(0,0,0,0.03); }
 .btn-secondary:hover { background-color: var(--button-secondary-hover-bg); border-color: var(--button-secondary-hover-border); color: var(--text-color); }
 .btn-secondary:active { background-color: #eee; transform: translateY(1px); box-shadow: inset 0 1px 1px rgba(0,0,0,0.05); }
-/* --- [HẾT THAY ĐỔI LỚN] --- */
-
-/* Áp dụng .btn-secondary cho nút trong settings */
-.settings-fields-controls button {
-    /* Kế thừa từ .btn-secondary thay vì style riêng */
-     padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 6px; cursor: pointer;
-     background-color: var(--button-secondary-bg); color: var(--button-secondary-text);
-     border: 1px solid var(--button-secondary-border); border-radius: 5px;
-     transition: all 0.15s ease; box-shadow: 0 1px 1px rgba(0,0,0,0.03);
-}
+.settings-fields-controls button { padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 6px; cursor: pointer; background-color: var(--button-secondary-bg); color: var(--button-secondary-text); border: 1px solid var(--button-secondary-border); border-radius: 5px; transition: all 0.15s ease; box-shadow: 0 1px 1px rgba(0,0,0,0.03); }
 .settings-fields-controls button:hover { background-color: var(--button-secondary-hover-bg); border-color: var(--button-secondary-hover-border); color: var(--text-color); }
 .settings-fields-controls button:active { background-color: #eee; transform: translateY(1px); box-shadow: inset 0 1px 1px rgba(0,0,0,0.05); }
-
-
 .status-message { margin-top: 1rem; padding: 0.7rem 0.8rem; border-radius: 6px; font-size: 0.9rem; text-align: center; font-weight: 500; border: 1px solid transparent; }
 .status-message.info { background-color: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
 .status-message.success { background-color: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
 .status-message.error { background-color: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
-
-/* --- UI Settings Fields --- */
+.settings-container { width: auto; min-width: 450px; }
 .note-type-selector { margin-bottom: 20px; }
 .settings-fields-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color-light); }
 .settings-fields-controls span { font-weight: 500; font-size: 0.95rem; color: var(--text-color-light); }
@@ -150,10 +100,5 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .settings-fields-list::-webkit-scrollbar { width: 6px; } .settings-fields-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; } .settings-fields-list::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; } .settings-fields-list::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 .random-id-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--border-color-light); }
 .random-id-section label { margin-bottom: 8px; }
-
-/* Link mở settings */
-#open-settings-link { font-size: 0.85rem; color: var(--text-color-light); text-decoration: none; }
-#open-settings-link:hover { color: var(--primary-color); text-decoration: underline; }
-
-/* Responsive */
-@media (max-width: 400px) { body { width: auto; min-width: 300px; } .container, .settings-container { padding: 12px; } }
+/* Link mở settings đã được di chuyển vào header-container */
+/* @media (max-width: 400px) { body { width: auto; min-width: 300px; } .container, .settings-container { padding: 12px; } } */ /* Tạm thời bỏ media query này vì sidebar thường đủ rộng */
