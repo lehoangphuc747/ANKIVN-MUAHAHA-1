@@ -60,3 +60,10 @@
 - Nâng cấp logic tìm kiếm trong `popup.js` (hàm `setupAutocomplete`).
 - Thay vì `includes(value)`, logic mới sẽ tách `value` thành các từ khóa và kiểm tra `every(keyword => target.includes(keyword))`.
 - Cho phép người dùng tìm kiếm "k quyển 1" để khớp với "(Korean) Tiếng Hàn Tổng Hợp::Quyển 1".
+
+## v1.13.0 – 2025-10-28
+- Thêm chức năng thu gọn (collapse) cho các field.
+- Cập nhật `popup.js`:
+    - Viết lại `createFieldsForModel` để tạo HTML mới với nút toggle và khôi phục trạng thái collapse từ `chrome.storage.local`.
+    - Thêm hàm `toggleFieldCollapse` để xử lý click và lưu trạng thái vào `chrome.storage.local`.
+- Cập nhật `styles.css`: Thêm các class `.field-header`, `.collapse-toggle`, và `.field-group.collapsed` để tạo kiểu và ẩn/hiện textarea.
