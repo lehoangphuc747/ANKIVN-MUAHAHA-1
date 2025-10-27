@@ -23,3 +23,7 @@
 - Added DOMContentLoaded event listener to initialize popup
 - Load decks, models, and tags from Anki-Connect on popup load
 - Added showStatus function for user feedback
+
+## v1.5.0 – 2025-08-29
+- Added model change event listener to dynamically create fields based on selected model
+- Added createFieldsForModel function to generate input fields for each field name

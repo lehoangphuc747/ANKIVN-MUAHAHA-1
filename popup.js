@@ -31,6 +31,42 @@ async function invoke(action, params = {}) {
   }
 }
 
+// Hàm tạo fields động dựa trên model được chọn
+async function createFieldsForModel(modelName) {
+  try {
+    const fieldNames = await invoke('modelFieldNames', { modelName: modelName });
+    const fieldsContainer = document.getElementById('fields-container');
+    
+    // Xóa sạch nội dung cũ
+    fieldsContainer.innerHTML = '';
+    
+    // Tạo các field mới
+    fieldNames.forEach(fieldName => {
+      const fieldGroup = document.createElement('div');
+      fieldGroup.className = 'form-group';
+      
+      const label = document.createElement('label');
+      label.textContent = fieldName + ':';
+      label.htmlFor = `field-${fieldName}`;
+      
+      // Sử dụng textarea cho các field có thể có nội dung dài
+      const input = document.createElement('textarea');
+      input.id = `field-${fieldName}`;
+      input.className = 'form-control field-input';
+      input.placeholder = `Nhập nội dung cho ${fieldName}`;
+      input.rows = 3;
+      
+      fieldGroup.appendChild(label);
+      fieldGroup.appendChild(input);
+      fieldsContainer.appendChild(fieldGroup);
+    });
+    
+  } catch (error) {
+    console.error('Error creating fields:', error);
+    showStatus('Không thể tải thông tin fields cho model này.', 'error');
+  }
+}
+
 // Hàm khởi tạo popup
 document.addEventListener('DOMContentLoaded', async function() {
   try {
@@ -64,6 +100,17 @@ document.addEventListener('DOMContentLoaded', async function() {
       const option = document.createElement('option');
       option.value = tag;
       tagsDatalist.appendChild(option);
+    });
+
+    // Thêm event listener cho model-select
+    modelSelect.addEventListener('change', function() {
+      const selectedModel = this.value;
+      if (selectedModel) {
+        createFieldsForModel(selectedModel);
+      } else {
+        // Xóa fields nếu không có model nào được chọn
+        document.getElementById('fields-container').innerHTML = '';
+      }
     });
 
   } catch (error) {
