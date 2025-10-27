@@ -18,7 +18,7 @@ function setupAutocomplete(inputId, containerId, sourceArray, onSelectCallback =
   function addActive(items) { if (!items) return false; removeActive(items); if (currentFocus >= items.length) currentFocus = 0; if (currentFocus < 0) currentFocus = items.length - 1; items[currentFocus].classList.add('active'); items[currentFocus].scrollIntoView({ block: 'nearest' }); }
   function removeActive(items) { for (let i = 0; i < items.length; i++) items[i].classList.remove('active'); }
   function closeAllLists() { container.innerHTML = ''; container.style.display = 'none'; }
-  document.addEventListener('click', (e) => { if (e.target !== input) closeAllLists(); });
+  document.addEventListener('click', (e) => { if (e.target !== input && !container.contains(e.target) ) closeAllLists(); }); // Sửa: kiểm tra click vào container gợi ý
 }
 
 // --- [HÀM ĐƯỢC VIẾT LẠI] Tải Fields với UI cải tiến ---
@@ -44,48 +44,37 @@ async function loadFieldsForSettings(modelName) {
 
         fieldNames.forEach(fieldName => {
             const isHidden = hiddenFields[fieldName] || false;
-            const checkboxId = `check-${fieldName.replace(/\s+/g, '-')}`; // Tạo ID an toàn
+            const checkboxId = `check-${fieldName.replace(/\s+/g, '-')}`;
 
             // Tạo item div (clickable)
             const itemDiv = document.createElement('div');
-            itemDiv.className = 'field-checkbox-item';
+            itemDiv.className = 'field-checkbox-item'; // Class mới
+            if (isHidden) {
+                itemDiv.classList.add('checked'); // Thêm class 'checked' nếu ẩn
+            }
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.id = checkboxId;
             checkbox.dataset.fieldName = fieldName;
             checkbox.checked = isHidden;
+            checkbox.style.pointerEvents = 'none'; // Không cho click trực tiếp vào checkbox
 
             const label = document.createElement('label');
-            label.htmlFor = checkboxId; // Trỏ tới checkbox
+            label.htmlFor = checkboxId; // Vẫn trỏ tới checkbox (dù không click được)
             label.textContent = fieldName;
-            label.title = fieldName; // Tooltip
+            label.title = fieldName;
 
             itemDiv.appendChild(checkbox);
             itemDiv.appendChild(label);
 
-            // [MỚI] Thêm sự kiện click vào toàn bộ itemDiv
-            itemDiv.addEventListener('click', (event) => {
-                // Ngăn chặn việc click vào label kích hoạt 2 lần event
-                if (event.target !== checkbox) {
-                    checkbox.checked = !checkbox.checked;
-                    // Kích hoạt sự kiện change thủ công nếu cần (ít khi cần)
-                    // checkbox.dispatchEvent(new Event('change'));
-                }
-                // Cập nhật style ngay lập tức (tùy chọn)
-                 if(checkbox.checked) {
-                     itemDiv.style.backgroundColor = "#fff0f0"; // Màu nền nhẹ khi ẩn
-                 } else {
-                     itemDiv.style.backgroundColor = "#f9f9f9"; // Màu nền mặc định
-                 }
+            // [MỚI] Sự kiện click vào toàn bộ itemDiv
+            itemDiv.addEventListener('click', () => {
+                // Đảo ngược trạng thái checked của checkbox
+                checkbox.checked = !checkbox.checked;
+                // Cập nhật class 'checked' cho itemDiv
+                itemDiv.classList.toggle('checked', checkbox.checked);
             });
-             // [MỚI] Set style ban đầu dựa trên trạng thái checked
-             if(checkbox.checked) {
-                 itemDiv.style.backgroundColor = "#fff0f0";
-             } else {
-                 itemDiv.style.backgroundColor = "#f9f9f9";
-             }
-
 
             fieldsListContainer.appendChild(itemDiv);
         });
@@ -98,52 +87,35 @@ async function loadFieldsForSettings(modelName) {
 }
 
 
-// --- Hàm lưu cài đặt (thay đổi selector) ---
-async function saveSettings() {
+// --- Hàm lưu cài đặt (không đổi) ---
+async function saveSettings() { /* ... giữ nguyên ... */
     const selectedModel = document.getElementById('settings-model-search').value;
-    if (!selectedModel || !allModelsForSettings.includes(selectedModel)) {
-        showStatus(`Vui lòng chọn Note Type hợp lệ${!selectedModel ? '' : ' từ gợi ý'}.`, 'error'); return;
-    }
-
-    // [THAY ĐỔI] Lấy checkbox từ container mới
-    const checkboxes = document.querySelectorAll('#settings-fields-list-container input[type="checkbox"]');
-    const hiddenFieldsState = {};
+    if (!selectedModel || !allModelsForSettings.includes(selectedModel)) { showStatus(`Vui lòng chọn Note Type hợp lệ${!selectedModel ? '' : ' từ gợi ý'}.`, 'error'); return; }
+    const checkboxes = document.querySelectorAll('#settings-fields-list-container input[type="checkbox"]'); const hiddenFieldsState = {};
     checkboxes.forEach(checkbox => { const fieldName = checkbox.dataset.fieldName; hiddenFieldsState[fieldName] = checkbox.checked; });
-
     const storageKey = `hiddenFields_${selectedModel}`;
-    try {
-        await chrome.storage.local.set({ [storageKey]: hiddenFieldsState });
-        console.log(`Settings saved for ${selectedModel}:`, hiddenFieldsState);
-        showStatus('Đã lưu cài đặt cho Note Type: ' + selectedModel, 'success');
+    try { await chrome.storage.local.set({ [storageKey]: hiddenFieldsState }); console.log(`Settings saved for ${selectedModel}:`, hiddenFieldsState); showStatus('Đã lưu cài đặt cho Note Type: ' + selectedModel, 'success');
     } catch (error) { console.error('Error saving settings:', error); showStatus('Lỗi khi lưu cài đặt: ' + error.message, 'error'); }
 }
 
-// --- Hàm Chọn/Bỏ chọn tất cả (thay đổi selector) ---
+// --- Hàm Chọn/Bỏ chọn tất cả (cập nhật class checked) ---
 function setAllCheckboxes(checkedState) {
-    // [THAY ĐỔI] Lấy checkbox từ container mới
     const checkboxes = document.querySelectorAll('#settings-fields-list-container input[type="checkbox"]');
     checkboxes.forEach(checkbox => {
-        checkbox.checked = checkedState;
-        // Cập nhật style tương ứng
-        const itemDiv = checkbox.closest('.field-checkbox-item');
-        if (itemDiv) {
-            itemDiv.style.backgroundColor = checkedState ? "#fff0f0" : "#f9f9f9";
+        if (checkbox.checked !== checkedState) { // Chỉ thay đổi nếu khác trạng thái
+             checkbox.checked = checkedState;
+             // Cập nhật class 'checked' cho itemDiv cha
+             const itemDiv = checkbox.closest('.field-checkbox-item');
+             if (itemDiv) {
+                 itemDiv.classList.toggle('checked', checkedState);
+             }
         }
     });
 }
 
 // --- Khởi tạo trang Settings (không đổi) ---
-document.addEventListener('DOMContentLoaded', async () => {
-    const saveButton = document.getElementById('save-settings-btn');
-    const selectAllButton = document.getElementById('select-all-fields');
-    const deselectAllButton = document.getElementById('deselect-all-fields');
-
-    try {
-        allModelsForSettings = await invoke('modelNames');
-        setupAutocomplete('settings-model-search', 'settings-model-suggestions', allModelsForSettings, loadFieldsForSettings);
-    } catch (error) { showStatus('Không thể tải danh sách Note Types.', 'error'); }
-
-    saveButton.addEventListener('click', saveSettings);
-    selectAllButton.addEventListener('click', () => setAllCheckboxes(true));
-    deselectAllButton.addEventListener('click', () => setAllCheckboxes(false));
+document.addEventListener('DOMContentLoaded', async () => { /* ... giữ nguyên ... */
+    const saveButton = document.getElementById('save-settings-btn'); const selectAllButton = document.getElementById('select-all-fields'); const deselectAllButton = document.getElementById('deselect-all-fields');
+    try { allModelsForSettings = await invoke('modelNames'); setupAutocomplete('settings-model-search', 'settings-model-suggestions', allModelsForSettings, loadFieldsForSettings); } catch (error) { showStatus('Không thể tải danh sách Note Types.', 'error'); }
+    saveButton.addEventListener('click', saveSettings); selectAllButton.addEventListener('click', () => setAllCheckboxes(true)); deselectAllButton.addEventListener('click', () => setAllCheckboxes(false));
 });
