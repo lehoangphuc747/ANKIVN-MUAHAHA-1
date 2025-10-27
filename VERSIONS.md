@@ -99,6 +99,11 @@
     - Cập nhật `settings.js` để tạo cấu trúc HTML mới và xử lý sự kiện click trên toàn bộ item.
     - Cập nhật `styles.css` để style cho `.field-checkbox-item` và các trạng thái của nó.
 
-
+## v1.18.0 – 2025-10-28
+- Cải thiện thêm UI/UX phần chọn field ẩn trong Settings (`styles.css`, `settings.js`):
+    - Làm hiệu ứng hover rõ nét hơn (`background-color`, `border-color`).
+    - Thêm hiệu ứng gạch ngang chữ và đổi màu chữ/checkbox khi field được chọn ẩn (class `.checked`).
+    - Cập nhật `settings.js` để thêm/xóa class `.checked` khi click vào item field.
+    - Điều chỉnh padding và bố cục flexbox trong `.field-checkbox-item` để tối ưu hiển thị.
 
 
