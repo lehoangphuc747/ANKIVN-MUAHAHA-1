@@ -208,3 +208,6 @@
     - Gửi thẻ `<img>` này dưới dạng text đến `popup.js` thay vì gửi URL gốc.
     - Xử lý lỗi nếu `storeMediaFile` thất bại và gửi thông báo lỗi tới `popup.js`.
 - `popup.js` không cần thay đổi listener `onMessage` vì nó đã xử lý việc chèn text vào `textarea`.
+
+## v1.32.0 – 2025-10-28
+- Sửa lỗi Collapse Fields (`popup.js`): Cập nhật hàm `toggleFieldCollapse` để đặt lại icon thành '🔽' khi field được mở rộng.
