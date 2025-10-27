@@ -32,3 +32,8 @@
 - Added addNoteToAnki function to handle note creation
 - Added click event listener for add-note-btn with full validation
 - Implemented note creation with fields and tags processing
+
+## v1.7.0 – 2025-08-31
+- Enhanced styles.css with modern, responsive design
+- Added proper styling for form controls, buttons, and status messages
+- Improved user experience with hover effects and focus states
