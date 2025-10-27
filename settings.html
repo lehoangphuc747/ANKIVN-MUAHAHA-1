@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cài đặt AnkiVN</title>
+    <link rel="stylesheet" href="styles.css"> <style>
+        /* Thêm style riêng cho settings nếu cần */
+        body { width: auto; min-width: 400px; }
+        .settings-container { padding: 20px; }
+        .field-checkbox-group { margin-bottom: 10px; }
+        .field-checkbox-group label { margin-left: 8px; }
+        #save-settings-btn { margin-top: 20px; }
+        .note-type-selector { margin-bottom: 20px; }
+        /* Style autocomplete trong settings giống popup */
+        .autocomplete-container { position: relative; }
+        .suggestions-container { display: none; position: absolute; background-color: white; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; width: 100%; box-sizing: border-box; max-height: 150px; overflow-y: auto; z-index: 1000; } /* Tăng z-index */
+        .suggestion-item { padding: 10px 12px; font-size: 14px; cursor: pointer; }
+        .suggestion-item:hover, .suggestion-item.active { background-color: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <h1>Cài đặt ẩn Fields</h1>
+        <p>Chọn Note Type, sau đó tích vào các field bạn muốn ẩn mặc định trong sidebar.</p>
+
+        <div class="form-group note-type-selector">
+            <label for="settings-model-search">Chọn Note Type để cấu hình:</label>
+            <div class="autocomplete-container">
+                <input type="text" id="settings-model-search" class="form-control" placeholder="🔍 Gõ để tìm Note Type...">
+                <div id="settings-model-suggestions" class="suggestions-container"></div>
+            </div>
+        </div>
+        <div id="settings-fields-list">
+            <p><i>Hãy chọn một Note Type ở trên.</i></p>
+            </div>
+
+        <button id="save-settings-btn" class="btn-primary">Lưu Cài đặt</button>
+        <div id="settings-status" class="status-message" style="margin-top: 15px;"></div>
+    </div>
+
+    <script src="settings.js"></script>
+</body>
+</html>
