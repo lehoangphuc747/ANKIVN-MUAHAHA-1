@@ -10,28 +10,25 @@
   <div class="container">
     <h1>AnkiVN - Muahaha</h1>
     
-    <div class="form-group">
-      <label for="deck-search">Chọn Deck:</label>
-      <div class="autocomplete-container">
-        <input type="text" id="deck-search" class="form-control" placeholder="🔍 Gõ để tìm Deck...">
+    <div class="form-group inline-group">
+      <label for="deck-search" class="inline-label">Deck:</label>
+      <div class="autocomplete-container inline-input-container">
+        <input type="text" id="deck-search" class="form-control" placeholder="Tìm Deck...">
         <div id="deck-suggestions" class="suggestions-container"></div>
       </div>
     </div>
-
-    <div class="form-group">
-      <label for="model-search">Chọn Note Type:</label>
-      <div class="autocomplete-container">
-        <input type="text" id="model-search" class="form-control" placeholder="🔍 Gõ để tìm Note Type...">
+    <div class="form-group inline-group">
+      <label for="model-search" class="inline-label">Note:</label>
+      <div class="autocomplete-container inline-input-container">
+        <input type="text" id="model-search" class="form-control" placeholder="Tìm Note Type...">
         <div id="model-suggestions" class="suggestions-container"></div>
       </div>
     </div>
-
     <div id="fields-container" class="fields-container">
       </div>
 
     <div class="form-group">
-      <label for="tags-input">Nhập Tags:</label>
-      <input type="text" id="tags-input" class="form-control" list="tags-datalist" placeholder="Nhập tags, phân cách bằng dấu cách">
+      <label for="tags-input">Tags:</label> <input type="text" id="tags-input" class="form-control" list="tags-datalist" placeholder="Nhập tags, phân cách bằng dấu cách">
       <datalist id="tags-datalist">
         </datalist>
     </div>
@@ -45,7 +42,7 @@
     <div style="text-align: center; margin-top: 20px;">
         <a href="#" id="open-settings-link" style="font-size: 13px; color: #555;">Mở Cài đặt</a>
     </div>
-    </div>
+  </div>
 
   <script src="popup.js"></script>
 </body>
