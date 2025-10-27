@@ -133,6 +133,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     allDecks = await invoke('deckNames');
     allModels = await invoke('modelNames');
     
+    // --- [THÊM ĐỂ DEBUG] ---
+    console.log("Decks đã tải:", allDecks);
+    console.log("Models đã tải:", allModels);
+    // -------------------------
+    
     // Thiết lập autocomplete
     setupAutocomplete('deck-search', 'deck-suggestions', allDecks);
     setupAutocomplete('model-search', 'model-suggestions', allModels, (selectedModel) => {
@@ -199,4 +204,47 @@ async function addNoteToAnki() {
       fields[fieldName] = input.value;
     });
 
-    const hasContent = Object.values(fields).some(value => value
+    const hasContent = Object.values(fields).some(value => value.trim() !== '');
+    if (!hasContent) {
+      throw new Error('Vui lòng nhập nội dung cho ít nhất một field');
+    }
+
+    // Xử lý tags
+    const tagsArray = tagsInput
+      .split(/[\s,]+/)
+      .filter(tag => tag.trim() !== '')
+      .map(tag => tag.trim());
+
+    // Tạo payload
+    const params = {
+      note: {
+        deckName: deckName,
+        modelName: modelName,
+        fields: fields,
+        tags: tagsArray
+      }
+    };
+
+    const result = await invoke('addNote', params);
+
+    // Thành công
+    showStatus('Thêm thành công! Note ID: ' + result, 'success');
+
+    // Xóa nội dung fields và tags
+    fieldInputs.forEach(input => {
+      input.value = '';
+    });
+    document.getElementById('tags-input').value = '';
+
+  } catch (error) {
+    console.error('Error adding note:', error);
+    showStatus('Lỗi: ' + error.message, 'error');
+  }
+}
+
+// Hàm hiển thị thông báo
+function showStatus(message, type = 'info') {
+  const statusElement = document.getElementById('status-message');
+  statusElement.textContent = message;
+  statusElement.className = `status-message ${type}`;
+}
