@@ -211,3 +211,11 @@
 
 ## v1.32.0 – 2025-10-28
 - Sửa lỗi Collapse Fields (`popup.js`): Cập nhật hàm `toggleFieldCollapse` để đặt lại icon thành '🔽' khi field được mở rộng.
+
+## v1.33.0 – 2025-10-28
+- Sửa lỗi Sidebar (`popup.js`):
+    - Khắc phục lỗi Autocomplete (Deck/Note Type) không hoạt động và không hiện Fields sau khi chọn Note Type bằng cách sửa lại luồng xử lý lỗi trong `DOMContentLoaded` và đảm bảo callback của `setupAutocomplete` được gọi đúng.
+    - Khắc phục lỗi nút Settings (⚙️) không hoạt động.
+    - Sửa lỗi icon Collapse không cập nhật đúng khi mở field (`toggleFieldCollapse`).
+    - Thêm nhiều log debug và kiểm tra `null`/`Array.isArray` để tăng độ ổn định.
+- Cập nhật `VERSIONS.md` để phản ánh đúng các sửa lỗi.
