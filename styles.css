@@ -221,3 +221,9 @@ input[list] {
     padding: 12px;
   }
 }
+
+/* --- [THÊM MỚI] Ẩn field theo cài đặt --- */
+.field-group.field-hidden-by-setting {
+    display: none !important; /* Dùng !important để ghi đè mọi thứ khác */
+}
+/* --- [HẾT THÊM MỚI] --- */
