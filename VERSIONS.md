@@ -77,3 +77,9 @@
     - Hàm `createFieldsForModel` giờ sẽ đọc cài đặt ẩn từ `chrome.storage.local` và áp dụng class `.field-hidden-by-setting`.
     - Thêm listener để mở trang cài đặt khi click link.
     - Sửa logic `addNoteToAnki` để không yêu cầu nội dung ở field bị ẩn và gửi giá trị rỗng cho chúng.
+
+## v1.15.0 – 2025-10-28
+- Cập nhật trang Cài đặt (`settings.html`, `settings.js`):
+    - Thay thế dropdown chọn Note Type bằng ô input autocomplete (sử dụng lại hàm `setupAutocomplete`).
+- Tối ưu giao diện Sidebar (`popup.html`, `styles.css`):
+    - Thay đổi layout để label ("Deck:", "Note:") và input tương ứng nằm trên cùng một hàng.
