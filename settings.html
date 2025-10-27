@@ -6,73 +6,44 @@
     <title>Cài đặt AnkiVN</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        body { width: auto; min-width: 450px; } /* Tăng chiều rộng tối thiểu */
+        /* ... (style cũ giữ nguyên) ... */
+        body { width: auto; min-width: 450px; }
         .settings-container { padding: 20px; }
         .note-type-selector { margin-bottom: 20px; }
         #save-settings-btn { margin-top: 20px; }
-        /* Style autocomplete trong settings giống popup */
         .autocomplete-container { position: relative; }
         .suggestions-container { display: none; position: absolute; background-color: white; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; width: 100%; box-sizing: border-box; max-height: 150px; overflow-y: auto; z-index: 1000; }
-        .suggestion-item { padding: 8px 10px; font-size: 14px; cursor: pointer; } /* Giảm padding một chút */
+        .suggestion-item { padding: 8px 10px; font-size: 14px; cursor: pointer; }
         .suggestion-item:hover, .suggestion-item.active { background-color: #f0f0f0; }
+        .settings-fields-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        .settings-fields-controls span { font-weight: 500; }
+        .settings-fields-controls button { padding: 5px 10px; font-size: 12px; margin-left: 6px; cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; transition: background-color 0.2s; }
+        .settings-fields-controls button:hover { background-color: #e0e0e0; }
+        .settings-fields-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px; background-color: #fff; }
+        .field-checkbox-item { display: flex; align-items: center; padding: 10px 12px; border-radius: 5px; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; background-color: #fdfdfd; border: 1px solid #eee; overflow: hidden; }
+        .field-checkbox-item:hover { background-color: #eaf6ff; border-color: #aed6f1; }
+        .field-checkbox-item.checked { background-color: #fff0f0; border-color: #f5b7b1; }
+        .field-checkbox-item.checked label { font-weight: 500; color: #c0392b; text-decoration: line-through; }
+        .field-checkbox-item.checked input[type="checkbox"] { accent-color: #c0392b; }
+        .field-checkbox-item input[type="checkbox"] { margin-right: 10px; flex-shrink: 0; cursor: pointer; }
+        .field-checkbox-item label { display: block; margin-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: #333; flex-grow: 1; }
+        .settings-fields-list::-webkit-scrollbar { width: 6px; } .settings-fields-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; } .settings-fields-list::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; } .settings-fields-list::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 
-        /* [THÊM MỚI] Style cho 2 cột và nút chọn */
-        .settings-fields-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
+        /* [THÊM MỚI] Style cho phần chọn Random ID Field */
+        .random-id-section {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
         }
-        .settings-fields-controls span {
-            font-weight: 500;
+        .random-id-section label {
+             margin-bottom: 8px;
         }
-        .settings-fields-controls button {
-            padding: 4px 8px;
-            font-size: 12px;
-            margin-left: 5px;
-            cursor: pointer;
-            background-color: #eee;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .settings-fields-controls button:hover {
-             background-color: #ddd;
-        }
-
-        .settings-fields-list {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Tạo 2 cột */
-            gap: 0 20px; /* Khoảng cách giữa các cột */
-            max-height: 400px; /* Tăng chiều cao tối đa */
-            overflow-y: auto;
-        }
-        .field-checkbox-group {
-            margin-bottom: 8px; /* Giảm khoảng cách */
-            display: flex;
-            align-items: center;
-        }
-        .field-checkbox-group input[type="checkbox"] {
-             margin-right: 8px; /* Khoảng cách giữa checkbox và label */
-        }
-        .field-checkbox-group label {
-            margin-bottom: 0; /* Ghi đè margin */
-            white-space: nowrap; /* Ngăn label xuống dòng */
-            overflow: hidden;
-            text-overflow: ellipsis; /* Thêm ... nếu label quá dài */
-        }
-         /* Scrollbar cho list */
-        .settings-fields-list::-webkit-scrollbar { width: 5px; }
-        .settings-fields-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
-        .settings-fields-list::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
-        .settings-fields-list::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        /* [HẾT THÊM MỚI] */
     </style>
 </head>
 <body>
     <div class="settings-container">
-        <h1>Cài đặt ẩn Fields</h1>
-        <p>Chọn Note Type, sau đó tích vào các field bạn muốn ẩn mặc định trong sidebar.</p>
+        <h1>Cài đặt AnkiVN</h1>
 
         <div class="form-group note-type-selector">
             <label for="settings-model-search">Chọn Note Type để cấu hình:</label>
@@ -83,15 +54,22 @@
         </div>
 
         <div class="settings-fields-controls">
-             <span>Fields (Tích để ẩn):</span>
+             <span>Ẩn Fields (Tích để ẩn):</span>
              <div>
-                 <button id="select-all-fields">Chọn tất cả</button>
-                 <button id="deselect-all-fields">Bỏ chọn tất cả</button>
+                 <button id="select-all-fields">Ẩn tất cả</button>
+                 <button id="deselect-all-fields">Hiện tất cả</button>
              </div>
         </div>
         <div class="settings-fields-list" id="settings-fields-list-container">
              <p><i>Hãy chọn một Note Type ở trên.</i></p>
-            </div>
+        </div>
+
+        <div class="random-id-section" id="random-id-section" style="display: none;"> <label for="random-id-field-select">Tự động tạo ID ngẫu nhiên cho Field:</label>
+             <select id="random-id-field-select" class="form-control">
+                 <option value="">-- Không tự động tạo ID --</option>
+                 </select>
+             <p style="font-size: 12px; color: #666; margin-top: 5px;">Chọn field (thường là field đầu tiên) để tự động điền 14 số ngẫu nhiên khi thêm note mới.</p>
+        </div>
         <button id="save-settings-btn" class="btn-primary">Lưu Cài đặt</button>
         <div id="settings-status" class="status-message" style="margin-top: 15px;"></div>
     </div>
