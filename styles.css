@@ -55,6 +55,11 @@ label {
   min-height: 60px;
 }
 
+/* Thêm class này */
+.search-input {
+  margin-bottom: 8px;
+}
+
 .fields-container {
   max-height: 300px;
   overflow-y: auto;
