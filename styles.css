@@ -4,12 +4,12 @@ body {
   margin: 0;
   padding: 0;
   background-color: #f5f5f5;
+  color: #333; /* Màu chữ chính */
 }
 
-.container, .settings-container { /* Áp dụng padding chung */
+.container, .settings-container {
   padding: 16px;
 }
-/* Style riêng cho settings nếu cần */
 .settings-container { width: auto; min-width: 450px; }
 
 
@@ -80,12 +80,8 @@ label {
 .note-type-selector { margin-bottom: 20px; }
 
 .settings-fields-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;
 }
 .settings-fields-controls span { font-weight: 500; }
 .settings-fields-controls button { padding: 5px 10px; font-size: 12px; margin-left: 6px; cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; transition: background-color 0.2s; }
@@ -93,63 +89,62 @@ label {
 
 .settings-fields-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Cột tự động co giãn */
-    gap: 8px; /* Khoảng cách giữa các item */
-    max-height: 400px;
-    overflow-y: auto;
-    border: 1px solid #e0e0e0; /* Thêm viền bao quanh */
-    border-radius: 6px;
-    padding: 10px;
-    background-color: #fff; /* Nền trắng */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+    max-height: 400px; overflow-y: auto;
+    border: 1px solid #e0e0e0; border-radius: 6px;
+    padding: 10px; background-color: #fff;
 }
 
-/* Biến toàn bộ item thành clickable */
-.field-checkbox-item { /* Thay thế .field-checkbox-group */
-    display: block; /* Để chiếm toàn bộ chiều rộng grid cell */
-    padding: 8px 10px;
-    border-radius: 4px;
+.field-checkbox-item {
+    display: flex; /* Sử dụng flex để căn chỉnh checkbox và label */
+    align-items: center; /* Căn giữa theo chiều dọc */
+    padding: 10px 12px; /* Tăng padding */
+    border-radius: 5px; /* Bo góc nhẹ */
     cursor: pointer;
-    transition: background-color 0.2s ease;
-    background-color: #f9f9f9; /* Nền nhẹ mặc định */
+    transition: background-color 0.15s ease, border-color 0.15s ease; /* Nhanh hơn chút */
+    background-color: #fdfdfd; /* Nền sáng hơn mặc định */
     border: 1px solid #eee;
-    overflow: hidden; /* Đảm bảo nội dung không tràn */
-}
-
-/* Hiệu ứng hover */
-.field-checkbox-item:hover {
-    background-color: #e9e9e9;
-}
-
-/* Style khi được chọn */
-.field-checkbox-item input[type="checkbox"]:checked + label {
-    font-weight: 500; /* Làm đậm chữ khi chọn */
-    color: #c0392b; /* Đổi màu chữ (màu đỏ lỗi) để dễ nhận biết "ẩn" */
-}
-.field-checkbox-item input[type="checkbox"]:checked {
-    accent-color: #c0392b; /* Đổi màu checkbox thành màu đỏ */
-}
-
-/* Ẩn checkbox gốc đi */
-.field-checkbox-item input[type="checkbox"] {
-    /* display: none; */ /* Bỏ ẩn để vẫn click được vào checkbox */
-    margin-right: 8px;
-    vertical-align: middle; /* Căn giữa với text */
-}
-
-/* Style cho label bên trong item */
-.field-checkbox-item label {
-    display: inline-block; /* Để cùng hàng với checkbox */
-    margin-bottom: 0;
-    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
-    vertical-align: middle;
-    cursor: pointer; /* Đảm bảo con trỏ đúng */
-    width: calc(100% - 25px); /* Chiếm phần còn lại trừ checkbox */
-    color: #333; /* Màu chữ mặc định */
 }
 
-/* Scrollbar cho list */
+/* [HOVER RÕ HƠN] */
+.field-checkbox-item:hover {
+    background-color: #eaf6ff; /* Nền xanh dương nhạt khi hover */
+    border-color: #aed6f1; /* Viền xanh dương nhạt */
+}
+
+/* Style khi được chọn (checked) */
+.field-checkbox-item.checked { /* Thêm class .checked bằng JS */
+    background-color: #fff0f0; /* Nền hồng nhạt khi ẩn */
+    border-color: #f5b7b1; /* Viền hồng nhạt */
+}
+.field-checkbox-item.checked label {
+    font-weight: 500;
+    color: #c0392b; /* Chữ đỏ */
+    text-decoration: line-through; /* Gạch ngang chữ */
+}
+.field-checkbox-item.checked input[type="checkbox"] {
+    accent-color: #c0392b; /* Checkbox màu đỏ */
+}
+
+
+.field-checkbox-item input[type="checkbox"] {
+    margin-right: 10px; /* Tăng khoảng cách */
+    flex-shrink: 0; /* Không cho checkbox co lại */
+    cursor: pointer;
+}
+
+.field-checkbox-item label {
+    display: block; /* Chiếm hết phần còn lại */
+    margin-bottom: 0;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    cursor: pointer;
+    color: #333;
+    flex-grow: 1; /* Cho label giãn ra */
+}
+
+/* Scrollbar */
 .settings-fields-list::-webkit-scrollbar { width: 6px; }
 .settings-fields-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
 .settings-fields-list::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
