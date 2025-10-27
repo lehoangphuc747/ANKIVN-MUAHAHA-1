@@ -2,6 +2,7 @@
 let allDecks = [];
 let allModels = [];
 let currentModelName = '';
+let currentFieldNames = []; // Thêm biến lưu tên fields hiện tại
 let statusTimeout = null;
 
 // --- Hàm invoke (Sửa lại: Ném lỗi như ban đầu) ---
@@ -77,18 +78,95 @@ async function createFieldsForModel(modelName) {
         document.getElementById('fields-container').innerHTML = `<p style="color: var(--error-text);"><i>Lỗi tải fields.</i></p>`; // Hiển thị lỗi trong container
     }
  }
-// --- Hàm toggleFieldCollapse (không đổi) ---
-async function toggleFieldCollapse(event) { /* ... giữ nguyên code v1.22.0 ... */ }
+
+// --- Hàm toggleFieldCollapse (đã sửa theo hướng dẫn) ---
+async function toggleFieldCollapse(event) {
+    const fieldHeader = event.currentTarget; // Lấy header được click
+    const fieldGroup = fieldHeader.closest('.field-group');
+    if (!fieldGroup) return;
+
+    const fieldName = fieldGroup.dataset.fieldName;
+    const targetTextarea = fieldGroup.querySelector('.field-input');
+    const toggleIcon = fieldHeader.querySelector('.collapse-toggle');
+    const label = fieldHeader.querySelector('label');
+
+    // Thêm kiểm tra kỹ hơn
+    if (!targetTextarea || !fieldName || !toggleIcon || !label) {
+        console.error("Could not find elements for collapse toggle:", {fieldGroup, targetTextarea, fieldName, toggleIcon, label});
+        return;
+    }
+
+    const isCurrentlyCollapsed = fieldGroup.classList.contains('collapsed');
+    const newState = !isCurrentlyCollapsed; // Trạng thái mới
+
+    // Cập nhật giao diện
+    fieldGroup.classList.toggle('collapsed', newState);
+    if (newState) {
+        targetTextarea.style.display = 'none';
+        label.style.opacity = '0.65';
+        toggleIcon.style.transform = 'rotate(-90deg)';
+    } else {
+        targetTextarea.style.display = '';
+        label.style.opacity = '1';
+        toggleIcon.style.transform = 'rotate(0deg)';
+        autoExpandTextarea({ target: targetTextarea }); // Trigger auto-expand khi mở
+    }
+
+    // Lưu trạng thái mới vào storage
+    const storageKey = `collapsedFields_${currentModelName}`;
+    try {
+        const currentState = await chrome.storage.local.get(storageKey);
+        const updatedState = currentState[storageKey] || {};
+        updatedState[fieldName] = newState;
+        await chrome.storage.local.set({ [storageKey]: updatedState });
+    } catch (error) { console.error('Error saving collapse state:', error); }
+}
+
 // --- Hàm autoExpandTextarea (không đổi) ---
-function autoExpandTextarea(event) { /* ... giữ nguyên code v1.22.0 ... */ }
+function autoExpandTextarea(event) {
+    const textarea = event.target;
+    textarea.style.height = 'auto'; // Reset height
+    textarea.style.height = (textarea.scrollHeight) + 'px'; // Set to scrollHeight
+}
+
 // --- Hàm openOptionsPage (không đổi) ---
 function openOptionsPage() { console.log("Opening options page..."); chrome.runtime.openOptionsPage(); } // Thêm log
-// --- Hàm generateRandomId (không đổi) ---
-function generateRandomId(length = 14) { /* ... giữ nguyên code ... */ }
-// --- Hàm showStatus (không đổi) ---
-function showStatus(message, type = 'info') { /* ... giữ nguyên code v1.20.0 ... */ }
 
-// --- Hàm setupAutocomplete (Đảm bảo giống hệt settings.js) ---
+// --- Hàm generateRandomId (không đổi) ---
+function generateRandomId(length = 14) {
+    const chars = '0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
+// --- Hàm showStatus (không đổi) ---
+function showStatus(message, type = 'info') {
+    const statusElement = document.getElementById('status-message');
+    statusElement.textContent = message;
+    statusElement.className = `status-message ${type}`;
+
+    // Xóa timeout trước đó nếu có
+    if (window.statusTimeout) {
+        clearTimeout(window.statusTimeout);
+    }
+
+    // Tự động ẩn thông báo thành công sau 4 giây
+    if (type === 'success') {
+        window.statusTimeout = setTimeout(() => {
+            if (statusElement.textContent === message) {
+                statusElement.textContent = '';
+                statusElement.className = 'status-message';
+            }
+        }, 4000);
+    } else {
+        window.statusTimeout = null; // Không tự ẩn với error/info
+    }
+}
+
+// --- Hàm setupAutocomplete (Đã sửa theo hướng dẫn) ---
 function setupAutocomplete(inputId, containerId, sourceArray, onSelectCallback = null) {
   // console.log(`Setting up autocomplete for input: #${inputId} with ${sourceArray ? sourceArray.length : 0} items`); // DEBUG
   const input = document.getElementById(inputId);
@@ -197,7 +275,56 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 // --- Hàm thêm note vào Anki (không đổi) ---
-async function addNoteToAnki() { /* ... giữ nguyên code v1.19.0 ... */ }
+async function addNoteToAnki() {
+    try {
+        showStatus('Đang thêm...', 'info');
+        const deckName = document.getElementById('deck-search').value.trim();
+        const modelName = document.getElementById('model-search').value.trim();
+        const tagsInput = document.getElementById('tags-input').value.trim();
+
+        if (!deckName) { showStatus('Vui lòng chọn hoặc nhập Deck.', 'error'); return; }
+        if (!modelName) { showStatus('Vui lòng chọn hoặc nhập Note Type.', 'error'); return; }
+        if (!allDecks.includes(deckName)) { showStatus('Tên Deck không hợp lệ. Vui lòng chọn từ gợi ý.', 'error'); return; }
+        if (!allModels.includes(modelName)) { showStatus('Tên Note Type không hợp lệ. Vui lòng chọn từ gợi ý.', 'error'); return; }
+
+        const fields = {};
+        let hasContent = false;
+        const fieldGroups = document.querySelectorAll('.field-group:not(.field-hidden-by-setting)');
+        for (const group of fieldGroups) {
+            const fieldName = group.dataset.fieldName;
+            const input = group.querySelector('.field-input');
+            if (input) {
+                const value = input.value.trim();
+                fields[fieldName] = value;
+                if (value) hasContent = true;
+            }
+        }
+
+        if (!hasContent) { showStatus('Vui lòng nhập nội dung cho ít nhất một field.', 'error'); return; }
+
+        // Xử lý Random ID Field (nếu có cài đặt)
+        const randomIdFieldKey = `randomIdField_${modelName}`;
+        const storedData = await chrome.storage.local.get(randomIdFieldKey);
+        const randomIdField = storedData[randomIdFieldKey];
+        if (randomIdField && fields[randomIdField] === '') {
+            fields[randomIdField] = generateRandomId();
+        }
+
+        const tagsArray = tagsInput.split(/[\s,]+/).filter(tag => tag.trim() !== '').map(tag => tag.trim());
+        const params = { note: { deckName, modelName, fields, tags: tagsArray } };
+        const result = await invoke('addNote', params);
+        showStatus('Thêm thành công! Note ID: ' + result, 'success');
+
+        // Xóa nội dung các field (giữ nguyên deck/model/tags)
+        document.querySelectorAll('.field-input').forEach(input => input.value = '');
+        // Gọi autoExpand cho tất cả textarea để reset chiều cao
+        document.querySelectorAll('.field-input').forEach(input => autoExpandTextarea({ target: input }));
+
+    } catch (error) {
+        console.error('Error adding note:', error);
+        showStatus('Lỗi: ' + (error.message || 'Không xác định'), 'error');
+    }
+}
 
 // --- [THÊM MỚI] Listener nhận message từ background.js ---
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

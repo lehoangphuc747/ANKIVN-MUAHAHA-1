@@ -182,3 +182,11 @@
     - Đảm bảo `createFieldsForModel` được gọi đúng sau khi chọn Note Type từ autocomplete.
     - Khắc phục lỗi nút Settings (⚙️) không hoạt động bằng cách thêm lại event listener bị thiếu trong `DOMContentLoaded`.
     - Thêm kiểm tra dữ liệu (`null`, `Array.isArray`) và log debug chi tiết hơn.
+
+## v1.28.0 – 2025-10-28
+- Sửa lỗi Autocomplete trong Sidebar (`popup.js`):
+    - Khắc phục lỗi đóng danh sách gợi ý khi click vào scrollbar bằng cách thêm kiểm tra kỹ hơn trong `document.addEventListener('click', ...)`.
+    - Thêm `container.addEventListener('mousedown', ...)` để ngăn input mất focus khi click vào scrollbar.
+- Sửa lỗi Collapse Fields không hoạt động (`popup.js`):
+    - Cập nhật hàm `toggleFieldCollapse` với kiểm tra kỹ hơn các phần tử và logic toggle chính xác.
+    - Đảm bảo phần tạo `fieldHeader` trong `createFieldsForModel` có `addEventListener` chính xác.
