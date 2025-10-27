@@ -169,4 +169,10 @@
     - Trigger `input` event để textarea tự động mở rộng.
     - Tùy chọn tự động mở field nếu đang bị thu gọn.
 
+## v1.27.0 – 2025-10-28
+- Sửa lỗi Sidebar (`popup.js`):
+    - Khắc phục lỗi Autocomplete (tìm kiếm Deck/Note Type) không hoạt động do xử lý lỗi `invoke` chưa đúng. Hoàn trả `invoke` về trạng thái ném lỗi (throw error) và xử lý lỗi trong `DOMContentLoaded`.
+    - Đảm bảo `createFieldsForModel` được gọi đúng sau khi chọn Note Type từ autocomplete.
+    - Khắc phục lỗi nút Settings (⚙️) không hoạt động bằng cách thêm lại event listener bị thiếu trong `DOMContentLoaded`.
+    - Thêm kiểm tra dữ liệu (`null`, `Array.isArray`) và log debug chi tiết hơn.
 
