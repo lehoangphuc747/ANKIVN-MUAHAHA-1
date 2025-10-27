@@ -4,10 +4,19 @@
   "version": "1.0",
   "description": "Thêm note vào Anki nhanh chóng.",
   "action": {
-    "default_popup": "popup.html"
+    "default_title": "Mở AnkiVN Sidebar"
   },
   "host_permissions": [
     "http://localhost:8765/"
   ],
-  "permissions": ["storage"]
+  "permissions": [
+    "storage",
+    "sidePanel"
+  ],
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
 }
