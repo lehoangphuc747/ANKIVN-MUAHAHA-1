@@ -136,5 +136,14 @@
     - Cập nhật `popup.js`: Viết lại `createFieldsForModel` và `toggleFieldCollapse`, thêm hàm `autoExpandTextarea`.
     - Cập nhật `styles.css`: Thay đổi style cho `.field-header`, `.collapse-toggle`, `.field-input`, `.field-group.collapsed`.
 
+## v1.23.0 – 2025-10-28
+- Sửa lỗi Autocomplete trong Sidebar (`popup.js`): Cung cấp lại code `popup.js` hoàn chỉnh để đảm bảo chức năng tìm kiếm/chọn hoạt động đúng. Thêm log debug chi tiết hơn.
+- Cải thiện giao diện Button (`styles.css`):
+    - Áp dụng style mới, hiện đại và tối giản hơn cho nút chính (`.btn-primary`) và nút phụ (`.btn-secondary`).
+    - Sử dụng biến CSS (`:root`) để quản lý màu sắc.
+    - Thêm hiệu ứng hover, active, shadow tinh tế hơn.
+    - Áp dụng style `.btn-secondary` cho các nút "Chọn tất cả", "Bỏ chọn tất cả" trong Settings.
+- Cập nhật `settings.js`: Đảm bảo không có lỗi và tương thích với CSS mới (không cần thay đổi logic).
+
 
 
