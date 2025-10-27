@@ -3,7 +3,29 @@
 const CONTEXT_MENU_ID_TEXT = "ankivnSendText";
 const CONTEXT_MENU_ID_IMAGE = "ankivnSendImage";
 
-// --- Hàm tạo/cập nhật Context Menu ---
+// --- [THÊM MỚI] Hàm invoke (copy từ popup.js/settings.js) ---
+// Hàm này cần thiết để background script gọi Anki-Connect
+async function invoke(action, params = {}) {
+    try {
+        const response = await fetch('http://localhost:8765', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: action, version: 6, params: params })
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const result = await response.json();
+        if (result.error) throw new Error(`Anki-Connect Error: ${result.error}`); // Thêm tiền tố cho rõ
+        console.log(`Anki-Connect (${action}) successful:`, result.result); // Log success
+        return result.result;
+    } catch (error) {
+        console.error(`Anki-Connect error in background (${action}):`, error);
+        // Ném lỗi để hàm gọi (onClicked) có thể bắt và xử lý
+        throw error;
+    }
+}
+
+
+// --- Hàm updateContextMenu (không đổi) ---
 async function updateContextMenu(fieldNames = []) {
     // Xóa menu cũ trước khi tạo mới để tránh trùng lặp
     await chrome.contextMenus.removeAll();
@@ -62,16 +84,13 @@ async function updateContextMenu(fieldNames = []) {
     });
     console.log("Context menu updated with fields:", fieldNames);
 }
-
-// --- Listener khi cài đặt/cập nhật extension ---
+// --- Listener onInstalled (không đổi) ---
 chrome.runtime.onInstalled.addListener(() => {
     console.log("AnkiVN Extension installed/updated.");
     // Tạo menu lần đầu (chưa có field)
     updateContextMenu([]);
 });
-
-// --- Listener khi Chrome khởi động ---
-// (Quan trọng để context menu xuất hiện lại sau khi khởi động lại Chrome)
+// --- Listener onStartup (không đổi) ---
 chrome.runtime.onStartup.addListener(async () => {
     console.log("Chrome started, restoring context menu.");
     // Cố gắng đọc field đã lưu từ lần cuối cùng
@@ -89,9 +108,7 @@ chrome.runtime.onStartup.addListener(async () => {
         updateContextMenu([]); // Tạo menu mặc định nếu lỗi
     }
 });
-
-
-// --- Listener nhận message từ popup.js để cập nhật fields ---
+// --- Listener onMessage (nhận fields từ popup - không đổi) ---
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "updateFieldsForContextMenu") {
         console.log("Received fields update from sidebar:", message.fields);
@@ -112,62 +129,96 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 
-// --- Listener xử lý khi click vào context menu item ---
+// --- [HÀM ĐƯỢC CẬP NHẬT] Listener xử lý click context menu ---
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     console.log("Context menu clicked:", info);
 
     let targetField = null;
     let content = null;
-    let contentType = null; // 'text' or 'image'
+    let contentType = null;
+    let finalContentToSend = null; // Nội dung cuối cùng gửi tới popup
 
-    // Xác định field và nội dung
-    if (info.menuItemId.startsWith("send-text-to-")) {
-        targetField = info.menuItemId.substring("send-text-to-".length);
-        content = info.selectionText; // Lấy text đã bôi đen
-        contentType = 'text';
-    } else if (info.menuItemId.startsWith("send-image-to-")) {
-        targetField = info.menuItemId.substring("send-image-to-".length);
-        content = info.srcUrl; // Lấy URL của ảnh
-        contentType = 'image';
-    }
+    try {
+        // Xác định field và nội dung ban đầu
+        if (info.menuItemId.startsWith("send-text-to-")) {
+            targetField = info.menuItemId.substring("send-text-to-".length);
+            content = info.selectionText;
+            contentType = 'text';
+            finalContentToSend = content; // Text thì gửi thẳng
+        } else if (info.menuItemId.startsWith("send-image-to-")) {
+            targetField = info.menuItemId.substring("send-image-to-".length);
+            content = info.srcUrl; // Lấy URL ảnh
+            contentType = 'image';
 
-    // Nếu xác định được field và content
-    if (targetField && content) {
-        console.log(`Sending ${contentType} to field "${targetField}":`, content);
+            // [MỚI] Gọi Anki-Connect để lưu ảnh
+            if (content) {
+                console.log(`Attempting to store image via Anki-Connect: ${content}`);
+                // Tạo tên file gợi ý (Anki-Connect có thể đổi nếu trùng)
+                let filename = `ankivn_img_${Date.now()}.${content.split('.').pop().split(/#|\?/)[0] || 'jpg'}`;
+                 // Rút gọn tên file nếu quá dài (tùy chọn)
+                 if (filename.length > 50) filename = filename.substring(filename.length - 50);
 
-        // Gửi message đến sidebar (popup.js)
-        try {
-            // Cần tìm đúng tab ID của sidebar nếu nó đang mở
-            // Hoặc đơn giản là gửi cho tất cả các context của extension
+                try {
+                    const storedFilename = await invoke('storeMediaFile', {
+                        url: content,
+                        // filename: filename // Có thể bỏ filename để Anki tự tạo tên duy nhất dựa trên URL hash
+                    });
+
+                    if (storedFilename) {
+                        finalContentToSend = `<img src="${storedFilename}">`; // Tạo thẻ img
+                        console.log(`Image stored successfully as "${storedFilename}". HTML tag: ${finalContentToSend}`);
+                    } else {
+                        // Trường hợp invoke thành công nhưng không trả về filename (ít xảy ra)
+                        throw new Error("storeMediaFile did not return a filename.");
+                    }
+                } catch (ankiconnectError) {
+                    console.error("Failed to store image via Anki-Connect:", ankiconnectError);
+                    // Gửi URL gốc tới popup kèm thông báo lỗi? Hoặc chỉ gửi lỗi?
+                    // Quyết định: Gửi thông báo lỗi tới popup
+                    finalContentToSend = `[Lỗi tải ảnh: ${ankiconnectError.message}] ${content}`; // Gửi URL kèm lỗi
+                    contentType = 'text'; // Coi như text lỗi
+                }
+            } else {
+                 console.warn("Image context menu clicked but no srcUrl found.");
+                 return; // Không làm gì nếu không có URL ảnh
+            }
+        }
+
+        // Nếu xác định được field và nội dung cuối cùng
+        if (targetField && finalContentToSend !== null) { // Kiểm tra finalContentToSend thay vì content
+            console.log(`Sending final content (${contentType}) to field "${targetField}":`, finalContentToSend);
+
+            // Gửi message đến sidebar
              chrome.runtime.sendMessage({
                 action: "fillFieldFromContextMenu",
                 field: targetField,
-                content: content,
-                contentType: contentType // Gửi cả loại nội dung
+                content: finalContentToSend, // Gửi nội dung đã xử lý (text hoặc img tag)
+                contentType: contentType
              }, (response) => {
                  if (chrome.runtime.lastError) {
-                      console.warn("Could not send message to sidebar (maybe closed?):", chrome.runtime.lastError.message);
-                      // Có thể hiện thông báo lỗi cho người dùng ở đây nếu muốn
-                 } else {
-                      console.log("Message sent to sidebar, response:", response);
-                 }
+                      console.warn("Could not send message to sidebar:", chrome.runtime.lastError.message);
+                 } else { console.log("Message sent response:", response); }
              });
 
-            // Mở sidebar nếu nó chưa mở (tùy chọn)
-            // Lấy windowId từ tab hiện tại nơi context menu được click
-            const currentWindow = await chrome.windows.get(tab.windowId);
+            // Mở sidebar
+            const currentWindow = await chrome.windows.getCurrent(); // Lấy cửa sổ hiện tại dễ hơn
             if (currentWindow) {
                  await chrome.sidePanel.open({ windowId: currentWindow.id });
             }
 
-
-        } catch (error) {
-            console.error("Error sending message to sidebar:", error);
+        } else if (!targetField) {
+             console.warn("Could not determine target field from context menu click:", info);
+        } else {
+             // Trường hợp finalContentToSend là null (ví dụ lỗi không mong muốn)
+             console.error("finalContentToSend is null, cannot send message.");
         }
-    } else {
-         console.warn("Could not determine target field or content from context menu click:", info);
+
+    } catch (error) {
+        // Bắt các lỗi khác (ví dụ lỗi khi gọi chrome.windows.getCurrent)
+        console.error("Error handling context menu click:", error);
     }
 });
+
 
 // Listener mở sidebar khi click icon (giữ nguyên)
 chrome.action.onClicked.addListener(async (tab) => {

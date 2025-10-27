@@ -198,4 +198,13 @@
 - Cập nhật biểu tượng collapse/expand: 
     - Sử dụng '▶' cho trạng thái collapsed (đóng)
     - Sử dụng '🔽' cho trạng thái expanded (mở)
-    - Cập nhật cả trong `popup.js` và `settings.js`
+    - Cập nhật hàm `createFieldsForModel` và `toggleFieldCollapse` trong `popup.js` để hiển thị đúng icon.
+
+## v1.31.0 – 2025-10-28
+- Nâng cấp Context Menu gửi ảnh (`background.js`):
+    - Thêm hàm `invoke` vào `background.js` để gọi Anki-Connect.
+    - Sửa listener `chrome.contextMenus.onClicked`: Khi chọn gửi ảnh, gọi `invoke('storeMediaFile', { url: srcUrl })` để Anki tải và lưu ảnh vào `collection.media`.
+    - Tạo thẻ `<img src="filename.ext">` với tên file Anki trả về.
+    - Gửi thẻ `<img>` này dưới dạng text đến `popup.js` thay vì gửi URL gốc.
+    - Xử lý lỗi nếu `storeMediaFile` thất bại và gửi thông báo lỗi tới `popup.js`.
+- `popup.js` không cần thay đổi listener `onMessage` vì nó đã xử lý việc chèn text vào `textarea`.
