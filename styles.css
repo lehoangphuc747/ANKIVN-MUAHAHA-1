@@ -1,9 +1,49 @@
 /* styles.css */
-:root { /* ... giữ nguyên các biến màu ... */ }
+:root {
+  /* Color Variables */
+  --primary-color: #3498db;
+  --primary-color-dark: #2980b9;
+  --primary-color-darker: #1f618d;
+  --button-text-color: #ffffff;
+  --text-color: #2c3e50;
+  --text-color-light: #7f8c8d;
+  --bg-color: #f5f7fa;
+  --bg-color-alt: #ffffff;
+  --border-color: #dcdfe6;
+  --border-color-light: #e4e7ed;
+  --hover-bg-color: #eaf6ff;
+  --hover-border-color: #aed6f1;
+  --checked-bg-color: #fff0f0;
+  --checked-border-color: #f5b7b1;
+  --checked-text-color: #c0392b;
+  --info-bg: #d6eaf8;
+  --info-text: #2874a6;
+  --info-border: #aed6f1;
+  --success-bg: #d5f4e6;
+  --success-text: #27ae60;
+  --success-border: #a3e4d7;
+  --error-bg: #fadbd8;
+  --error-text: #c0392b;
+  --error-border: #f5b7b1;
+  --button-secondary-bg: #f8f9fa;
+  --button-secondary-text: #495057;
+  --button-secondary-border: #dee2e6;
+  --button-secondary-hover-bg: #e9ecef;
+  --button-secondary-hover-border: #ced4da;
+}
 
-body { /* ... giữ nguyên ... */ }
-.container, .settings-container { padding: 16px; }
-.settings-container { width: auto; min-width: 450px; }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  min-width: 350px;
+}
+
+.container, .settings-container {
+  padding: 16px;
+}
 
 /* --- [THÊM MỚI] Header Container --- */
 .header-container {
@@ -56,7 +96,7 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); }
 .form-control.field-input { resize: none; overflow-y: hidden; min-height: calc(1.5em * 2 + 1.2rem + 2px); height: calc(1.5em * 2 + 1.2rem + 2px); margin-top: 0.4rem; line-height: 1.5; }
 .autocomplete-container { position: relative; }
-.suggestions-container { display: none; position: absolute; background-color: var(--bg-color-alt); border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 6px 6px; width: 100%; box-sizing: border-box; max-height: 160px; overflow-y: auto; z-index: 1000; box-shadow: 0 5px 10px rgba(0,0,0,0.08); }
+.suggestions-container { display: none; position: absolute; /* --- SỬA DÒNG NÀY --- */ background-color: #ffffff; /* Solid White - Đảm bảo không trong suốt */ /* --- HẾT SỬA --- */ border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 6px 6px; width: 100%; box-sizing: border-box; max-height: 160px; overflow-y: auto; z-index: 1000; box-shadow: 0 5px 10px rgba(0,0,0,0.08); }
 .suggestion-item { padding: 0.6rem 0.8rem; font-size: 0.9rem; cursor: pointer; border-bottom: 1px solid var(--border-color-light); }
 .suggestion-item:last-child { border-bottom: none; }
 .suggestion-item.active { background-color: #eee; }

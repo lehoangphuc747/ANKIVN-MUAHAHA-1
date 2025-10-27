@@ -190,3 +190,6 @@
 - Sửa lỗi Collapse Fields không hoạt động (`popup.js`):
     - Cập nhật hàm `toggleFieldCollapse` với kiểm tra kỹ hơn các phần tử và logic toggle chính xác.
     - Đảm bảo phần tạo `fieldHeader` trong `createFieldsForModel` có `addEventListener` chính xác.
+
+## v1.29.0 – 2025-10-28
+- Sửa lỗi hiển thị Autocomplete (`styles.css`): Đặt tường minh `background-color: #ffffff;` cho `.suggestions-container` để đảm bảo nền luôn solid trắng, không bị trong suốt.
