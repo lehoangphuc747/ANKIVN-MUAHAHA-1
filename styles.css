@@ -24,14 +24,34 @@ h1 {
   margin-bottom: 16px;
 }
 
+/* [ĐÃ SỬA] Label mặc định */
 label {
-  display: inline-block; /* Thay đổi thành inline-block */
+  display: block; /* Quay lại block mặc định */
   font-size: 14px;
   font-weight: 500;
   color: #34495e;
-  margin-bottom: 0; /* Xóa margin bottom */
-  vertical-align: middle; /* Căn giữa với nút toggle */
+  margin-bottom: 6px; /* Thêm lại margin bottom */
 }
+
+/* --- [THÊM MỚI] Kiểu Inline Layout cho Deck/Note --- */
+.inline-group {
+  display: flex;
+  align-items: center; /* Căn giữa label và input theo chiều dọc */
+}
+
+.inline-label {
+  flex: 0 0 auto; /* Không co giãn, giữ kích thước gốc */
+  margin-right: 8px; /* Khoảng cách giữa label và input */
+  margin-bottom: 0; /* Ghi đè margin bottom mặc định */
+  font-weight: 600; /* Có thể làm đậm hơn */
+}
+
+.inline-input-container {
+  flex: 1 1 auto; /* Cho phép input chiếm phần còn lại */
+  position: relative; /* Giữ nguyên để suggestion hoạt động */
+}
+/* --- [HẾT THÊM MỚI] --- */
+
 
 .form-control {
   width: 100%;
@@ -53,7 +73,7 @@ label {
 .form-control.field-input {
   resize: vertical;
   min-height: 60px;
-  margin-top: 6px; /* Thêm khoảng cách với header */
+  margin-top: 6px;
 }
 
 /* --- Kiểu Autocomplete --- */
@@ -62,7 +82,7 @@ label {
 }
 
 .suggestions-container {
-  display: none; /* Ẩn mặc định */
+  display: none;
   position: absolute;
   background-color: white;
   border: 1px solid #ddd;
@@ -90,32 +110,46 @@ label {
 }
 /* --- Hết phần Autocomplete --- */
 
-/* --- [THÊM MỚI] Kiểu Collapse --- */
+/* --- Kiểu Collapse --- */
 .field-header {
   display: flex;
   align-items: center;
-  margin-bottom: 6px; /* Khoảng cách giữa header và textarea */
+  margin-bottom: 6px;
 }
 
 .collapse-toggle {
   display: inline-block;
   cursor: pointer;
-  font-size: 12px; /* Kích thước icon */
-  margin-right: 8px; /* Khoảng cách với label */
-  width: 16px; /* Đảm bảo độ rộng cố định */
+  font-size: 12px;
+  margin-right: 8px;
+  width: 16px;
   text-align: center;
   transition: transform 0.2s ease;
-  user-select: none; /* Không cho chọn text */
+  user-select: none;
+}
+
+/* [SỬA] Label trong field-header */
+.field-header label {
+    display: inline-block;
+    margin-bottom: 0;
+    vertical-align: middle;
 }
 
 .field-group.collapsed .collapse-toggle {
-  transform: rotate(-90deg); /* Xoay icon khi thu gọn */
+  transform: rotate(-90deg);
 }
 
 .field-group.collapsed .field-input {
-  display: none; /* Ẩn textarea khi thu gọn */
+  display: none;
 }
-/* --- [HẾT THÊM MỚI] --- */
+/* --- Hết Collapse --- */
+
+/* --- Ẩn field theo setting --- */
+.field-group.field-hidden-by-setting {
+    display: none !important;
+}
+/* --- Hết ẩn field --- */
+
 
 .fields-container {
   max-height: 300px;
@@ -127,103 +161,9 @@ label {
   background-color: white;
 }
 
-.btn-primary {
-  width: 100%;
-  padding: 12px 16px;
-  background-color: #3498db;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
+/* ... (Phần còn lại của CSS giữ nguyên: .btn-primary, .status-message, scrollbar, datalist, media query) ... */
 
-.btn-primary:hover {
-  background-color: #2980b9;
-}
-
-.btn-primary:active {
-  background-color: #2471a3;
-}
-
-.btn-primary:disabled {
-  background-color: #bdc3c7;
-  cursor: not-allowed;
-}
-
-.status-message {
-  margin-top: 12px;
-  padding: 10px;
-  border-radius: 6px;
-  font-size: 13px;
-  text-align: center;
-  font-weight: 500;
-}
-
-.status-message.info {
-  background-color: #d6eaf8;
-  color: #2874a6;
-  border: 1px solid #aed6f1;
-}
-
-.status-message.success {
-  background-color: #d5f4e6;
-  color: #27ae60;
-  border: 1px solid #a3e4d7;
-}
-
-.status-message.error {
-  background-color: #fadbd8;
-  color: #c0392b;
-  border: 1px solid #f5b7b1;
-}
-
-/* Scrollbar styling for containers */
-.fields-container::-webkit-scrollbar,
-.suggestions-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.fields-container::-webkit-scrollbar-track,
-.suggestions-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.fields-container::-webkit-scrollbar-thumb,
-.suggestions-container::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-}
-
-.fields-container::-webkit-scrollbar-thumb:hover,
-.suggestions-container::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Datalist styling */
-input[list] {
-  background-image: url('data:image/svg+xml;utf8,<svg fill="%23333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 16px;
-}
-
-/* Responsive adjustments */
-@media (max-width: 400px) {
-  body {
-    width: 320px;
-  }
-  
-  .container {
-    padding: 12px;
-  }
-}
-
-/* --- [THÊM MỚI] Ẩn field theo cài đặt --- */
-.field-group.field-hidden-by-setting {
-    display: none !important; /* Dùng !important để ghi đè mọi thứ khác */
-}
-/* --- [HẾT THÊM MỚI] --- */
+.btn-primary { width: 100%; padding: 12px 16px; background-color: #3498db; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color 0.2s ease; }
+.btn-primary:hover { background-color: #2980b9; }
+.btn-primary:active { background-color: #2471a3; }
+.btn-primary:disabled { background-color: #bd
