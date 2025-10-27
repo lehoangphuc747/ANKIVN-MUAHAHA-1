@@ -106,4 +106,16 @@
     - Cập nhật `settings.js` để thêm/xóa class `.checked` khi click vào item field.
     - Điều chỉnh padding và bố cục flexbox trong `.field-checkbox-item` để tối ưu hiển thị.
 
+## v1.19.0 – 2025-10-28
+- Thêm tính năng tự động tạo ID ngẫu nhiên (14 chữ số) cho field được chọn.
+- Cập nhật `settings.html`: Thêm khu vực chọn "Random ID Field" (dropdown) hiển thị sau khi chọn Note Type.
+- Cập nhật `settings.js`:
+    - Sửa `loadFieldsForSettings` để điền dữ liệu vào dropdown Random ID Field và tải/hiển thị lựa chọn đã lưu.
+    - Sửa `saveSettings` để lưu lựa chọn Random ID Field vào `chrome.storage.local`.
+- Cập nhật `popup.js`:
+    - Thêm hàm `generateRandomId()`.
+    - Sửa `addNoteToAnki` để đọc cài đặt Random ID Field từ storage, tạo ID mới và gán vào field tương ứng trước khi gửi note đến Anki.
+- Cập nhật `styles.css`: Thêm style cơ bản cho khu vực Random ID trong Settings.
+
+
 
