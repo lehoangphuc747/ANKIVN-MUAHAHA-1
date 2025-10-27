@@ -1,13 +1,13 @@
 // background.js
-// Listens for messages or extension events
 
-chrome.runtime.onInstalled.addListener(() => {
-  console.log("Extension installed and ready.");
+// Lắng nghe sự kiện nhấp vào biểu tượng extension
+chrome.action.onClicked.addListener(async (tab) => {
+  // Mở side panel trong cửa sổ hiện tại
+  await chrome.sidePanel.open({ windowId: tab.windowId });
 });
 
-// Example message listener
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.action === "ping") {
-    sendResponse({ response: "pong" });
-  }
+chrome.runtime.onInstalled.addListener(() => {
+  console.log("AnkiVN Sidebar đã sẵn sàng.");
+  // Bạn có thể thiết lập quy tắc chỉ hiển thị sidebar trên các trang nhất định ở đây nếu muốn
+  // chrome.sidePanel.setOptions({ path: 'popup.html' });
 });
