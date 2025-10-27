@@ -25,11 +25,12 @@ h1 {
 }
 
 label {
-  display: block;
+  display: inline-block; /* Thay đổi thành inline-block */
   font-size: 14px;
   font-weight: 500;
   color: #34495e;
-  margin-bottom: 6px;
+  margin-bottom: 0; /* Xóa margin bottom */
+  vertical-align: middle; /* Căn giữa với nút toggle */
 }
 
 .form-control {
@@ -52,6 +53,7 @@ label {
 .form-control.field-input {
   resize: vertical;
   min-height: 60px;
+  margin-top: 6px; /* Thêm khoảng cách với header */
 }
 
 /* --- Kiểu Autocomplete --- */
@@ -79,7 +81,6 @@ label {
   cursor: pointer;
 }
 
-/* [THÊM MỚI] class này để highlight */
 .suggestion-item.active {
   background-color: #e0e0e0;
 }
@@ -88,6 +89,33 @@ label {
   background-color: #f0f0f0;
 }
 /* --- Hết phần Autocomplete --- */
+
+/* --- [THÊM MỚI] Kiểu Collapse --- */
+.field-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px; /* Khoảng cách giữa header và textarea */
+}
+
+.collapse-toggle {
+  display: inline-block;
+  cursor: pointer;
+  font-size: 12px; /* Kích thước icon */
+  margin-right: 8px; /* Khoảng cách với label */
+  width: 16px; /* Đảm bảo độ rộng cố định */
+  text-align: center;
+  transition: transform 0.2s ease;
+  user-select: none; /* Không cho chọn text */
+}
+
+.field-group.collapsed .collapse-toggle {
+  transform: rotate(-90deg); /* Xoay icon khi thu gọn */
+}
+
+.field-group.collapsed .field-input {
+  display: none; /* Ẩn textarea khi thu gọn */
+}
+/* --- [HẾT THÊM MỚI] --- */
 
 .fields-container {
   max-height: 300px;
