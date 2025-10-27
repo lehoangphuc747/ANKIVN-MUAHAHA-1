@@ -10,3 +10,7 @@
 ## v1.1.0 – 2025-08-25
 - Updated manifest.json for AnkiVN extension with host permissions for localhost:8765
 - Removed unnecessary permissions and content scripts
+
+## v1.2.0 – 2025-08-26
+- Redesigned popup.html with complete UI for Anki note creation
+- Added deck selection dropdown, note type selection, fields container, tags input with datalist, and status message
