@@ -149,3 +149,8 @@
 - Sửa lỗi Autocomplete trong Settings (`settings.js`): Cung cấp lại code `settings.js` hoàn chỉnh, đảm bảo hàm `setupAutocomplete` giống hệt `popup.js` và xử lý lỗi `invoke` đúng cách.
 - Cải thiện giao diện Button (`styles.css`): Viết lại hoàn toàn CSS cho các nút (`.btn-primary`, `.btn-secondary`) với phong cách hiện đại, tối giản, sử dụng gradient, shadow và hiệu ứng transform. Cập nhật các biến màu CSS.
 
+## v1.25.0 – 2025-10-28
+- Di chuyển nút "Mở Cài đặt" lên header của Sidebar, cùng hàng với tiêu đề (`popup.html`, `styles.css`).
+- Cập nhật `popup.html`: Thay đổi cấu trúc header, dùng icon ⚙️ cho nút cài đặt.
+- Cập nhật `styles.css`: Thêm style cho `.header-container`, `h1` và `#open-settings-link` trong header mới.
+
