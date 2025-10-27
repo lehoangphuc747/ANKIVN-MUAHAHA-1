@@ -67,6 +67,37 @@ async function createFieldsForModel(modelName) {
   }
 }
 
+/**
+ * [HÀM MỚI]
+ * Hàm lọc các option của một dropdown dựa trên input search.
+ * @param {string} inputId - ID của ô input search
+ * @param {string} selectId - ID của thẻ select dropdown
+ */
+function setupDropdownFilter(inputId, selectId) {
+  const searchInput = document.getElementById(inputId);
+  const selectDropdown = document.getElementById(selectId);
+
+  searchInput.addEventListener('input', () => {
+    const searchTerm = searchInput.value.toLowerCase();
+    const options = selectDropdown.getElementsByTagName('option');
+
+    for (const option of options) {
+      // Luôn hiển thị option "-- Chọn ..."
+      if (option.value === "") {
+        option.style.display = '';
+        continue;
+      }
+      
+      const text = option.textContent.toLowerCase();
+      if (text.includes(searchTerm)) {
+        option.style.display = ''; // Hiện
+      } else {
+        option.style.display = 'none'; // Ẩn
+      }
+    }
+  });
+}
+
 // Hàm khởi tạo popup
 document.addEventListener('DOMContentLoaded', async function() {
   try {
@@ -101,6 +132,11 @@ document.addEventListener('DOMContentLoaded', async function() {
       option.value = tag;
       tagsDatalist.appendChild(option);
     });
+
+    // --- [CODE MỚI] Kích hoạt 2 bộ lọc ---
+    setupDropdownFilter('deck-search', 'deck-select');
+    setupDropdownFilter('model-search', 'model-select');
+    // ------------------------------------
 
     // Thêm event listener cho model-select
     modelSelect.addEventListener('change', function() {
