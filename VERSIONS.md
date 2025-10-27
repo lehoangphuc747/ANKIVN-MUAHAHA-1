@@ -193,3 +193,9 @@
 
 ## v1.29.0 – 2025-10-28
 - Sửa lỗi hiển thị Autocomplete (`styles.css`): Đặt tường minh `background-color: #ffffff;` cho `.suggestions-container` để đảm bảo nền luôn solid trắng, không bị trong suốt.
+
+## v1.30.0 – 2025-10-28
+- Cập nhật biểu tượng collapse/expand: 
+    - Sử dụng '▶' cho trạng thái collapsed (đóng)
+    - Sử dụng '🔽' cho trạng thái expanded (mở)
+    - Cập nhật cả trong `popup.js` và `settings.js`

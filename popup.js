@@ -59,11 +59,11 @@ async function createFieldsForModel(modelName) {
             const fieldId = `field-${fieldName}`; const isHidden = hiddenFields[fieldName] || false; const isCollapsed = collapsedFields[fieldName] || false;
             const fieldGroup = document.createElement('div'); fieldGroup.className = `form-group field-group ${isCollapsed ? 'collapsed' : ''} ${isHidden ? 'field-hidden-by-setting' : ''}`; fieldGroup.dataset.fieldName = fieldName;
             const fieldHeader = document.createElement('div'); fieldHeader.className = 'field-header'; fieldHeader.addEventListener('click', toggleFieldCollapse);
-            const toggle = document.createElement('span'); toggle.className = 'collapse-toggle'; toggle.textContent = '▶'; toggle.style.pointerEvents = 'none';
+            const toggle = document.createElement('span'); toggle.className = 'collapse-toggle'; toggle.textContent = isCollapsed ? '▶' : '🔽'; toggle.style.pointerEvents = 'none';
             const label = document.createElement('label'); label.textContent = fieldName; label.style.pointerEvents = 'none';
             const input = document.createElement('textarea'); input.id = fieldId; input.className = 'form-control field-input'; input.placeholder = `Nội dung ${fieldName}...`; input.rows = 2; input.addEventListener('input', autoExpandTextarea);
-            if (isCollapsed) { input.style.display = 'none'; label.style.opacity = '0.65'; toggle.style.transform = 'rotate(-90deg)'; }
-            else { toggle.style.transform = 'rotate(0deg)'; }
+            if (isCollapsed) { input.style.display = 'none'; label.style.opacity = '0.65'; toggle.textContent = '▶'; }
+            else { toggle.textContent = '🔽'; }
             fieldHeader.appendChild(toggle); fieldHeader.appendChild(label); fieldGroup.appendChild(fieldHeader); fieldGroup.appendChild(input); fieldsContainer.appendChild(fieldGroup);
             autoExpandTextarea({ target: input }); // Gọi để tính chiều cao ban đầu
         });
@@ -104,11 +104,11 @@ async function toggleFieldCollapse(event) {
     if (newState) {
         targetTextarea.style.display = 'none';
         label.style.opacity = '0.65';
-        toggleIcon.style.transform = 'rotate(-90deg)';
+        toggleIcon.textContent = '▶';
     } else {
         targetTextarea.style.display = '';
         label.style.opacity = '1';
-        toggleIcon.style.transform = 'rotate(0deg)';
+        toggleIcon.textContent = '🔽';
         autoExpandTextarea({ target: targetTextarea }); // Trigger auto-expand khi mở
     }
 
