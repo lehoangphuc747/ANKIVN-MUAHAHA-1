@@ -1,121 +1,159 @@
 /* styles.css */
+:root {
+  --primary-color: #3498db;
+  --primary-color-dark: #2980b9;
+  --primary-color-darker: #2471a3;
+  --text-color: #333;
+  --text-color-light: #555;
+  --border-color: #dcdcdc; /* Nhạt hơn chút */
+  --border-color-light: #eee;
+  --bg-color: #f7f7f7; /* Sáng hơn chút */
+  --bg-color-alt: #fff;
+  --hover-bg-color: #f0f7ff; /* Đổi màu hover */
+  --hover-border-color: #cce4f7; /* Đổi màu hover */
+  --checked-bg-color: #fff5f5; /* Đổi màu checked */
+  --checked-border-color: #ffe0e0; /* Đổi màu checked */
+  --checked-text-color: #d63031; /* Đỏ nhẹ hơn */
+  --success-bg: #e6fffa; --success-text: #00876c; --success-border: #99ede0;
+  --error-bg: #fff0f0; --error-text: #d63031; --error-border: #ffe0e0;
+  --info-bg: #eaf6ff; --info-text: #0984e3; --info-border: #cce4f7;
+  --button-text-color: #fff;
+  --button-secondary-bg: #fff;
+  --button-secondary-text: #555;
+  --button-secondary-border: #ccc;
+  --button-secondary-hover-bg: #f9f9f9;
+  --button-secondary-hover-border: #bbb;
+}
+
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin: 0; padding: 0; background-color: #f5f5f5; color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color);
+  font-size: 14px; line-height: 1.5; /* Thêm line-height */
 }
 .container, .settings-container { padding: 16px; }
 .settings-container { width: auto; min-width: 450px; }
 
-h1 { /* ... giữ nguyên ... */ }
-.form-group { margin-bottom: 12px; } /* Giảm nhẹ margin */
-label { display: block; font-size: 14px; font-weight: 500; color: #34495e; margin-bottom: 6px; }
+h1 {
+  font-size: 1.1rem; font-weight: 600; color: #2c3e50;
+  margin: 0 0 1.2rem 0; text-align: center; border-bottom: 1px solid var(--border-color-light); padding-bottom: 0.8rem;
+}
 
-/* --- Inline Layout cho Deck/Note --- */
-.inline-group { display: flex; align-items: center; margin-bottom: 12px;} /* Giảm nhẹ margin */
-.inline-label { flex: 0 0 auto; margin-right: 8px; margin-bottom: 0; font-weight: 600; font-size: 14px; color: #34495e;}
+.form-group { margin-bottom: 1rem; }
+label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-color-light); margin-bottom: 0.4rem; }
+
+/* Inline Layout */
+.inline-group { display: flex; align-items: center; margin-bottom: 0.8rem;}
+.inline-label { flex: 0 0 auto; margin-right: 8px; margin-bottom: 0; font-weight: 500; font-size: 0.95rem; color: var(--text-color-light);}
 .inline-input-container { flex: 1 1 auto; position: relative; }
-/* --- Hết Inline Layout --- */
 
-.form-control { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; background-color: white; line-height: 1.4; } /* Giảm padding, thêm line-height */
-.form-control:focus { outline: none; border-color: #3498db; box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2); }
-
-/* --- [THAY ĐỔI LỚN] Field Input & Auto Expand --- */
-.form-control.field-input {
-    resize: none; /* Tắt resize thủ công */
-    overflow-y: hidden; /* Ẩn scrollbar dọc ban đầu */
-    min-height: calc(1.4em * 2 + 16px + 2px); /* Tính toán chiều cao cho 2 dòng + padding + border */
-    height: calc(1.4em * 2 + 16px + 2px); /* Đặt chiều cao ban đầu */
-    margin-top: 6px;
-    box-sizing: border-box; /* Đảm bảo padding không làm tăng kích thước */
+.form-control {
+  width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; background-color: var(--bg-color-alt); line-height: 1.4; color: var(--text-color);
 }
-/* --- Hết Field Input --- */
+.form-control::placeholder { color: #aaa; } /* Nhạt hơn */
+.form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); } /* Shadow nhẹ hơn */
 
+/* Field Input & Auto Expand */
+.form-control.field-input { resize: none; overflow-y: hidden; min-height: calc(1.5em * 2 + 1.2rem + 2px); height: calc(1.5em * 2 + 1.2rem + 2px); margin-top: 0.4rem; line-height: 1.5; } /* Tăng line-height */
 
-/* --- Autocomplete --- */
+/* Autocomplete */
 .autocomplete-container { position: relative; }
-.suggestions-container { /* ... giữ nguyên ... */ }
-.suggestion-item { /* ... giữ nguyên ... */ }
-.suggestion-item.active { /* ... giữ nguyên ... */ }
-.suggestion-item:hover { /* ... giữ nguyên ... */ }
-/* --- Hết Autocomplete --- */
+.suggestions-container { display: none; position: absolute; background-color: var(--bg-color-alt); border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 6px 6px; width: 100%; box-sizing: border-box; max-height: 160px; overflow-y: auto; z-index: 1000; box-shadow: 0 5px 10px rgba(0,0,0,0.08); }
+.suggestion-item { padding: 0.6rem 0.8rem; font-size: 0.9rem; cursor: pointer; border-bottom: 1px solid var(--border-color-light); }
+.suggestion-item:last-child { border-bottom: none; }
+.suggestion-item.active { background-color: #eee; }
+.suggestion-item:hover { background-color: #f5f5f5; }
 
-/* --- [THAY ĐỔI LỚN] Collapse Header Clickable --- */
-.field-group {
-    /* border-bottom: 1px solid #eee; */ /* Bỏ đường kẻ nếu muốn */
-    /* padding-bottom: 8px; */
-    margin-bottom: 10px; /* Giảm khoảng cách giữa các field */
-}
-.field-header {
-    display: flex;
-    align-items: center;
-    cursor: pointer; /* Toàn bộ header là clickable */
-    padding: 4px 0; /* Thêm padding nhẹ */
-    user-select: none; /* Không cho chọn text */
-    border-radius: 4px; /* Bo góc nhẹ */
-    transition: background-color 0.15s ease;
-}
-.field-header:hover {
-    background-color: #f0f0f0; /* Hiệu ứng hover nhẹ */
-}
+/* Collapse */
+.field-group { margin-bottom: 0.6rem; }
+.field-header { display: flex; align-items: center; cursor: pointer; padding: 5px 3px; user-select: none; border-radius: 5px; transition: background-color 0.15s ease; }
+.field-header:hover { background-color: #f0f0f0; }
+.collapse-toggle { display: inline-block; font-size: 10px; margin-right: 6px; width: 12px; text-align: center; transition: transform 0.2s ease; color: #777; transform: rotate(0deg); }
+.field-header label { display: inline-block; margin-bottom: 0; vertical-align: middle; font-weight: 500; color: var(--text-color-light); transition: opacity 0.2s ease; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.95rem; }
+.field-group.collapsed .collapse-toggle { transform: rotate(-90deg); }
+.field-group.collapsed .field-header label { opacity: 0.65; }
+.field-group.collapsed .field-input { display: none; }
 
-.collapse-toggle {
-    display: inline-block;
-    font-size: 10px; /* Nhỏ hơn */
-    margin-right: 6px;
-    width: 12px; /* Thu hẹp lại */
-    text-align: center;
-    transition: transform 0.2s ease;
-    color: #555; /* Màu icon */
-    transform: rotate(0deg); /* Mặc định là mở */
-}
-
-.field-header label {
-    display: inline-block; /* Để cùng hàng */
-    margin-bottom: 0;
-    vertical-align: middle;
-    font-weight: 500; /* Bỏ in đậm nếu muốn */
-    color: #34495e; /* Màu label mặc định */
-    transition: opacity 0.2s ease; /* Hiệu ứng mờ */
-    flex-grow: 1; /* Chiếm phần còn lại */
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; /* Chống tràn label */
-}
-
-/* Trạng thái collapsed */
-.field-group.collapsed .collapse-toggle {
-    transform: rotate(-90deg); /* Quay icon */
-}
-.field-group.collapsed .field-header label {
-    opacity: 0.6; /* Làm mờ label */
-}
-.field-group.collapsed .field-input {
-    display: none;
-}
-/* --- Hết Collapse --- */
-
-/* --- Ẩn field theo setting --- */
+/* Ẩn field */
 .field-group.field-hidden-by-setting { display: none !important; }
-/* --- Hết ẩn field --- */
 
-.fields-container { max-height: 400px; /* Tăng chiều cao tối đa nếu cần */ overflow-y: auto; margin-bottom: 16px; border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px; background-color: #fff; } /* Giảm padding container */
-.btn-primary { /* ... giữ nguyên ... */ }
-.status-message { /* ... giữ nguyên ... */ }
-/* ... Scrollbars, Datalist, Media Query giữ nguyên ... */
+.fields-container { max-height: 400px; overflow-y: auto; margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; background-color: var(--bg-color-alt); }
 
-/* --- UI Settings --- */
-.settings-container { width: auto; min-width: 450px; }
+/* --- [THAY ĐỔI LỚN] Button Styles --- */
+/* Nút chính (Thêm vào Anki, Lưu Cài đặt) */
+.btn-primary {
+  display: inline-block; width: 100%;
+  padding: 0.7rem 1rem; /* Giảm padding dọc chút */
+  background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-color-dark) 100%); /* Gradient nhẹ */
+  color: var(--button-text-color);
+  border: none; border-radius: 7px; /* Bo tròn hơn */
+  font-size: 0.95rem; font-weight: 500;
+  cursor: pointer; text-align: center;
+  transition: all 0.15s ease; /* Nhanh hơn */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 5px rgba(52, 152, 219, 0.2); /* Shadow tinh tế */
+  text-shadow: 0 1px 1px rgba(0,0,0,0.1); /* Text shadow nhẹ */
+}
+.btn-primary:hover {
+  background: linear-gradient(180deg, var(--primary-color-dark) 0%, var(--primary-color-darker) 100%);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 4px 8px rgba(52, 152, 219, 0.25);
+  transform: translateY(-1px); /* Hiệu ứng nhấc lên */
+}
+.btn-primary:active {
+  background: var(--primary-color-darker);
+  transform: translateY(0px); /* Nhấn xuống */
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); /* Shadow lõm */
+  text-shadow: none;
+}
+.btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; transform: none; text-shadow: none; }
+
+/* Nút phụ (Chọn tất cả, Bỏ chọn,...) */
+.btn-secondary { /* Áp dụng class này cho nút nhỏ nếu muốn */
+  padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 6px; cursor: pointer;
+  background-color: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  border: 1px solid var(--button-secondary-border); border-radius: 5px;
+  transition: all 0.15s ease;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.03);
+}
+.btn-secondary:hover { background-color: var(--button-secondary-hover-bg); border-color: var(--button-secondary-hover-border); color: var(--text-color); }
+.btn-secondary:active { background-color: #eee; transform: translateY(1px); box-shadow: inset 0 1px 1px rgba(0,0,0,0.05); }
+/* --- [HẾT THAY ĐỔI LỚN] --- */
+
+/* Áp dụng .btn-secondary cho nút trong settings */
+.settings-fields-controls button {
+    /* Kế thừa từ .btn-secondary thay vì style riêng */
+     padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 6px; cursor: pointer;
+     background-color: var(--button-secondary-bg); color: var(--button-secondary-text);
+     border: 1px solid var(--button-secondary-border); border-radius: 5px;
+     transition: all 0.15s ease; box-shadow: 0 1px 1px rgba(0,0,0,0.03);
+}
+.settings-fields-controls button:hover { background-color: var(--button-secondary-hover-bg); border-color: var(--button-secondary-hover-border); color: var(--text-color); }
+.settings-fields-controls button:active { background-color: #eee; transform: translateY(1px); box-shadow: inset 0 1px 1px rgba(0,0,0,0.05); }
+
+
+.status-message { margin-top: 1rem; padding: 0.7rem 0.8rem; border-radius: 6px; font-size: 0.9rem; text-align: center; font-weight: 500; border: 1px solid transparent; }
+.status-message.info { background-color: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
+.status-message.success { background-color: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
+.status-message.error { background-color: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
+
+/* --- UI Settings Fields --- */
 .note-type-selector { margin-bottom: 20px; }
-.settings-fields-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-.settings-fields-controls span { font-weight: 500; }
-.settings-fields-controls button { padding: 5px 10px; font-size: 12px; margin-left: 6px; cursor: pointer; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 4px; transition: background-color 0.2s; }
-.settings-fields-controls button:hover { background-color: #e0e0e0; }
-.settings-fields-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 6px; padding: 10px; background-color: #fff; }
-.field-checkbox-item { display: flex; align-items: center; padding: 10px 12px; border-radius: 5px; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; background-color: #fdfdfd; border: 1px solid #eee; overflow: hidden; }
-.field-checkbox-item:hover { background-color: #eaf6ff; border-color: #aed6f1; }
-.field-checkbox-item.checked { background-color: #fff0f0; border-color: #f5b7b1; }
-.field-checkbox-item.checked label { font-weight: 500; color: #c0392b; text-decoration: line-through; }
-.field-checkbox-item.checked input[type="checkbox"] { accent-color: #c0392b; }
-.field-checkbox-item input[type="checkbox"] { margin-right: 10px; flex-shrink: 0; pointer-events: none; } /* Vẫn giữ pointer-events none */
-.field-checkbox-item label { display: block; margin-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: #333; flex-grow: 1; }
+.settings-fields-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color-light); }
+.settings-fields-controls span { font-weight: 500; font-size: 0.95rem; color: var(--text-color-light); }
+.settings-fields-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; background-color: var(--bg-color-alt); }
+.field-checkbox-item { display: flex; align-items: center; padding: 10px 12px; border-radius: 5px; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; background-color: #fdfdfd; border: 1px solid var(--border-color-light); overflow: hidden; }
+.field-checkbox-item:hover { background-color: var(--hover-bg-color); border-color: var(--hover-border-color); }
+.field-checkbox-item.checked { background-color: var(--checked-bg-color); border-color: var(--checked-border-color); }
+.field-checkbox-item.checked label { font-weight: 500; color: var(--checked-text-color); text-decoration: line-through; }
+.field-checkbox-item.checked input[type="checkbox"] { accent-color: var(--checked-text-color); }
+.field-checkbox-item input[type="checkbox"] { margin-right: 10px; flex-shrink: 0; pointer-events: none; }
+.field-checkbox-item label { display: block; margin-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: var(--text-color); flex-grow: 1; }
 .settings-fields-list::-webkit-scrollbar { width: 6px; } .settings-fields-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; } .settings-fields-list::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; } .settings-fields-list::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-.random-id-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; }
+.random-id-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--border-color-light); }
 .random-id-section label { margin-bottom: 8px; }
+
+/* Link mở settings */
+#open-settings-link { font-size: 0.85rem; color: var(--text-color-light); text-decoration: none; }
+#open-settings-link:hover { color: var(--primary-color); text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 400px) { body { width: auto; min-width: 300px; } .container, .settings-container { padding: 12px; } }
