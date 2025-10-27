@@ -42,3 +42,9 @@
 - Added search/filter functionality for deck and model selection inputs
 - Implemented real-time filtering of dropdown options based on user input
 - Enhanced user experience with searchable selection fields
+
+## v1.10.0 – 2025-10-28
+- Chuyển từ giao diện Popup sang Sidebar (API `chrome.sidePanel`).
+- Cập nhật `manifest.json`: Xóa `default_popup`, thêm quyền `sidePanel` và khóa `side_panel` trỏ đến `popup.html`.
+- Cập nhật `background.js`: Thêm listener `chrome.action.onClicked` để mở sidebar.
+- Cập nhật `styles.css`: (Khuyến nghị) Xóa `width: 350px;` khỏi `body` để sidebar linh hoạt.
