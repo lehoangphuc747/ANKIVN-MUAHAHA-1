@@ -168,4 +168,126 @@ document.addEventListener('DOMContentLoaded', async function() {
 async function addNoteToAnki() {
     try {
         showStatus('Đang thêm...', 'info');
-        const deckName = document.getElementById('deck-search').value.
+        const deckName = document.getElementById('deck-search').value.trim();
+        const modelName = document.getElementById('model-search').value.trim();
+        const tagsInput = document.getElementById('tags-input').value.trim();
+
+        // Kiểm tra chặt chẽ hơn
+        if (!deckName) { showStatus('Vui lòng chọn hoặc nhập Deck.', 'error'); return; }
+        if (!modelName) { showStatus('Vui lòng chọn hoặc nhập Note Type.', 'error'); return; }
+        if (!Array.isArray(allDecks) || !allDecks.includes(deckName)) { showStatus('Tên Deck không hợp lệ. Vui lòng chọn từ gợi ý.', 'error'); return; }
+        if (!Array.isArray(allModels) || !allModels.includes(modelName)) { showStatus('Tên Note Type không hợp lệ. Vui lòng chọn từ gợi ý.', 'error'); return; }
+
+        const fields = {};
+        let hasContent = false;
+        // Lấy đúng các field group đang hiển thị (không bị ẩn bởi setting)
+        const fieldGroups = document.querySelectorAll('#fields-container .field-group:not(.field-hidden-by-setting)');
+
+        if (fieldGroups.length === 0 && currentFieldNames.length > 0) {
+             console.warn("Field groups found in DOM but selector failed? Or fields hidden?");
+             // Nếu chắc chắn model đã chọn đúng và có field, nhưng không tìm thấy group -> có thể lỗi lạ
+             // Thử tìm lại input trực tiếp
+             const directInputs = document.querySelectorAll('#fields-container .field-input');
+             if (directInputs.length !== currentFieldNames.filter(fname => !(hiddenFields[fname] || false)).length) {
+                  // Số lượng input không khớp -> lỗi hiển thị field?
+                  throw new Error("Lỗi hiển thị fields. Hãy thử chọn lại Note Type.");
+             }
+             // Nếu tìm thấy input trực tiếp thì dùng tạm? (Hơi rủi ro)
+             directInputs.forEach(input => {
+                const fieldName = input.id.replace('field-', '');
+                 if(fieldName){
+                      const value = input.value.trim();
+                      fields[fieldName] = value;
+                      if (value) hasContent = true;
+                 }
+             });
+
+        } else if (fieldGroups.length === 0 && currentFieldNames.length === 0 && currentModelName) {
+             // Model đã chọn nhưng không có field (trường hợp hợp lệ)
+             // Vẫn cho phép thêm nếu có tags? (Tùy logic mong muốn)
+             // Hiện tại: Báo lỗi nếu không có field nào để nhập
+             showStatus('Note Type này không có field để nhập liệu.', 'error'); return;
+        } else {
+             // Trường hợp bình thường
+             fieldGroups.forEach(group => {
+                 const fieldName = group.dataset.fieldName;
+                 const input = group.querySelector('.field-input');
+                 if (input && fieldName) {
+                     const value = input.value; // Giữ nguyên khoảng trắng nếu user cố tình nhập
+                     fields[fieldName] = value;
+                     if (value.trim()) hasContent = true; // Kiểm tra trim để xác định có nội dung không
+                 }
+             });
+        }
+
+
+        // Xử lý Random ID Field
+        const randomIdFieldKey = `randomIdField_${modelName}`;
+        const storedData = await chrome.storage.local.get(randomIdFieldKey);
+        const randomIdField = storedData[randomIdFieldKey];
+        let idGenerated = false;
+        if (randomIdField && fields.hasOwnProperty(randomIdField) && fields[randomIdField].trim() === '') { // Chỉ tạo ID nếu field đó trống
+            fields[randomIdField] = generateRandomId();
+            idGenerated = true;
+            hasContent = true; // Nếu chỉ có ID được tạo thì vẫn tính là có nội dung
+        } else if (randomIdField && !fields.hasOwnProperty(randomIdField)) {
+            console.warn(`Random ID Field "${randomIdField}" is configured but not found or hidden.`);
+        }
+
+        // Kiểm tra lại nội dung sau khi có thể đã tạo ID
+        if (!hasContent) {
+            showStatus('Vui lòng nhập nội dung cho ít nhất một field (hoặc cấu hình Random ID Field).', 'error'); return;
+        }
+
+        const tagsArray = tagsInput.split(/[\s,]+/).filter(tag => tag.trim() !== '').map(tag => tag.trim());
+        const params = { note: { deckName, modelName, fields, tags: tagsArray } };
+        console.log("Sending note:", JSON.parse(JSON.stringify(params.note))); // Deep copy để log không bị thay đổi sau này
+
+        const result = await invoke('addNote', params);
+        if (result === null) throw new Error("AnkiConnect returned null for addNote."); // Lỗi nếu Anki trả về null
+
+        showStatus('Thêm thành công! Note ID: ' + result, 'success');
+
+        // Xóa nội dung fields (trừ field ID nếu vừa được tạo?)
+        document.querySelectorAll('.field-input').forEach(input => {
+             const fieldName = input.id.replace('field-', '');
+             // Giữ lại ID nếu vừa tạo? (Tùy chọn)
+             // if (idGenerated && fieldName === randomIdField) return;
+             input.value = '';
+             autoExpandTextarea({ target: input }); // Reset chiều cao
+         });
+        // Không xóa tags? (Tùy chọn)
+        // document.getElementById('tags-input').value = '';
+
+    } catch (error) {
+        console.error('Error adding note:', error);
+        showStatus('Lỗi thêm note: ' + (error.message || 'Không xác định'), 'error');
+    }
+}
+
+
+// --- Listener nhận message từ background.js ---
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log("Sidebar received message:", message); // DEBUG
+    if (message.action === "fillFieldFromContextMenu") {
+        const { field, content, contentType } = message;
+        const targetTextarea = document.getElementById(`field-${field}`);
+
+        if (targetTextarea) {
+             console.log(`Filling field "${field}" with ${contentType}:`, content);
+             let finalContent = content; if (contentType === 'image') finalContent = `<img src="${content}">`;
+             // Nối vào nội dung cũ thay vì ghi đè?
+             targetTextarea.value += (targetTextarea.value ? '\n' : '') + finalContent; // Nối vào
+             // targetTextarea.value = finalContent; // Ghi đè
+             targetTextarea.dispatchEvent(new Event('input', { bubbles: true })); // Trigger autoExpand
+             const fieldGroup = targetTextarea.closest('.field-group'); if (fieldGroup && fieldGroup.classList.contains('collapsed')) { const header = fieldGroup.querySelector('.field-header'); if(header) header.click(); }
+             sendResponse({ success: true, message: `Field "${field}" updated.` });
+        } else {
+             console.warn(`Field "${field}" not found in sidebar.`);
+             if (!currentModelName) showStatus(`Lỗi: Chọn Note Type trước khi gửi vào field "${field}"`, 'error');
+             else showStatus(`Lỗi: Field "${field}" không tìm thấy. Model có đúng?`, 'error');
+             sendResponse({ success: false, message: `Field "${field}" not found.` });
+        }
+    }
+    // return true; // Keep channel open for async response (not needed here)
+});
