@@ -145,5 +145,7 @@
     - Áp dụng style `.btn-secondary` cho các nút "Chọn tất cả", "Bỏ chọn tất cả" trong Settings.
 - Cập nhật `settings.js`: Đảm bảo không có lỗi và tương thích với CSS mới (không cần thay đổi logic).
 
-
+## v1.24.0 – 2025-10-28
+- Sửa lỗi Autocomplete trong Settings (`settings.js`): Cung cấp lại code `settings.js` hoàn chỉnh, đảm bảo hàm `setupAutocomplete` giống hệt `popup.js` và xử lý lỗi `invoke` đúng cách.
+- Cải thiện giao diện Button (`styles.css`): Viết lại hoàn toàn CSS cho các nút (`.btn-primary`, `.btn-secondary`) với phong cách hiện đại, tối giản, sử dụng gradient, shadow và hiệu ứng transform. Cập nhật các biến màu CSS.
 
