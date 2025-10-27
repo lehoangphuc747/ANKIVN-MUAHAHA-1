@@ -39,8 +39,11 @@ async function createFieldsForModel(modelName) {
   try {
     const fieldNames = await invoke('modelFieldNames', { modelName: modelName });
     const fieldsContainer = document.getElementById('fields-container');
-    fieldsContainer.innerHTML = ''; // Xóa sạch nội dung cũ
     
+    // Xóa sạch nội dung cũ
+    fieldsContainer.innerHTML = '';
+    
+    // Tạo các field mới
     fieldNames.forEach(fieldName => {
       const fieldGroup = document.createElement('div');
       fieldGroup.className = 'form-group';
@@ -67,7 +70,7 @@ async function createFieldsForModel(modelName) {
 }
 
 /**
- * [HÀM ĐƯỢC VIẾT LẠI]
+ * [HÀM ĐƯỢC CẬP NHẬT LOGIC TÌM KIẾM]
  * Thiết lập logic autocomplete cho một ô input
  */
 function setupAutocomplete(inputId, containerId, sourceArray, onSelectCallback = null) {
@@ -80,8 +83,15 @@ function setupAutocomplete(inputId, containerId, sourceArray, onSelectCallback =
     container.innerHTML = ''; // Xóa gợi ý cũ
     const valLower = value.toLowerCase();
 
-    // Lọc danh sách dựa trên giá trị gõ vào
-    const suggestions = sourceArray.filter(item => item.toLowerCase().includes(valLower));
+    // [LOGIC MỚI] Tách truy vấn thành các từ khóa (theo dấu cách)
+    const keywords = valLower.split(' ').filter(k => k.trim() !== '');
+
+    // Lọc: item phải chứa TẤT CẢ các từ khóa
+    const suggestions = sourceArray.filter(item => {
+        const target = item.toLowerCase();
+        // Dùng .every() để đảm bảo mọi từ khóa đều có trong item
+        return keywords.every(keyword => target.includes(keyword));
+    });
     
     if (suggestions.length === 0) {
       container.style.display = 'none';
@@ -108,17 +118,17 @@ function setupAutocomplete(inputId, containerId, sourceArray, onSelectCallback =
     currentFocus = -1; // Reset focus khi danh sách thay đổi
   }
 
-  // [MỚI] Sự kiện 'input' - Hiển thị khi gõ
+  // Sự kiện 'input' - Hiển thị khi gõ
   input.addEventListener('input', () => {
     showSuggestions(input.value);
   });
 
-  // [MỚI] Sự kiện 'focus' - Hiển thị TẤT CẢ khi click vào
+  // Sự kiện 'focus' - Hiển thị TẤT CẢ khi click vào
   input.addEventListener('focus', () => {
     showSuggestions(''); // Hiển thị tất cả
   });
 
-  // [MỚI] Sự kiện 'keydown' - Xử lý mũi tên và Enter
+  // Sự kiện 'keydown' - Xử lý mũi tên và Enter
   input.addEventListener('keydown', (e) => {
     let items = container.getElementsByClassName('suggestion-item');
     if (items.length === 0) return;
@@ -143,7 +153,7 @@ function setupAutocomplete(inputId, containerId, sourceArray, onSelectCallback =
     }
   });
 
-  // [MỚI] Hàm tô sáng mục được chọn
+  // Hàm tô sáng mục được chọn
   function addActive(items) {
     if (!items) return false;
     removeActive(items);
@@ -155,20 +165,20 @@ function setupAutocomplete(inputId, containerId, sourceArray, onSelectCallback =
     items[currentFocus].scrollIntoView({ block: 'nearest' });
   }
 
-  // [MỚI] Hàm bỏ tô sáng
+  // Hàm bỏ tô sáng
   function removeActive(items) {
     for (let i = 0; i < items.length; i++) {
       items[i].classList.remove('active');
     }
   }
 
-  // [MỚI] Hàm đóng danh sách
+  // Hàm đóng danh sách
   function closeAllLists() {
     container.innerHTML = '';
     container.style.display = 'none';
   }
 
-  // [MỚI] Đóng danh sách khi click ra ngoài
+  // Đóng danh sách khi click ra ngoài
   document.addEventListener('click', (e) => {
     if (e.target !== input) {
       closeAllLists();
