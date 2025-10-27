@@ -67,3 +67,13 @@
     - Viết lại `createFieldsForModel` để tạo HTML mới với nút toggle và khôi phục trạng thái collapse từ `chrome.storage.local`.
     - Thêm hàm `toggleFieldCollapse` để xử lý click và lưu trạng thái vào `chrome.storage.local`.
 - Cập nhật `styles.css`: Thêm các class `.field-header`, `.collapse-toggle`, và `.field-group.collapsed` để tạo kiểu và ẩn/hiện textarea.
+
+## v1.14.0 – 2025-10-28
+- Thêm trang Cài đặt (`settings.html`, `settings.js`) để cho phép người dùng chọn ẩn các field không mong muốn cho từng Note Type.
+- Cập nhật `manifest.json`: Thêm khóa `options_page`.
+- Cập nhật `popup.html`: Thêm link để mở trang Cài đặt.
+- Cập nhật `styles.css`: Thêm class `.field-hidden-by-setting` để ẩn field theo cài đặt.
+- Cập nhật `popup.js`:
+    - Hàm `createFieldsForModel` giờ sẽ đọc cài đặt ẩn từ `chrome.storage.local` và áp dụng class `.field-hidden-by-setting`.
+    - Thêm listener để mở trang cài đặt khi click link.
+    - Sửa logic `addNoteToAnki` để không yêu cầu nội dung ở field bị ẩn và gửi giá trị rỗng cho chúng.
