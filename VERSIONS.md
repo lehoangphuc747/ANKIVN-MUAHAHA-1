@@ -37,3 +37,8 @@
 - Enhanced styles.css with modern, responsive design
 - Added proper styling for form controls, buttons, and status messages
 - Improved user experience with hover effects and focus states
+
+## v1.8.0 – 2025-10-28
+- Updated `popup.html` to include search/filter inputs for Decks and Note Types.
+- Updated `popup.js` to add `setupDropdownFilter` function and logic to filter dropdowns based on search input.
+- Updated `styles.css` to add minor styling (`.search-input`) for the new search boxes.
