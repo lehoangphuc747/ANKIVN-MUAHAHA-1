@@ -38,13 +38,7 @@
 - Added proper styling for form controls, buttons, and status messages
 - Improved user experience with hover effects and focus states
 
-## v1.8.0 – 2025-10-28
-- Updated `popup.html` to include search/filter inputs for Decks and Note Types.
-- Updated `popup.js` to add `setupDropdownFilter` function and logic to filter dropdowns based on search input.
-- Updated `styles.css` to add minor styling (`.search-input`) for the new search boxes.
-
-## v1.9.0 – 2025-10-28
-- Reworked UI from filterable dropdown to autocomplete/suggestion inputs.
-- Updated `popup.html`: Replaced `<select>` tags with `<div>` containers for suggestions.
-- Updated `popup.js`: Removed `setupDropdownFilter`. Added global arrays `allDecks`, `allModels`. Added new `setupAutocomplete` function to handle suggestion display and selection. Logic for loading fields (`createFieldsForModel`) is now triggered by the `onSelectCallback` of the model autocomplete.
-- Updated `styles.css`: Removed `.search-input` and added styles for `.autocomplete-container`, `.suggestions-container`, and `.suggestion-item`.
+## v1.8.0 – 2025-10-27
+- Added search/filter functionality for deck and model selection inputs
+- Implemented real-time filtering of dropdown options based on user input
+- Enhanced user experience with searchable selection fields
