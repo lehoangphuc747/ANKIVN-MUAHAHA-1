@@ -6,3 +6,7 @@
 - Added content.js placeholder
 - Added popup.html and popup.js with simple ping functionality
 - Added styles.css for minimal popup styling
+
+## v1.1.0 – 2025-08-25
+- Updated manifest.json for AnkiVN extension with host permissions for localhost:8765
+- Removed unnecessary permissions and content scripts
