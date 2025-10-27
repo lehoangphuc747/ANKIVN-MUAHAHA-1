@@ -121,5 +121,12 @@
 - Cập nhật `popup.js`: Sửa hàm `showStatus` để thông báo thành công tự động biến mất sau 4 giây.
 - Cung cấp lại toàn bộ code `popup.js` (v1.19.0 + sửa lỗi tự ẩn thông báo) để khắc phục lỗi mất chức năng autocomplete/search có thể do copy thiếu code trước đó.
 
+## v1.21.0 – 2025-10-28
+- Sửa lỗi trang Cài đặt (`settings.js`):
+    - Khắc phục lỗi autocomplete không hoạt động (sửa lỗi xử lý error trong hàm `invoke`).
+    - Khắc phục lỗi nút "Lưu Cài đặt" không hoạt động (cung cấp lại hàm `saveSettings` đầy đủ).
+    - Thêm nhiều `console.log` để hỗ trợ debug.
+
+
 
 
