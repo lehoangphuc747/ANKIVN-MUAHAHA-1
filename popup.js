@@ -1,4 +1,7 @@
 // popup.js
+let allDecks = [];
+let allModels = [];
+
 // Hàm giao tiếp với Anki-Connect API
 async function invoke(action, params = {}) {
   try {
@@ -49,7 +52,6 @@ async function createFieldsForModel(modelName) {
       label.textContent = fieldName + ':';
       label.htmlFor = `field-${fieldName}`;
       
-      // Sử dụng textarea cho các field có thể có nội dung dài
       const input = document.createElement('textarea');
       input.id = `field-${fieldName}`;
       input.className = 'form-control field-input';
@@ -69,61 +71,81 @@ async function createFieldsForModel(modelName) {
 
 /**
  * [HÀM MỚI]
- * Hàm lọc các option của một dropdown dựa trên input search.
- * @param {string} inputId - ID của ô input search
- * @param {string} selectId - ID của thẻ select dropdown
+ * Thiết lập logic autocomplete cho một ô input
+ * @param {string} inputId - ID của ô input
+ * @param {string} containerId - ID của div chứa gợi ý
+ * @param {string[]} sourceArray - Mảng dữ liệu (allDecks hoặc allModels)
+ * @param {function(string)} onSelectCallback - (Tùy chọn) Hàm gọi khi một mục được chọn
  */
-function setupDropdownFilter(inputId, selectId) {
-  const searchInput = document.getElementById(inputId);
-  const selectDropdown = document.getElementById(selectId);
+function setupAutocomplete(inputId, containerId, sourceArray, onSelectCallback = null) {
+  const input = document.getElementById(inputId);
+  const container = document.getElementById(containerId);
 
-  searchInput.addEventListener('input', () => {
-    const searchTerm = searchInput.value.toLowerCase();
-    const options = selectDropdown.getElementsByTagName('option');
-
-    for (const option of options) {
-      // Luôn hiển thị option "-- Chọn ..."
-      if (option.value === "") {
-        option.style.display = '';
-        continue;
-      }
-      
-      const text = option.textContent.toLowerCase();
-      if (text.includes(searchTerm)) {
-        option.style.display = ''; // Hiện
-      } else {
-        option.style.display = 'none'; // Ẩn
-      }
+  input.addEventListener('input', () => {
+    const value = input.value.toLowerCase();
+    container.innerHTML = ''; // Xóa gợi ý cũ
+    
+    if (!value) {
+      container.style.display = 'none';
+      return;
     }
+
+    const suggestions = sourceArray.filter(item => item.toLowerCase().includes(value));
+    
+    if (suggestions.length > 0) {
+      suggestions.forEach(item => {
+        const suggestionItem = document.createElement('div');
+        suggestionItem.className = 'suggestion-item';
+        suggestionItem.textContent = item;
+        
+        suggestionItem.addEventListener('click', () => {
+          input.value = item; // Điền giá trị vào input
+          container.innerHTML = '';
+          container.style.display = 'none';
+          
+          // Gọi callback nếu có (dùng để tải fields cho model)
+          if (onSelectCallback) {
+            onSelectCallback(item);
+          }
+        });
+        
+        container.appendChild(suggestionItem);
+      });
+      container.style.display = 'block';
+    } else {
+      container.style.display = 'none';
+    }
+  });
+
+  // Ẩn gợi ý khi click ra ngoài
+  input.addEventListener('blur', () => {
+    // Thêm delay nhỏ để sự kiện click vào gợi ý kịp chạy
+    setTimeout(() => {
+      container.style.display = 'none';
+    }, 200);
   });
 }
 
 // Hàm khởi tạo popup
 document.addEventListener('DOMContentLoaded', async function() {
   try {
-    // Lấy danh sách decks
-    const decks = await invoke('deckNames');
-    const deckSelect = document.getElementById('deck-select');
+    // Lấy và lưu trữ decks và models
+    allDecks = await invoke('deckNames');
+    allModels = await invoke('modelNames');
     
-    decks.forEach(deck => {
-      const option = document.createElement('option');
-      option.value = deck;
-      option.textContent = deck;
-      deckSelect.appendChild(option);
+    // Thiết lập autocomplete
+    setupAutocomplete('deck-search', 'deck-suggestions', allDecks);
+    setupAutocomplete('model-search', 'model-suggestions', allModels, (selectedModel) => {
+      // Đây là callback `onSelectCallback`
+      // Khi chọn một model, gọi hàm createFieldsForModel
+      if (selectedModel) {
+        createFieldsForModel(selectedModel);
+      } else {
+        document.getElementById('fields-container').innerHTML = '';
+      }
     });
 
-    // Lấy danh sách models (note types)
-    const models = await invoke('modelNames');
-    const modelSelect = document.getElementById('model-select');
-    
-    models.forEach(model => {
-      const option = document.createElement('option');
-      option.value = model;
-      option.textContent = model;
-      modelSelect.appendChild(option);
-    });
-
-    // Lấy danh sách tags
+    // Lấy danh sách tags (cho datalist)
     const tags = await invoke('getTags');
     const tagsDatalist = document.getElementById('tags-datalist');
     
@@ -131,22 +153,6 @@ document.addEventListener('DOMContentLoaded', async function() {
       const option = document.createElement('option');
       option.value = tag;
       tagsDatalist.appendChild(option);
-    });
-
-    // --- [CODE MỚI] Kích hoạt 2 bộ lọc ---
-    setupDropdownFilter('deck-search', 'deck-select');
-    setupDropdownFilter('model-search', 'model-select');
-    // ------------------------------------
-
-    // Thêm event listener cho model-select
-    modelSelect.addEventListener('change', function() {
-      const selectedModel = this.value;
-      if (selectedModel) {
-        createFieldsForModel(selectedModel);
-      } else {
-        // Xóa fields nếu không có model nào được chọn
-        document.getElementById('fields-container').innerHTML = '';
-      }
     });
 
     // Thêm event listener cho nút thêm note
@@ -161,71 +167,36 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Hàm thêm note vào Anki
 async function addNoteToAnki() {
   try {
-    // Hiển thị thông báo đang xử lý
     showStatus('Đang thêm...', 'info');
 
-    // Lấy giá trị từ form
-    const deckName = document.getElementById('deck-select').value;
-    const modelName = document.getElementById('model-select').value;
+    // [ĐÃ THAY ĐỔI] Lấy giá trị từ ô input search
+    const deckName = document.getElementById('deck-search').value;
+    const modelName = document.getElementById('model-search').value;
     const tagsInput = document.getElementById('tags-input').value;
 
-    // Kiểm tra dữ liệu bắt buộc
     if (!deckName || !modelName) {
       throw new Error('Vui lòng chọn deck và note type');
+    }
+    
+    // [ĐÃ THAY ĐỔI] Kiểm tra xem deck và model có hợp lệ không
+    if (!allDecks.includes(deckName)) {
+      throw new Error('Tên Deck không hợp lệ. Vui lòng chọn từ gợi ý.');
+    }
+    if (!allModels.includes(modelName)) {
+      throw new Error('Tên Note Type không hợp lệ. Vui lòng chọn từ gợi ý.');
     }
 
     // Tạo object fields từ các input
     const fields = {};
     const fieldInputs = document.querySelectorAll('.field-input');
     
+    if (fieldInputs.length === 0) {
+        throw new Error('Vui lòng chọn Note Type để hiển thị fields.');
+    }
+    
     fieldInputs.forEach(input => {
       const fieldName = input.id.replace('field-', '');
       fields[fieldName] = input.value;
     });
 
-    // Kiểm tra xem có field nào được điền không
-    const hasContent = Object.values(fields).some(value => value.trim() !== '');
-    if (!hasContent) {
-      throw new Error('Vui lòng nhập nội dung cho ít nhất một field');
-    }
-
-    // Xử lý tags (phân tách bằng dấu cách hoặc phẩy)
-    const tagsArray = tagsInput
-      .split(/[\s,]+/)
-      .filter(tag => tag.trim() !== '')
-      .map(tag => tag.trim());
-
-    // Tạo payload
-    const params = {
-      note: {
-        deckName: deckName,
-        modelName: modelName,
-        fields: fields,
-        tags: tagsArray
-      }
-    };
-
-    // Gọi API thêm note
-    const result = await invoke('addNote', params);
-
-    // Thành công
-    showStatus('Thêm thành công! Note ID: ' + result, 'success');
-
-    // Xóa nội dung các ô input (giữ nguyên deck và model)
-    fieldInputs.forEach(input => {
-      input.value = '';
-    });
-    document.getElementById('tags-input').value = '';
-
-  } catch (error) {
-    console.error('Error adding note:', error);
-    showStatus('Lỗi: ' + error.message, 'error');
-  }
-}
-
-// Hàm hiển thị thông báo
-function showStatus(message, type = 'info') {
-  const statusElement = document.getElementById('status-message');
-  statusElement.textContent = message;
-  statusElement.className = `status-message ${type}`;
-}
+    const hasContent = Object.values(fields).some(value => value
