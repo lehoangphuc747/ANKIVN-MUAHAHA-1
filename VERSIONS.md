@@ -221,3 +221,8 @@
 - Sửa lỗi Gửi Ảnh (`background.js`):
     - Khắc phục lỗi action `storeMediaFile` của Anki-Connect thiếu tham số `filename` bắt buộc.
     - Thêm `filename: filename` vào params khi gọi `invoke('storeMediaFile', ...)`.
+
+## v1.34.0 – 2025-10-28
+- Cập nhật định dạng ảnh mặc định: 
+    - Thay đổi định dạng ảnh ưu tiên từ jpg sang webp trong `background.js`.
+    - Khi không xác định được định dạng từ URL, sử dụng webp thay vì jpg.

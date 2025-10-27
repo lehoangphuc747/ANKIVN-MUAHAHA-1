@@ -154,10 +154,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             if (content) {
                 console.log(`Attempting to store image via Anki-Connect: ${content}`);
                 // Tạo tên file gợi ý (Anki-Connect có thể đổi nếu trùng)
-                let fileExtension = content.split('.').pop().split(/#|\?/)[0] || 'jpg';
-                // Đảm bảo extension hợp lệ (ví dụ cơ bản)
-                if (fileExtension.length > 5 || !/^[a-zA-Z0-9]+$/.test(fileExtension)) {
-                     fileExtension = 'jpg'; // Mặc định là jpg nếu extension lạ
+                let fileExtension = content.split('.').pop().split(/#|\?/)[0] || 'webp';
+                // Ưu tiên webp, nếu không có thì dùng jpg
+                if (!fileExtension || fileExtension.length > 5 || !/^[a-zA-Z0-9]+$/.test(fileExtension)) {
+                     fileExtension = 'webp'; // Mặc định là webp nếu extension lạ
                 }
                 let filename = `ankivn_img_${Date.now()}.${fileExtension}`;
 
