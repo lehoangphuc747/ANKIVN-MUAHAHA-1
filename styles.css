@@ -55,10 +55,35 @@ label {
   min-height: 60px;
 }
 
-/* Thêm class này */
-.search-input {
-  margin-bottom: 8px;
+/* --- [THÊM MỚI] Kiểu Autocomplete --- */
+.autocomplete-container {
+  position: relative;
 }
+
+.suggestions-container {
+  display: none; /* Ẩn mặc định */
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  width: 100%;
+  box-sizing: border-box;
+  max-height: 150px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.suggestion-item {
+  padding: 10px 12px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.suggestion-item:hover, .suggestion-item.active {
+  background-color: #f0f0f0;
+}
+/* --- [HẾT THÊM MỚI] --- */
 
 .fields-container {
   max-height: 300px;
@@ -123,22 +148,26 @@ label {
   border: 1px solid #f5b7b1;
 }
 
-/* Scrollbar styling for fields container */
-.fields-container::-webkit-scrollbar {
+/* Scrollbar styling for containers */
+.fields-container::-webkit-scrollbar,
+.suggestions-container::-webkit-scrollbar {
   width: 6px;
 }
 
-.fields-container::-webkit-scrollbar-track {
+.fields-container::-webkit-scrollbar-track,
+.suggestions-container::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 3px;
 }
 
-.fields-container::-webkit-scrollbar-thumb {
+.fields-container::-webkit-scrollbar-thumb,
+.suggestions-container::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 3px;
 }
 
-.fields-container::-webkit-scrollbar-thumb:hover {
+.fields-container::-webkit-scrollbar-thumb:hover,
+.suggestions-container::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
 
