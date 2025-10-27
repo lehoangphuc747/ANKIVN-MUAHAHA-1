@@ -14,3 +14,7 @@
 ## v1.2.0 – 2025-08-26
 - Redesigned popup.html with complete UI for Anki note creation
 - Added deck selection dropdown, note type selection, fields container, tags input with datalist, and status message
+
+## v1.3.0 – 2025-08-27
+- Added invoke function in popup.js for communicating with Anki-Connect API
+- Function handles POST requests to localhost:8765 with proper error handling
