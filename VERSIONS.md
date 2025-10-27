@@ -48,3 +48,10 @@
 - Cập nhật `manifest.json`: Xóa `default_popup`, thêm quyền `sidePanel` và khóa `side_panel` trỏ đến `popup.html`.
 - Cập nhật `background.js`: Thêm listener `chrome.action.onClicked` để mở sidebar.
 - Cập nhật `styles.css`: (Khuyến nghị) Xóa `width: 350px;` khỏi `body` để sidebar linh hoạt.
+
+## v1.11.0 – 2025-10-28
+- Nâng cấp `setupAutocomplete` trong `popup.js`:
+  - Thêm sự kiện `focus` để hiển thị tất cả gợi ý khi click vào ô.
+  - Thêm sự kiện `keydown` để hỗ trợ điều hướng bằng phím mũi tên (lên/xuống) và chọn bằng phím Enter.
+  - Thêm logic đóng gợi ý khi click ra ngoài.
+- Cập nhật `styles.css`: Thêm class `.suggestion-item.active` để tô sáng mục đang chọn bằng bàn phím.
