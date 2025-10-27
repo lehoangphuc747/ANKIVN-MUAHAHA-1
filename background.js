@@ -25,8 +25,8 @@ async function invoke(action, params = {}) {
 }
 
 
-// --- Hàm updateContextMenu (không đổi) ---
-async function updateContextMenu(fieldNames = []) {
+// --- [HÀM ĐƯỢC CẬP NHẬT] Hàm updateContextMenu ---
+async function updateContextMenu(fieldNames = [], modelName = null) {
     // Xóa menu cũ trước khi tạo mới để tránh trùng lặp
     await chrome.contextMenus.removeAll();
 
@@ -65,8 +65,46 @@ async function updateContextMenu(fieldNames = []) {
         return;
     }
 
-    // Tạo menu con cho từng field
-    fieldNames.forEach(fieldName => {
+    // Nếu có modelName, lọc bỏ các fields bị ẩn trong cài đặt
+    let visibleFields = fieldNames;
+    if (modelName) {
+        try {
+            const hiddenFieldsKey = `hiddenFields_${modelName}`;
+            const storedData = await chrome.storage.local.get(hiddenFieldsKey);
+            const hiddenFields = storedData[hiddenFieldsKey] || {};
+            
+            // Lọc bỏ các fields bị ẩn
+            visibleFields = fieldNames.filter(fieldName => !hiddenFields[fieldName]);
+            console.log(`Filtered fields for model "${modelName}":`, { allFields: fieldNames, hiddenFields, visibleFields });
+        } catch (error) {
+            console.error("Error filtering hidden fields:", error);
+            // Nếu có lỗi, dùng tất cả fields
+            visibleFields = fieldNames;
+        }
+    }
+
+    // Nếu không có field nào hiển thị sau khi lọc
+    if (visibleFields.length === 0) {
+        console.log("No visible fields after filtering, showing info menu.");
+        chrome.contextMenus.create({
+            id: "noVisibleFieldsText",
+            parentId: CONTEXT_MENU_ID_TEXT,
+            title: "Tất cả fields đã bị ẩn trong cài đặt",
+            contexts: ["selection"],
+            enabled: false
+        });
+        chrome.contextMenus.create({
+            id: "noVisibleFieldsImage",
+            parentId: CONTEXT_MENU_ID_IMAGE,
+            title: "Tất cả fields đã bị ẩn trong cài đặt",
+            contexts: ["image"],
+            enabled: false
+        });
+        return;
+    }
+
+    // Tạo menu con cho từng field hiển thị
+    visibleFields.forEach(fieldName => {
         // Menu con cho Text
         chrome.contextMenus.create({
             id: `send-text-to-${fieldName}`, // ID duy nhất
@@ -82,7 +120,7 @@ async function updateContextMenu(fieldNames = []) {
             contexts: ["image"]
         });
     });
-    console.log("Context menu updated with fields:", fieldNames);
+    console.log("Context menu updated with visible fields:", visibleFields);
 }
 // --- Listener onInstalled (không đổi) ---
 chrome.runtime.onInstalled.addListener(() => {
@@ -98,7 +136,7 @@ chrome.runtime.onStartup.addListener(async () => {
         const data = await chrome.storage.local.get(['lastSelectedModel', 'lastModelFields']);
         if (data.lastSelectedModel && data.lastModelFields) {
             console.log("Restoring fields for model:", data.lastSelectedModel);
-            updateContextMenu(data.lastModelFields);
+            updateContextMenu(data.lastModelFields, data.lastSelectedModel);
         } else {
              console.log("No last selected model/fields found, creating default menu.");
              updateContextMenu([]); // Tạo menu mặc định nếu chưa có gì lưu
@@ -108,12 +146,12 @@ chrome.runtime.onStartup.addListener(async () => {
         updateContextMenu([]); // Tạo menu mặc định nếu lỗi
     }
 });
-// --- Listener onMessage (nhận fields từ popup - không đổi) ---
+// --- [HÀM ĐƯỢC CẬP NHẬT] Listener onMessage (nhận fields từ popup) ---
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "updateFieldsForContextMenu") {
         console.log("Received fields update from sidebar:", message.fields);
         if (Array.isArray(message.fields)) {
-            updateContextMenu(message.fields);
+            updateContextMenu(message.fields, message.modelName);
             // Lưu lại để dùng khi khởi động Chrome
             chrome.storage.local.set({
                  lastSelectedModel: message.modelName, // Lưu cả model name
@@ -129,7 +167,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 
-// --- [HÀM ĐƯỢC CẬP NHẬT] Listener xử lý click context menu ---
+// --- Listener xử lý click context menu (không đổi) ---
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     console.log("Context menu clicked:", info);
 

@@ -226,3 +226,9 @@
 - Cập nhật định dạng ảnh mặc định: 
     - Thay đổi định dạng ảnh ưu tiên từ jpg sang webp trong `background.js`.
     - Khi không xác định được định dạng từ URL, sử dụng webp thay vì jpg.
+
+## v1.35.0 – 2025-10-28
+- Cập nhật Context Menu (`background.js`):
+    - Context menu chỉ hiển thị những fields không bị ẩn trong cài đặt.
+    - Cập nhật hàm `updateContextMenu` để lọc bỏ các fields bị ẩn dựa trên `modelName`.
+    - Thêm thông báo trong menu khi tất cả fields đều bị ẩn.
