@@ -90,3 +90,15 @@
     - Thêm nút "Chọn tất cả" và "Bỏ chọn tất cả" để thao tác nhanh hơn.
     - Cập nhật `settings.js` để xử lý logic cho các nút mới và hiển thị 2 cột.
     - Cập nhật `settings.html` và style CSS tương ứng.
+
+## v1.17.0 – 2025-10-28
+- Cải thiện UI/UX phần chọn field ẩn trong Settings (`settings.html`, `settings.js`, `styles.css`):
+    - Thay đổi cấu trúc HTML (`.field-checkbox-item`) để toàn bộ vùng chứa field (checkbox + label) đều có thể click được.
+    - Thêm hiệu ứng hover rõ ràng cho từng item field.
+    - Thêm visual feedback (thay đổi màu nền, màu chữ, màu checkbox) khi một field được chọn (đánh dấu là ẩn).
+    - Cập nhật `settings.js` để tạo cấu trúc HTML mới và xử lý sự kiện click trên toàn bộ item.
+    - Cập nhật `styles.css` để style cho `.field-checkbox-item` và các trạng thái của nó.
+
+
+
+
