@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AnkiVN - Muahaha</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- [MỚI] Thêm icon font (ví dụ: Font Awesome) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
@@ -15,7 +14,6 @@
         <a href="#" id="open-settings-link" title="Mở Cài đặt">⚙️</a>
     </div>
 
-    <!-- [MỚI] Wrapper cho phần header có thể sticky -->
     <div id="sticky-header-content">
       <div class="form-group inline-group preset-group">
           <label for="preset-select" class="inline-label">Cấu hình:</label>
@@ -43,7 +41,10 @@
         </div>
       </div>
 
-      <!-- [MỚI] Thanh công cụ định dạng -->
+      <div id="editor-mode-toggle" class="editor-mode-toggle">
+        <button id="mode-normal-btn" class="btn-secondary active" data-mode="normal">✍️ Normal</button>
+        <button id="mode-source-btn" class="btn-secondary" data-mode="source">&lt;/&gt; Source</button>
+      </div>
       <div id="format-toolbar">
         <button id="format-bold" title="In đậm (Ctrl+B)"><i class="fas fa-bold"></i></button>
         <button id="format-italic" title="In nghiêng (Ctrl+I)"><i class="fas fa-italic"></i></button>
@@ -59,12 +60,10 @@
         <button id="format-cloze" title="Thêm Cloze (Ctrl+Shift+C)">{ ... }</button>
       </div>
     </div>
-    <!-- [HẾT MỚI] Wrapper -->
 
 
     <div id="fields-container" class="fields-container">
-      <!-- Fields sẽ được load bằng JS -->
-    </div>
+      </div>
 
     <div class="form-group">
       <label for="tags-input">Tags:</label>
@@ -90,4 +89,3 @@
   <script src="popup.js"></script>
 </body>
 </html>
-
