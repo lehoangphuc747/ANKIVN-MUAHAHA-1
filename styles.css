@@ -92,11 +92,35 @@ body {
     color: var(--primary-color);
 }
 
-/* --- Wrapper cho phần KHÔNG sticky (Preset, Deck, Note, Mode) --- */
-#non-sticky-header-content {
-    /* Bỏ position: sticky */
-    padding-bottom: 10px; /* Khoảng cách với toolbar */
-    margin-bottom: 0.5rem; /* Khoảng cách với toolbar */
+/* --- [THÊM MỚI] Style cho khối header sticky mới --- */
+#sticky-header {
+    position: sticky;
+    top: 0; /* Hoặc -1px nếu cần */
+    z-index: 10;
+    background-color: var(--bg-color); /* Lấy màu nền của body */
+    padding-bottom: 1rem; /* Khoảng cách dưới cùng của khối sticky */
+    margin-bottom: 1rem; /* Khoảng cách với fields-container bên dưới */
+
+    /* Thêm đoạn này để phần nền sticky không bị thụt vào */
+    margin-left: -16px; /* Bù trừ padding của .container */
+    margin-right: -16px; /* Bù trừ padding của .container */
+    padding-left: 16px; /* Giữ padding nội dung */
+    padding-right: 16px; /* Giữ padding nội dung */
+    /* Có thể thêm border-bottom nhẹ nếu muốn tách biệt rõ hơn khi cuộn */
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+/* Điều chỉnh lại margin-top cho toolbar nếu cần */
+#format-toolbar {
+    margin-top: 10px; /* Thêm lại margin-top nếu muốn có khoảng cách với nút mode */
+}
+
+/* Đảm bảo container vẫn là scroll container */
+.container {
+  padding: 16px;
+  height: 100vh; /* Chiều cao tối đa */
+  overflow-y: auto; /* Thêm cuộn dọc nếu nội dung vượt quá */
+  box-sizing: border-box;
 }
 
 /* --- Layout chung --- */
@@ -140,10 +164,9 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .btn-icon-danger:hover { background-color: var(--error-bg); }
 
 /* --- Editor Mode Toggle Buttons --- */
-#editor-mode-toggle {
+.editor-mode-toggle {
     margin-top: 10px;
-    /* margin-bottom: 5px; */ /* Dòng này đã có, giữ nguyên hoặc tăng lên nếu cần */
-    margin-bottom: 10px; /* Tăng khoảng cách dưới nút toggle nếu muốn */
+    margin-bottom: 5px; /* Giảm mb */
     text-align: center;
 }
 .editor-mode-toggle button {
@@ -160,34 +183,16 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
 }
 
-/* --- Wrapper CỐ ĐỊNH cho Format Toolbar ---
-/*
-#sticky-toolbar-wrapper {
-    position: sticky;
-    top: -1px;
-    z-index: 10;
-    background-color: var(--sticky-toolbar-bg);
-    padding-bottom: 8px;
-    margin-left: -16px;
-    margin-right: -16px;
-    padding-left: 16px;
-    padding-right: 16px;
-    border-bottom: 1px solid var(--border-color-light);
-    margin-bottom: 1rem;
-}
-*/
-
-
 /* --- Thanh công cụ định dạng --- */
 #format-toolbar {
     background-color: var(--toolbar-bg);
     border: 1px solid var(--toolbar-border);
     border-radius: 6px;
     padding: 5px 8px;
-    /* margin-top: 10px; */ /* <<< XÓA DÒNG NÀY */
+    /* margin-top: 10px; -> Đã có padding ở wrapper */
     display: flex;
     align-items: center;
-    gap: 4px; /* Khoảng cách giữa các nút */
+    gap: 4px;
     flex-wrap: wrap; /* Cho phép xuống dòng nếu không đủ chỗ */
 }
 #format-toolbar button {
