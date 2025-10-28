@@ -90,7 +90,8 @@ body {
     position: sticky;
     top: -1px; /* Đẩy lên 1px để border không bị che */
     background-color: var(--bg-color);
-    z-index: 10;
+    /* [SỬA LỖI] Bỏ z-index để không che autocomplete */
+    /* z-index: 10; */
     padding-top: 1px; /* Bù lại top -1px */
     padding-bottom: 10px; /* Khoảng cách với fields container */
     margin: -16px -16px 0 -16px; /* Mở rộng nền ra sát cạnh */
@@ -104,20 +105,20 @@ body {
 .form-group { margin-bottom: 1rem; }
 label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-color-light); margin-bottom: 0.4rem; }
 
-/* Layout inline cho Preset, Deck, Note */
+/* [SỬA LỖI] Khôi phục layout inline */
 .inline-group {
     display: flex;
     align-items: center;
-    margin-bottom: 0.8rem; /* Giảm khoảng cách */
-    gap: 6px; /* Khoảng cách giữa các phần tử */
+    margin-bottom: 0.8rem;
+    gap: 6px;
 }
 .inline-label {
     flex: 0 0 auto;
-    width: 50px; /* Tăng chiều rộng label */
-    margin-right: 4px; /* Giảm margin */
+    width: 50px;
+    margin-right: 4px;
     margin-bottom: 0;
     font-weight: 500;
-    font-size: 0.9rem; /* Giảm nhẹ font size */
+    font-size: 0.9rem;
     color: var(--text-color);
     text-align: right;
 }
@@ -125,9 +126,8 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     flex: 1 1 auto;
     position: relative;
 }
-
 /* Preset Group specific */
-.preset-group .inline-label { width: 60px; } /* Label Cấu hình rộng hơn */
+.preset-group .inline-label { width: 60px; }
 .preset-group .inline-input-container { flex-grow: 1; }
 #preset-select { padding-right: 25px; }
 
@@ -146,7 +146,7 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     background-color: var(--toolbar-bg);
     border: 1px solid var(--toolbar-border);
     border-radius: 6px;
-    padding: 5px 8px; /* Tăng padding ngang */
+    padding: 5px 8px;
     margin-top: 10px;
     display: flex;
     align-items: center;
@@ -169,7 +169,21 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .form-control::placeholder { color: #aaa; }
 .form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); }
 .autocomplete-container { position: relative; }
-.suggestions-container { display: none; position: absolute; background-color: #ffffff; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 6px 6px; width: 100%; box-sizing: border-box; max-height: 160px; overflow-y: auto; z-index: 1000; box-shadow: 0 5px 10px rgba(0,0,0,0.08); }
+/* [SỬA LỖI] Tăng z-index của suggestion */
+.suggestions-container {
+    display: none;
+    position: absolute;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 6px 6px;
+    width: 100%;
+    box-sizing: border-box;
+    max-height: 160px;
+    overflow-y: auto;
+    z-index: 1001; /* Tăng z-index để cao hơn cả modal (nếu cần) */
+    box-shadow: 0 5px 10px rgba(0,0,0,0.08);
+}
 .suggestion-item { padding: 0.6rem 0.8rem; font-size: 0.9rem; cursor: pointer; border-bottom: 1px solid var(--border-color-light); }
 .suggestion-item:last-child { border-bottom: none; }
 .suggestion-item.active { background-color: #eee; }
@@ -177,8 +191,9 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 
 /* --- Fields Container và Field Group --- */
 .fields-container {
-    /* max-height: 400px; */ /* Bỏ max-height */
-    /* overflow-y: auto; */ /* Bỏ overflow */
+    /* Bỏ max-height và overflow-y để sticky header hoạt động */
+    /* max-height: 400px; */
+    /* overflow-y: auto; */
     margin-bottom: 1rem;
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -199,7 +214,7 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 
 /* --- Field Input Area (Textarea, Rendered, Preview) --- */
 .field-input-area { position: relative; padding-top: 0.5rem; padding-bottom: 0.2rem; }
-.form-control.field-input { resize: none; overflow-y: hidden; min-height: calc(1.5em * 2 + 1.2rem + 2px); height: auto; line-height: 1.5; margin: 0; /* Xóa margin thừa */ }
+.form-control.field-input { resize: none; overflow-y: hidden; min-height: calc(1.5em * 2 + 1.2rem + 2px); height: auto; line-height: 1.5; margin: 0; }
 .rendered-field-view { min-height: calc(1.5em * 1 + 1.2rem + 2px); height: auto; padding: 0.6rem 0.8rem; background-color: var(--bg-color-alt); border: 1px solid transparent; border-radius: 0; overflow-wrap: break-word; line-height: 1.5; margin-bottom: 5px; }
 .rendered-field-view img, .rendered-field-view video, .rendered-field-view audio { max-width: 100%; height: auto; display: block; margin-top: 5px; margin-bottom: 5px; border-radius: 4px; }
 .rendered-field-view span.ankivn-sound-placeholder { display: inline-block; padding: 3px 8px; background-color: var(--button-secondary-bg); border: 1px solid var(--button-secondary-border); border-radius: 4px; font-size: 0.85em; color: var(--button-secondary-text); margin: 2px; cursor: default; }
@@ -239,5 +254,29 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .status-message.error { background-color: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
 
 
-}
+/* --- Settings Page Styles --- */
+.settings-container { width: auto; min-width: 450px; }
+.note-type-selector { margin-bottom: 20px; }
+.settings-fields-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color-light); }
+.settings-fields-controls span { font-weight: 500; font-size: 0.95rem; color: var(--text-color-light); }
+.settings-fields-controls button { /* Kế thừa từ .btn-secondary */ }
+.settings-fields-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; background-color: var(--bg-color-alt); }
+.field-checkbox-item { display: flex; align-items: center; padding: 10px 12px; border-radius: 5px; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; background-color: #fdfdfd; border: 1px solid var(--border-color-light); overflow: hidden; }
+.field-checkbox-item:hover { background-color: var(--hover-bg-color); border-color: var(--hover-border-color); }
+/* Checked cho "Ẩn" */
+.field-checkbox-item.checked { background-color: var(--checked-bg-color); border-color: var(--checked-border-color); }
+.field-checkbox-item.checked label { font-weight: 500; color: var(--checked-text-color); text-decoration: line-through; }
+.field-checkbox-item.checked input[type="checkbox"] { accent-color: var(--checked-text-color); }
+.field-checkbox-item input[type="checkbox"] { margin-right: 10px; flex-shrink: 0; pointer-events: none; }
+.field-checkbox-item label { display: block; margin-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: var(--text-color); flex-grow: 1; }
+.settings-fields-list::-webkit-scrollbar { width: 6px; } .settings-fields-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; } .settings-fields-list::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; } .settings-fields-list::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+.random-id-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--border-color-light); }
+.random-id-section label { margin-bottom: 8px; }
+
+/* Style cho "Ghim" */
+.settings-fields-controls.sticky-controls { margin-top: 25px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+.settings-fields-controls.sticky-controls span { color: var(--sticky-text-color); }
+.field-checkbox-item.sticky-item.checked { background-color: var(--sticky-bg-color); border-color: var(--sticky-border-color); }
+.field-checkbox-item.sticky-item.checked label { color: var(--sticky-text-color); text-decoration: none; font-weight: 500; }
+.field-checkbox-item.sticky-item.checked input[type="checkbox"] { accent-color: var(--sticky-text-color); }
 
