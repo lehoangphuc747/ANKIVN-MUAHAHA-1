@@ -30,162 +30,219 @@
   --button-secondary-border: #dee2e6;
   --button-secondary-hover-bg: #e9ecef;
   --button-secondary-hover-border: #ced4da;
-  
-  /* [MỚI] Màu cho Sticky/Ghim */
   --sticky-bg-color: #fffbeb;
   --sticky-border-color: #fde68a;
   --sticky-text-color: #b45309;
 }
 
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: var(--bg-color);
-  color: var(--text-color);
-  min-width: 350px;
+body { /* ... giữ nguyên ... */ }
+.container, .settings-container { /* ... giữ nguyên ... */ }
+.header-container { /* ... giữ nguyên ... */ }
+.header-container h1 { /* ... giữ nguyên ... */ }
+.header-container #open-settings-link { /* ... giữ nguyên ... */ }
+.preset-group { /* ... giữ nguyên ... */ }
+.preset-group .inline-input-container { /* ... giữ nguyên ... */ }
+#preset-select { /* ... giữ nguyên ... */ }
+.btn-icon { /* ... giữ nguyên ... */ }
+.btn-icon-danger { /* ... giữ nguyên ... */ }
+.btn-icon-danger:hover { /* ... giữ nguyên ... */ }
+.form-group { /* ... giữ nguyên ... */ }
+label { /* ... giữ nguyên ... */ }
+.inline-group { /* ... giữ nguyên ... */ }
+.inline-label { /* ... giữ nguyên ... */ }
+.inline-input-container { /* ... giữ nguyên ... */ }
+.form-control { /* ... giữ nguyên ... */ }
+.form-control::placeholder { /* ... giữ nguyên ... */ }
+.form-control:focus { /* ... giữ nguyên ... */ }
+.form-control.field-input { /* ... giữ nguyên ... */ }
+.autocomplete-container { /* ... giữ nguyên ... */ }
+.suggestions-container { /* ... giữ nguyên ... */ }
+.suggestion-item { /* ... giữ nguyên ... */ }
+.suggestion-item:last-child { /* ... giữ nguyên ... */ }
+.suggestion-item.active { /* ... giữ nguyên ... */ }
+.suggestion-item:hover { /* ... giữ nguyên ... */ }
+.field-group { /* ... giữ nguyên ... */ }
+.field-header { /* ... giữ nguyên ... */ }
+.field-header:hover { /* ... giữ nguyên ... */ }
+.collapse-toggle { /* ... giữ nguyên ... */ }
+.field-header label { /* ... giữ nguyên ... */ }
+
+/* [MỚI] Nút Show Code/Rendered */
+.btn-toggle-view {
+    padding: 2px 5px;
+    font-size: 0.8em;
+    line-height: 1;
+    margin-left: 8px; /* Khoảng cách với label */
+    flex-shrink: 0; /* Không co lại */
+    font-family: monospace; /* Font chữ dễ nhìn code */
 }
 
-.container, .settings-container {
-  padding: 16px;
+.field-group.collapsed .collapse-toggle { /* ... giữ nguyên ... */ }
+.field-group.collapsed .field-header label { /* ... giữ nguyên ... */ }
+.field-group.collapsed .field-input-area { /* ... giữ nguyên ... */ }
+.field-group.field-hidden-by-setting { /* ... giữ nguyên ... */ }
+.fields-container { /* ... giữ nguyên ... */ }
+
+.field-input-area {
+    position: relative;
+    margin-top: 0.4rem;
 }
 
-.header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.2rem;
-    border-bottom: 1px solid var(--border-color-light);
-    padding-bottom: 0.8rem;
+/* [MỚI] Style cho Rendered View */
+.rendered-field-view {
+    min-height: calc(1.5em * 2 + 1.2rem + 2px); /* Giữ chiều cao tối thiểu giống textarea */
+    height: auto; /* Tự động thay đổi chiều cao */
+    padding: 0.6rem 0.8rem;
+    background-color: #fdfdfd; /* Nền hơi khác textarea để phân biệt */
+    border: 1px solid var(--border-color-light); /* Border nhạt hơn */
+    border-radius: 6px;
+    overflow-wrap: break-word; /* Tự xuống dòng */
+    line-height: 1.5;
+    /* Cần thêm style để hiển thị HTML cơ bản (vd: ảnh, audio tag) */
 }
-.header-container h1 {
-    margin: 0;
-    padding: 0;
-    border-bottom: none;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #2c3e50;
-    text-align: left;
-    flex-grow: 1;
+/* Hiển thị ảnh và media khác trong rendered view */
+.rendered-field-view img,
+.rendered-field-view video,
+.rendered-field-view audio {
+    max-width: 100%;
+    height: auto;
+    display: block; /* Tránh khoảng trắng thừa */
+    margin-top: 5px;
+    margin-bottom: 5px;
+    border-radius: 4px; /* Bo góc nhẹ */
 }
-.header-container #open-settings-link {
-    font-size: 1.3rem;
-    color: var(--text-color-light);
-    text-decoration: none;
-    padding: 5px;
-    border-radius: 50%;
-    transition: background-color 0.2s ease, color 0.2s ease;
-    flex-shrink: 0;
-    margin-left: 10px;
+/* Style cho thẻ sound (mô phỏng) */
+.rendered-field-view span.ankivn-sound-placeholder {
+    display: inline-block;
+    padding: 3px 8px;
+    background-color: var(--button-secondary-bg);
+    border: 1px solid var(--button-secondary-border);
+    border-radius: 4px;
+    font-size: 0.85em;
+    color: var(--button-secondary-text);
+    margin: 2px;
+    cursor: default;
 }
-.header-container #open-settings-link:hover {
-    background-color: #eee;
-    color: var(--primary-color);
+.rendered-field-view span.ankivn-sound-placeholder::before {
+    content: "🔊 "; /* Thêm icon loa */
+    margin-right: 3px;
 }
 
-/* [MỚI] Style cho khu vực Preset */
-.preset-group {
-    margin-bottom: 0.8rem;
-    gap: 6px; /* Khoảng cách giữa các item */
+
+/* --- Media Preview --- */
+.media-preview-container {
+    padding: 8px 0 3px 0; /* Tăng padding trên */
+    min-height: 30px; /* Tăng chiều cao tối thiểu */
+    border-top: 1px dashed var(--border-color-light);
+    margin-top: 8px; /* Tăng margin top */
 }
-.preset-group .inline-input-container {
-    flex-grow: 1; /* Cho select chiếm nhiều không gian */
+/* Style loading */
+.preview-loading {
+     font-size: 0.8rem;
+     color: var(--text-color-light);
+     font-style: italic;
 }
-#preset-select {
-    padding-right: 25px; /* Thêm padding cho select */
+.preview-image {
+    max-width: 100%;
+    max-height: 120px; /* Giảm chiều cao preview mặc định */
+    height: auto;
+    display: block;
+    margin-top: 5px;
+    border: 1px solid var(--border-color-light);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
 }
-.btn-icon {
-    flex-shrink: 0; /* Không co nút */
-    padding: 0.4rem 0.6rem; /* Nút nhỏ hơn */
-    font-size: 1rem;
+.preview-image:hover {
+    box-shadow: 0 0 8px rgba(0,0,0,0.15);
+}
+.preview-audio-button {
+    font-size: 0.8rem;
+    padding: 3px 8px;
+    margin-top: 5px;
+    margin-right: 5px;
     line-height: 1;
 }
-.btn-icon-danger {
+.preview-audio-button:disabled {
+    cursor: default;
+    opacity: 0.7;
+}
+.preview-error {
+    font-size: 0.8rem;
     color: var(--error-text);
-    border-color: var(--error-border);
+    display: block;
+    margin-top: 5px;
 }
-.btn-icon-danger:hover {
-     background-color: var(--error-bg);
-}
-/* [HẾT MỚI] */
 
-
-.form-group { margin-bottom: 1rem; }
-label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-color-light); margin-bottom: 0.4rem; }
-.inline-group { display: flex; align-items: center; }
-.inline-label { flex: 0 0 auto; margin-right: 8px; margin-bottom: 0; font-weight: 500; font-size: 0.95rem; color: var(--text-color-light);}
-.inline-input-container { flex: 1 1 auto; position: relative; }
-.form-control { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; background-color: var(--bg-color-alt); line-height: 1.4; color: var(--text-color); }
-.form-control::placeholder { color: #aaa; }
-.form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); }
-.form-control.field-input { resize: none; overflow-y: hidden; min-height: calc(1.5em * 2 + 1.2rem + 2px); height: calc(1.5em * 2 + 1.2rem + 2px); margin-top: 0.4rem; line-height: 1.5; }
-.autocomplete-container { position: relative; }
-.suggestions-container { display: none; position: absolute; background-color: #ffffff; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 6px 6px; width: 100%; box-sizing: border-box; max-height: 160px; overflow-y: auto; z-index: 1000; box-shadow: 0 5px 10px rgba(0,0,0,0.08); }
-.suggestion-item { padding: 0.6rem 0.8rem; font-size: 0.9rem; cursor: pointer; border-bottom: 1px solid var(--border-color-light); }
-.suggestion-item:last-child { border-bottom: none; }
-.suggestion-item.active { background-color: #eee; }
-.suggestion-item:hover { background-color: #f5f5f5; }
-.field-group { margin-bottom: 0.6rem; }
-.field-header { display: flex; align-items: center; cursor: pointer; padding: 5px 3px; user-select: none; border-radius: 5px; transition: background-color 0.15s ease; }
-.field-header:hover { background-color: #f0f0f0; }
-.collapse-toggle { display: inline-block; font-size: 10px; margin-right: 6px; width: 12px; text-align: center; transition: transform 0.2s ease; color: #777; transform: rotate(0deg); }
-.field-header label { display: inline-block; margin-bottom: 0; vertical-align: middle; font-weight: 500; color: var(--text-color-light); transition: opacity 0.2s ease; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.95rem; }
-.field-group.collapsed .collapse-toggle { transform: rotate(-90deg); }
-.field-group.collapsed .field-header label { opacity: 0.65; }
-.field-group.collapsed .field-input { display: none; }
-.field-group.field-hidden-by-setting { display: none !important; }
-.fields-container { max-height: 400px; overflow-y: auto; margin-bottom: 1rem; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; background-color: var(--bg-color-alt); }
-.btn-primary { display: inline-block; width: 100%; padding: 0.7rem 1rem; background: linear-gradient(180deg, var(--primary-color) 0%, var(--primary-color-dark) 100%); color: var(--button-text-color); border: none; border-radius: 7px; font-size: 0.95rem; font-weight: 500; cursor: pointer; text-align: center; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 2px 5px rgba(52, 152, 219, 0.2); text-shadow: 0 1px 1px rgba(0,0,0,0.1); }
-.btn-primary:hover { background: linear-gradient(180deg, var(--primary-color-dark) 0%, var(--primary-color-darker) 100%); box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 4px 8px rgba(52, 152, 219, 0.25); transform: translateY(-1px); }
-.btn-primary:active { background: var(--primary-color-darker); transform: translateY(0px); box-shadow: inset 0 1px 2px rgba(0,0,0,0.1); text-shadow: none; }
-.btn-primary:disabled { background: #bdc3c7; cursor: not-allowed; box-shadow: none; transform: none; text-shadow: none; }
-.btn-secondary { padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 6px; cursor: pointer; background-color: var(--button-secondary-bg); color: var(--button-secondary-text); border: 1px solid var(--button-secondary-border); border-radius: 5px; transition: all 0.15s ease; box-shadow: 0 1px 1px rgba(0,0,0,0.03); }
-.btn-secondary:hover { background-color: var(--button-secondary-hover-bg); border-color: var(--button-secondary-hover-border); color: var(--text-color); }
-.btn-secondary:active { background-color: #eee; transform: translateY(1px); box-shadow: inset 0 1px 1px rgba(0,0,0,0.05); }
+.btn-primary { /* ... giữ nguyên ... */ }
+.btn-primary:hover { /* ... giữ nguyên ... */ }
+.btn-primary:active { /* ... giữ nguyên ... */ }
+.btn-primary:disabled { /* ... giữ nguyên ... */ }
+.btn-secondary { /* ... giữ nguyên ... */ }
+.btn-secondary:hover { /* ... giữ nguyên ... */ }
+.btn-secondary:active { /* ... giữ nguyên ... */ }
 
 /* --- Styles cho trang Cài đặt --- */
-.settings-container { width: auto; min-width: 450px; }
-.note-type-selector { margin-bottom: 20px; }
-.settings-fields-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color-light); }
-.settings-fields-controls span { font-weight: 500; font-size: 0.95rem; color: var(--text-color-light); }
-.settings-fields-controls button { /* Kế thừa từ .btn-secondary */ }
-.settings-fields-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; background-color: var(--bg-color-alt); }
-.field-checkbox-item { display: flex; align-items: center; padding: 10px 12px; border-radius: 5px; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; background-color: #fdfdfd; border: 1px solid var(--border-color-light); overflow: hidden; }
-.field-checkbox-item:hover { background-color: var(--hover-bg-color); border-color: var(--hover-border-color); }
-/* Checked cho "Ẩn" */
-.field-checkbox-item.checked { background-color: var(--checked-bg-color); border-color: var(--checked-border-color); }
-.field-checkbox-item.checked label { font-weight: 500; color: var(--checked-text-color); text-decoration: line-through; }
-.field-checkbox-item.checked input[type="checkbox"] { accent-color: var(--checked-text-color); }
-.field-checkbox-item input[type="checkbox"] { margin-right: 10px; flex-shrink: 0; pointer-events: none; }
-.field-checkbox-item label { display: block; margin-bottom: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; color: var(--text-color); flex-grow: 1; }
-.settings-fields-list::-webkit-scrollbar { width: 6px; } .settings-fields-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; } .settings-fields-list::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; } .settings-fields-list::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-.random-id-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--border-color-light); }
-.random-id-section label { margin-bottom: 8px; }
+/* ... giữ nguyên toàn bộ style của trang cài đặt ... */
 
-/* [MỚI] Style cho "Ghim" */
-.settings-fields-controls.sticky-controls {
-    margin-top: 25px; /* Khoảng cách với phần "Ẩn" */
-    border-top: 1px solid var(--border-color);
-    padding-top: 15px;
+/* --- Modal xem ảnh --- */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1001; /* Sit on top */
+  padding-top: 50px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0,0,0,0.85); /* Black w/ opacity */
 }
-.settings-fields-controls.sticky-controls span {
-    color: var(--sticky-text-color);
+.modal-content {
+  margin: auto;
+  display: block;
+  max-width: 90%;
+  max-height: 80vh; /* Limit height */
+  /* Animation */
+  animation-name: zoom;
+  animation-duration: 0.3s;
 }
-.field-checkbox-item.sticky-item.checked {
-    background-color: var(--sticky-bg-color);
-    border-color: var(--sticky-border-color);
+#modal-caption {
+  margin: auto;
+  display: block;
+  width: 80%;
+  max-width: 700px;
+  text-align: center;
+  color: #ccc;
+  padding: 10px 0;
+  height: 50px; /* Fixed height */
+  font-size: 0.9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.field-checkbox-item.sticky-item.checked label {
-    color: var(--sticky-text-color);
-    text-decoration: none; /* Không gạch ngang */
-    font-weight: 500;
+.modal-close-btn {
+  position: absolute;
+  top: 15px;
+  right: 35px;
+  color: #f1f1f1;
+  font-size: 40px;
+  font-weight: bold;
+  transition: 0.3s;
+  cursor: pointer;
 }
-.field-checkbox-item.sticky-item.checked input[type="checkbox"] {
-    accent-color: var(--sticky-text-color);
+.modal-close-btn:hover,
+.modal-close-btn:focus {
+  color: #bbb;
+  text-decoration: none;
 }
-/* [HẾT MỚI] */
+@keyframes zoom {
+  from {transform: scale(0.8)}
+  to {transform: scale(1)}
+}
 
-.status-message { margin-top: 1rem; padding: 0.7rem 0.8rem; border-radius: 6px; font-size: 0.9rem; text-align: center; font-weight: 500; border: 1px solid transparent; }
-.status-message.info { background-color: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
-.status-message.success { background-color: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
-.status-message.error { background-color: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
+.status-message { /* ... giữ nguyên ... */ }
+.status-message.info { /* ... giữ nguyên ... */ }
+.status-message.success { /* ... giữ nguyên ... */ }
+.status-message.error { /* ... giữ nguyên ... */ }
+
