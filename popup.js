@@ -7,10 +7,9 @@ let currentModelName = '';
 let currentFieldNames = [];
 let statusTimeout = null;
 let currentAudio = null; // Để quản lý audio đang phát
-let activeElement = null; // Lưu element đang focus (div hoặc textarea)
-let globalEditorMode = 'normal'; // Chế độ editor mặc định
+let activeElement = null; // Lưu element đang focus (chỉ là div contenteditable)
 
-// --- [MỚI] Khóa lưu trạng thái thu gọn header ---
+// --- Khóa lưu trạng thái thu gọn header ---
 const HEADER_COLLAPSE_KEY = 'headerCollapsed';
 
 // --- Hàm invoke (Kết nối AnkiConnect) ---
@@ -70,10 +69,9 @@ async function createFieldsForModel(modelName) {
         fieldNames.forEach(fieldName => {
             const safeFieldName = fieldName.replace(/\s+/g, '-'); // Tạo id an toàn
             const fieldIdBase = `field-${safeFieldName}`;
-            const divId = `${fieldIdBase}-div`;
-            const textareaId = `${fieldIdBase}-textarea`;
+            const divId = `${fieldIdBase}-div`; // Chỉ cần ID cho div
             const previewId = `preview-${fieldIdBase}`;
-            const renderedViewId = `${fieldIdBase}-rendered`;
+            const renderedViewId = `${fieldIdBase}-rendered`; // Giữ lại ID cho rendered view
             const toggleViewBtnId = `toggle-view-${safeFieldName}`;
 
             const isHidden = hiddenFields[fieldName] || false;
@@ -82,8 +80,8 @@ async function createFieldsForModel(modelName) {
             const fieldGroup = document.createElement('div');
             fieldGroup.className = `form-group field-group ${isCollapsed ? 'collapsed' : ''} ${isHidden ? 'field-hidden-by-setting' : ''}`;
             fieldGroup.dataset.fieldName = fieldName;
-            fieldGroup.dataset.editorMode = globalEditorMode; // Đặt mode ban đầu
-            fieldGroup.dataset.viewMode = 'code'; // Mặc định là code view
+            // fieldGroup.dataset.editorMode = 'normal'; // Không cần nữa
+            fieldGroup.dataset.viewMode = 'code'; // Mặc định là code view (hiển thị div)
 
             // --- Field Header ---
             const fieldHeader = document.createElement('div');
@@ -118,34 +116,24 @@ async function createFieldsForModel(modelName) {
             fieldGroup.appendChild(fieldHeader);
             // --- Hết Header ---
 
-            // --- Field Input Area (chứa div, textarea, preview) ---
+            // --- Field Input Area (chứa div, preview, rendered view) ---
             const inputContainer = document.createElement('div');
             inputContainer.className = 'field-input-area';
             if (isCollapsed) inputContainer.style.display = 'none'; // Ẩn ban đầu nếu collapsed
 
-            // Div ContentEditable (Normal Mode)
+            // Div ContentEditable (Luôn là Normal Mode)
             const inputDiv = document.createElement('div');
             inputDiv.id = divId;
             inputDiv.contentEditable = true;
             inputDiv.className = 'form-control field-input-div';
             inputDiv.dataset.placeholder = `Nội dung ${fieldName}...`; // Dùng CSS để hiển thị placeholder
-            inputDiv.style.display = globalEditorMode === 'normal' ? '' : 'none'; // Hiển thị/ẩn ban đầu
+            // inputDiv.style.display = ''; // Luôn hiển thị trừ khi view mode là 'rendered'
             inputDiv.addEventListener('input', handleInputEvent);
             inputDiv.addEventListener('focus', handleFocusEvent);
             inputDiv.addEventListener('blur', handleBlurEvent);
             inputContainer.appendChild(inputDiv);
 
-            // Textarea (Source Mode)
-            const inputTextarea = document.createElement('textarea');
-            inputTextarea.id = textareaId;
-            inputTextarea.className = 'form-control field-input-textarea';
-            inputTextarea.placeholder = `HTML/Source ${fieldName}...`;
-            inputTextarea.rows = 3;
-            inputTextarea.style.display = globalEditorMode === 'source' ? '' : 'none'; // Hiển thị/ẩn ban đầu
-            inputTextarea.addEventListener('input', handleInputEvent);
-            inputTextarea.addEventListener('focus', handleFocusEvent);
-            inputTextarea.addEventListener('blur', handleBlurEvent);
-            inputContainer.appendChild(inputTextarea);
+            // Removed Textarea
 
             // Rendered View
             const renderedView = document.createElement('div');
@@ -158,21 +146,15 @@ async function createFieldsForModel(modelName) {
             const previewContainer = document.createElement('div');
             previewContainer.id = previewId;
             previewContainer.className = 'media-preview-container';
-            previewContainer.style.display = globalEditorMode === 'normal' ? '' : 'none'; // Chỉ hiển thị ở Normal mode
+            // previewContainer.style.display = ''; // Luôn hiển thị trừ khi view mode là 'rendered'
             inputContainer.appendChild(previewContainer);
 
             fieldGroup.appendChild(inputContainer);
             fieldsContainer.appendChild(fieldGroup);
 
-            // Kích hoạt autoExpand nếu đang ở Source Mode
-            if (globalEditorMode === 'source') {
-                 autoExpandTextarea({ target: inputTextarea });
-            }
-            // Update preview và rendered view lần đầu nếu đang ở Normal Mode
-            if (globalEditorMode === 'normal') {
-                 updateMediaPreviewFromContent(inputDiv.innerHTML, previewId);
-                 updateRenderedView(inputDiv, renderedView);
-            }
+            // Update preview và rendered view lần đầu
+            updateMediaPreviewFromContent(inputDiv.innerHTML, previewId);
+            updateRenderedView(inputDiv, renderedView);
         });
         console.log("Fields created successfully.");
 
@@ -190,162 +172,39 @@ async function createFieldsForModel(modelName) {
 
 // --- Hàm xử lý sự kiện input chung ---
 function handleInputEvent(event) {
-    const target = event.target;
+    const target = event.target; // Luôn là div
     const fieldGroup = target.closest('.field-group');
     if (!fieldGroup) return;
 
     const fieldName = fieldGroup.dataset.fieldName;
     const safeFieldName = fieldName.replace(/\s+/g, '-');
-    const fieldIdBase = `field-${safeFieldName}`;
-    const divId = `${fieldIdBase}-div`;
-    const textareaId = `${fieldIdBase}-textarea`;
-    const previewId = `preview-${fieldIdBase}`;
-    const renderedViewId = `${fieldIdBase}-rendered`;
-
-    const divElement = fieldGroup.querySelector(`#${divId}`);
-    const textareaElement = fieldGroup.querySelector(`#${textareaId}`);
+    const previewId = `preview-field-${safeFieldName}`;
+    const renderedViewId = `field-${safeFieldName}-rendered`;
     const renderedViewElement = fieldGroup.querySelector(`#${renderedViewId}`);
 
-    if (target.id === divId) { // Input từ div contenteditable
-        syncDivToTextarea(divElement, textareaElement);
-        updateMediaPreviewFromContent(divElement.innerHTML, previewId);
-        updateRenderedView(divElement, renderedViewElement);
-        // ensureContentEditableKeepsFocus(divElement); // Có thể gây lỗi nhảy con trỏ
-    } else if (target.id === textareaId) { // Input từ textarea
-        autoExpandTextarea({ target: textareaElement });
-        syncTextareaToDiv(textareaElement, divElement);
-        // Không update preview từ textarea
-    }
+    updateMediaPreviewFromContent(target.innerHTML, previewId);
+    updateRenderedView(target, renderedViewElement);
 }
 
 // --- Hàm xử lý sự kiện focus/blur ---
 function handleFocusEvent(event) {
-    activeElement = event.target; // Cập nhật element đang focus
+    activeElement = event.target; // Cập nhật element đang focus (luôn là div)
     console.log("Focus on:", activeElement.id);
 }
 function handleBlurEvent(event) {
-    const target = event.target;
-    // Đồng bộ lần cuối khi mất focus khỏi div (đảm bảo textarea có nội dung mới nhất)
-    if (target.classList.contains('field-input-div')) {
-        const fieldGroup = target.closest('.field-group');
-        if (fieldGroup) {
-            const fieldName = fieldGroup.dataset.fieldName;
-            const safeFieldName = fieldName.replace(/\s+/g, '-');
-            const textareaId = `field-${safeFieldName}-textarea`;
-            const textareaElement = fieldGroup.querySelector(`#${textareaId}`);
-            syncDivToTextarea(target, textareaElement);
-        }
-    }
-    // Bỏ activeElement nếu element mất focus chính là nó
-    if (activeElement === target) {
+    // Không cần đồng bộ div -> textarea nữa
+    if (activeElement === event.target) {
         console.log("Blur from:", activeElement.id);
         activeElement = null;
     }
 }
 
-// --- Hàm đồng bộ nội dung ---
-function syncDivToTextarea(divElement, textareaElement) {
-    if (divElement && textareaElement && textareaElement.value !== divElement.innerHTML) {
-        // console.log("Syncing div to textarea");
-        textareaElement.value = divElement.innerHTML;
-        // Trigger input event cho textarea để autoExpand nếu cần (tránh lặp vô hạn)
-        // textareaElement.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
-    }
-}
-function syncTextareaToDiv(textareaElement, divElement) {
-    if (textareaElement && divElement && divElement.innerHTML !== textareaElement.value) {
-        // console.log("Syncing textarea to div");
-        divElement.innerHTML = textareaElement.value;
-        // Trigger input event cho div để update preview nếu đang ở normal mode
-        if (globalEditorMode === 'normal') {
-            divElement.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
-        }
-    }
-}
+// --- Hàm đồng bộ nội dung (đã loại bỏ) ---
+// function syncDivToTextarea(...) { ... }
+// function syncTextareaToDiv(...) { ... }
 
-// --- Hàm chuyển chế độ global ---
-function setGlobalEditorMode(newMode) {
-    if (newMode !== 'normal' && newMode !== 'source') return;
-    if (newMode === globalEditorMode) return; // Không làm gì nếu đã ở mode đó
-
-    console.log("Switching global editor mode to:", newMode);
-    globalEditorMode = newMode;
-    document.body.dataset.editorMode = newMode; // Cập nhật attribute trên body
-
-    // Cập nhật trạng thái nút bấm
-    document.getElementById('mode-normal-btn').classList.toggle('active', newMode === 'normal');
-    document.getElementById('mode-source-btn').classList.toggle('active', newMode === 'source');
-    // CSS sẽ tự động disable toolbar dựa trên `body[data-editor-mode="source"]`
-
-    // Lưu element đang focus trước khi chuyển đổi
-    const focusedElement = activeElement;
-    let focusFieldName = null;
-    if (focusedElement) {
-        focusFieldName = focusedElement.closest('.field-group')?.dataset.fieldName;
-    }
-
-    // Duyệt qua tất cả các field và chuyển đổi hiển thị
-    document.querySelectorAll('.field-group').forEach(fieldGroup => {
-        const fieldName = fieldGroup.dataset.fieldName;
-        const safeFieldName = fieldName.replace(/\s+/g, '-');
-        const fieldIdBase = `field-${safeFieldName}`;
-        const divId = `${fieldIdBase}-div`;
-        const textareaId = `${fieldIdBase}-textarea`;
-        const previewId = `preview-${fieldIdBase}`;
-        const renderedViewId = `${fieldIdBase}-rendered`;
-
-        const divElement = fieldGroup.querySelector(`#${divId}`);
-        const textareaElement = fieldGroup.querySelector(`#${textareaId}`);
-        const previewContainer = fieldGroup.querySelector(`#${previewId}`);
-        const renderedViewElement = fieldGroup.querySelector(`#${renderedViewId}`);
-
-        if (divElement && textareaElement && previewContainer && renderedViewElement) {
-            fieldGroup.dataset.editorMode = newMode; // Cập nhật data attribute của field
-
-            if (newMode === 'normal') {
-                syncTextareaToDiv(textareaElement, divElement); // Đồng bộ từ source -> normal
-                divElement.style.display = '';
-                textareaElement.style.display = 'none';
-                // Cập nhật hiển thị dựa trên view mode
-                const isRenderedView = fieldGroup.dataset.viewMode === 'rendered';
-                if (isRenderedView) {
-                    renderedViewElement.style.display = '';
-                    divElement.style.display = 'none';
-                } else {
-                    renderedViewElement.style.display = 'none';
-                    divElement.style.display = '';
-                }
-                previewContainer.style.display = '';
-                updateMediaPreviewFromContent(divElement.innerHTML, previewId); // Cập nhật preview
-                updateRenderedView(divElement, renderedViewElement); // Cập nhật rendered view
-            } else { // newMode === 'source'
-                syncDivToTextarea(divElement, textareaElement); // Đồng bộ từ normal -> source
-                divElement.style.display = 'none';
-                renderedViewElement.style.display = 'none';
-                textareaElement.style.display = '';
-                previewContainer.style.display = 'none'; // Ẩn preview
-                autoExpandTextarea({ target: textareaElement }); // Kích hoạt auto-expand
-            }
-        }
-    });
-
-    // Focus lại element tương ứng nếu có
-    if (focusFieldName) {
-        const safeFocusFieldName = focusFieldName.replace(/\s+/g, '-');
-        const focusFieldIdBase = `field-${safeFocusFieldName}`;
-        const newFocusElementId = newMode === 'normal' ? `${focusFieldIdBase}-div` : `${focusFieldIdBase}-textarea`;
-        const newFocusElement = document.getElementById(newFocusElementId);
-        if (newFocusElement) {
-            newFocusElement.focus();
-            activeElement = newFocusElement; // Cập nhật lại activeElement
-            console.log("Refocused on:", newFocusElement.id);
-        } else {
-             activeElement = null; // Mất focus nếu không tìm thấy element mới
-        }
-    } else {
-        activeElement = null; // Clear active element nếu không có focus trước đó
-    }
-}
+// --- Hàm chuyển chế độ global (đã loại bỏ) ---
+// function setGlobalEditorMode(...) { ... }
 
 // --- Hàm toggle field view (Code/Rendered) ---
 function toggleFieldView(fieldGroup) {
@@ -354,13 +213,15 @@ function toggleFieldView(fieldGroup) {
     const fieldIdBase = `field-${safeFieldName}`;
     const divId = `${fieldIdBase}-div`;
     const renderedViewId = `${fieldIdBase}-rendered`;
+    const previewId = `preview-${fieldIdBase}`; // Cần ID preview
     const toggleViewBtnId = `toggle-view-${safeFieldName}`;
 
     const divElement = fieldGroup.querySelector(`#${divId}`);
     const renderedViewElement = fieldGroup.querySelector(`#${renderedViewId}`);
+    const previewContainer = fieldGroup.querySelector(`#${previewId}`); // Lấy container preview
     const toggleViewBtn = fieldGroup.querySelector(`#${toggleViewBtnId}`);
 
-    if (!divElement || !renderedViewElement || !toggleViewBtn) {
+    if (!divElement || !renderedViewElement || !toggleViewBtn || !previewContainer) {
         console.error("Toggle view elements not found!");
         return;
     }
@@ -373,15 +234,17 @@ function toggleFieldView(fieldGroup) {
     if (newViewMode === 'rendered') {
         // Chuyển sang rendered view
         divElement.style.display = 'none';
+        previewContainer.style.display = 'none'; // Ẩn preview
         renderedViewElement.style.display = '';
-        toggleViewBtn.title = 'Show Code';
-        toggleViewBtn.innerHTML = '&lt;/&gt;';
+        toggleViewBtn.title = 'Show Editor'; // Đổi title
+        toggleViewBtn.innerHTML = '✍️'; // Đổi icon
         // Cập nhật nội dung rendered view
         updateRenderedView(divElement, renderedViewElement);
     } else {
-        // Chuyển sang code view
+        // Chuyển sang code view (editor)
         renderedViewElement.style.display = 'none';
         divElement.style.display = '';
+        previewContainer.style.display = ''; // Hiện preview
         toggleViewBtn.title = 'Show Rendered';
         toggleViewBtn.innerHTML = '🖼️';
     }
@@ -397,7 +260,7 @@ function updateRenderedView(sourceElement, renderedViewElement) {
     renderedViewElement.innerHTML = processedContent;
 }
 
-// --- Hàm cập nhật Media Preview (Chỉ chạy ở Normal Mode) ---
+// --- Hàm cập nhật Media Preview ---
 async function updateMediaPreviewFromContent(content, previewId) {
     const previewContainer = document.getElementById(previewId);
     if (!previewContainer) {
@@ -405,14 +268,16 @@ async function updateMediaPreviewFromContent(content, previewId) {
         return;
     }
 
-    // Xóa và ẩn nếu không phải Normal mode
-    if (globalEditorMode !== 'normal') {
+    // Luôn hiển thị preview trừ khi view mode là 'rendered'
+    const fieldGroup = previewContainer.closest('.field-group');
+    if (fieldGroup && fieldGroup.dataset.viewMode === 'rendered') {
         previewContainer.innerHTML = '';
         previewContainer.style.display = 'none';
         return;
     }
-    previewContainer.style.display = ''; // Đảm bảo hiển thị nếu đang ở normal mode
+    previewContainer.style.display = ''; // Đảm bảo hiển thị
     previewContainer.innerHTML = ''; // Xóa preview cũ
+
 
     // Tìm thẻ img đầu tiên
     const imgMatch = content.match(/<img src="([^"]+)"[^>]*>/i);
@@ -433,7 +298,7 @@ async function updateMediaPreviewFromContent(content, previewId) {
             try {
                 const base64Data = await invoke('retrieveMediaFile', { filename: filename });
                 const currentPreviewContainer = document.getElementById(previewId); // Lấy lại container phòng trường hợp bị xóa/thay đổi
-                if (!currentPreviewContainer || globalEditorMode !== 'normal') return; // Kiểm tra lại mode và container
+                if (!currentPreviewContainer || currentPreviewContainer.closest('.field-group')?.dataset.viewMode === 'rendered') return; // Kiểm tra lại mode và container
 
                 if (base64Data) {
                     currentPreviewContainer.innerHTML = ''; // Xóa loading
@@ -456,7 +321,7 @@ async function updateMediaPreviewFromContent(content, previewId) {
             } catch (error) {
                 console.error("Error retrieving image preview:", error);
                 const currentPreviewContainer = document.getElementById(previewId);
-                if (currentPreviewContainer && globalEditorMode === 'normal') {
+                 if (currentPreviewContainer && currentPreviewContainer.closest('.field-group')?.dataset.viewMode !== 'rendered') {
                     currentPreviewContainer.innerHTML = `<span class="preview-error">⚠️ Lỗi tải ảnh "${filename}": ${error.message}</span>`;
                 }
             }
@@ -488,7 +353,7 @@ async function updateMediaPreviewFromContent(content, previewId) {
                 try {
                     const base64Data = await invoke('retrieveMediaFile', { filename: filename });
                     const currentPrevContainer = document.getElementById(previewId); // Re-fetch container
-                    if (!currentPrevContainer || globalEditorMode !== 'normal') return; // Re-check mode
+                    if (!currentPrevContainer || currentPrevContainer.closest('.field-group')?.dataset.viewMode === 'rendered') return; // Re-check mode
 
                     if (base64Data) {
                         if (!audioObject) { // Tạo thẻ audio nếu chưa có
@@ -520,7 +385,7 @@ async function updateMediaPreviewFromContent(content, previewId) {
                 } catch (error) {
                     console.error("Error retrieving/playing audio preview:", error);
                      const currentPrevContainer = document.getElementById(previewId);
-                     if (currentPrevContainer && globalEditorMode === 'normal') {
+                      if (currentPrevContainer && currentPrevContainer.closest('.field-group')?.dataset.viewMode !== 'rendered') {
                          currentPrevContainer.innerHTML = `<span class="preview-error">⚠️ Lỗi tải audio "${filename}": ${error.message}</span>`;
                      }
                     isPlaying = false; button.textContent = '⚠️ Lỗi'; button.disabled = true;
@@ -529,7 +394,7 @@ async function updateMediaPreviewFromContent(content, previewId) {
         };
         // Thêm nút vào container (kiểm tra lại mode)
         const finalPreviewContainer = document.getElementById(previewId);
-        if (finalPreviewContainer && globalEditorMode === 'normal') {
+        if (finalPreviewContainer && finalPreviewContainer.closest('.field-group')?.dataset.viewMode !== 'rendered') {
             finalPreviewContainer.appendChild(button);
         }
     }
@@ -564,15 +429,15 @@ async function toggleFieldCollapse(event) {
     const fieldGroup = fieldHeader.closest('.field-group');
     if (!fieldGroup) return;
 
-    // Ngăn collapse khi click vào các nút control bên trong header (nếu có)
-    // Hoặc khi click vào preview media
-    if (event.target !== fieldHeader && 
-        !event.target.classList.contains('collapse-toggle') && 
+    // Ngăn collapse khi click vào các nút control bên trong header
+    if (event.target !== fieldHeader &&
+        !event.target.classList.contains('collapse-toggle') &&
         !event.target.closest('label') &&
-        !event.target.classList.contains('btn-toggle-view')) {
-       // console.log("Click inside header, preventing collapse.");
+        !event.target.classList.contains('btn-toggle-view')) { // Không collapse khi click nút view
+       // console.log("Click inside header control, preventing collapse.");
        return;
     }
+
 
     const fieldName = fieldGroup.dataset.fieldName;
     const inputArea = fieldGroup.querySelector('.field-input-area');
@@ -593,15 +458,7 @@ async function toggleFieldCollapse(event) {
         inputArea.style.display = '';
         label.style.opacity = '1';
         toggleIcon.textContent = '🔽';
-        // Trigger autoExpand cho textarea nếu đang ở source mode và được mở ra
-        if (globalEditorMode === 'source') {
-            const safeFieldName = fieldName.replace(/\s+/g, '-');
-            const textareaId = `field-${safeFieldName}-textarea`;
-            const textarea = inputArea.querySelector(`#${textareaId}`);
-            if (textarea) {
-                autoExpandTextarea({ target: textarea });
-            }
-        }
+        // Không cần trigger autoExpand nữa vì không còn textarea
     }
 
     // Lưu trạng thái collapse vào storage
@@ -619,11 +476,7 @@ async function toggleFieldCollapse(event) {
 
 
 // --- Các hàm tiện ích ---
-function autoExpandTextarea(event) {
-    const textarea = event.target;
-    textarea.style.height = 'auto'; // Reset height để tính lại scrollHeight
-    textarea.style.height = (textarea.scrollHeight + 2) + 'px'; // +2 để tránh scrollbar nhỏ
-}
+// function autoExpandTextarea(...) { ... } // Không cần nữa
 function openOptionsPage() {
     chrome.runtime.openOptionsPage();
 }
@@ -887,30 +740,24 @@ async function applyPreset() {
 
 // --- Hàm xử lý định dạng (Bold, Italic, v.v.) ---
 function applyFormat(command, value = null) {
-    if (globalEditorMode !== 'normal') {
-        showStatus("Chức năng định dạng chỉ hoạt động ở Normal Mode.", "warning");
-        return;
-    }
+    // Luôn ở normal mode
     if (!activeElement || !activeElement.isContentEditable) {
         showStatus("Vui lòng đặt con trỏ vào field cần định dạng.", "warning");
         activeElement?.focus(); // Thử focus lại element cuối cùng
         if (!activeElement || !activeElement.isContentEditable) return; // Vẫn không được thì bỏ qua
     }
 
-    activeElement.focus(); // Đảm bảo focus đúng element
+    activeElement.focus(); // Đảm bảo focus đúng element (div)
     document.execCommand(command, false, value);
 
-    // Đồng bộ và cập nhật preview sau khi định dạng
+    // Cập nhật preview sau khi định dạng
     const fieldGroup = activeElement.closest('.field-group');
     if (fieldGroup) {
         const fieldName = fieldGroup.dataset.fieldName;
         const safeFieldName = fieldName.replace(/\s+/g, '-');
-        const textareaId = `field-${safeFieldName}-textarea`;
         const previewId = `preview-field-${safeFieldName}`;
         const renderedViewId = `field-${safeFieldName}-rendered`;
-        const textareaElement = document.getElementById(textareaId);
         const renderedViewElement = document.getElementById(renderedViewId);
-        syncDivToTextarea(activeElement, textareaElement);
         updateMediaPreviewFromContent(activeElement.innerHTML, previewId);
         updateRenderedView(activeElement, renderedViewElement);
     }
@@ -920,10 +767,7 @@ function applyFormat(command, value = null) {
 
 // --- Hàm xử lý Cloze ---
 function addCloze() {
-    if (globalEditorMode !== 'normal') {
-        showStatus("Chức năng Cloze chỉ hoạt động ở Normal Mode.", "warning");
-        return;
-    }
+    // Luôn ở normal mode
      if (!activeElement || !activeElement.isContentEditable) {
         showStatus("Vui lòng đặt con trỏ vào field cần tạo Cloze.", "warning");
         activeElement?.focus();
@@ -954,20 +798,17 @@ function addCloze() {
     const nextClozeNum = highestCloze + 1;
     const clozeText = `{{c${nextClozeNum}::${selectedText}}}`;
 
-    // Thay thế nội dung đã chọn bằng clozeText (dùng insertHTML hoặc tương tự)
+    // Thay thế nội dung đã chọn bằng clozeText (dùng insertHTML)
     document.execCommand('insertHTML', false, clozeText);
 
-    // Đồng bộ và cập nhật preview
+    // Cập nhật preview
     const fieldGroup = activeElement.closest('.field-group');
     if (fieldGroup) {
         const fieldName = fieldGroup.dataset.fieldName;
         const safeFieldName = fieldName.replace(/\s+/g, '-');
-        const textareaId = `field-${safeFieldName}-textarea`;
         const previewId = `preview-field-${safeFieldName}`;
         const renderedViewId = `field-${safeFieldName}-rendered`;
-        const textareaElement = document.getElementById(textareaId);
         const renderedViewElement = document.getElementById(renderedViewId);
-        syncDivToTextarea(activeElement, textareaElement);
         updateMediaPreviewFromContent(activeElement.innerHTML, previewId);
         updateRenderedView(activeElement, renderedViewElement);
     }
@@ -975,7 +816,7 @@ function addCloze() {
      setTimeout(() => activeElement?.focus(), 0);
 }
 
-// --- [MỚI] Hàm quản lý trạng thái thu gọn Header ---
+// --- Hàm quản lý trạng thái thu gọn Header ---
 function setHeaderCollapsed(isCollapsed) {
     const toggleHeaderBtn = document.getElementById('toggle-header-btn');
     document.body.classList.toggle('header-collapsed', isCollapsed);
@@ -990,12 +831,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log("Sidebar (popup.js) DOM loaded");
     showStatus("Đang kết nối tới Anki...", 'info');
 
-    // --- [MỚI] Lấy các nút header ---
+    // --- Lấy các nút header ---
     const toggleHeaderBtn = document.getElementById('toggle-header-btn');
     const settingsLink = document.getElementById('open-settings-link');
 
     try {
-        // --- [MỚI] Tải và áp dụng trạng thái thu gọn header ---
+        // --- Tải và áp dụng trạng thái thu gọn header ---
         try {
             const data = await chrome.storage.local.get([HEADER_COLLAPSE_KEY]);
             const isCollapsed = data[HEADER_COLLAPSE_KEY] || false;
@@ -1005,7 +846,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             setHeaderCollapsed(false); // Mặc định là mở
         }
 
-        // --- [MỚI] Gán sự kiện cho nút thu gọn header ---
+        // --- Gán sự kiện cho nút thu gọn header ---
         if (toggleHeaderBtn) {
             toggleHeaderBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -1111,14 +952,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // --- Gán sự kiện cho các nút ---
         document.getElementById('add-note-btn').addEventListener('click', addNoteToAnki);
-        // document.getElementById('open-settings-link').addEventListener('click', openOptionsPage); // [ĐÃ DI CHUYỂN LÊN TRÊN]
         document.getElementById('preset-select').addEventListener('change', applyPreset);
         document.getElementById('save-preset-btn').addEventListener('click', saveCurrentPreset);
         document.getElementById('delete-preset-btn').addEventListener('click', deleteCurrentPreset);
 
-        // Listener cho nút chuyển mode
-        document.getElementById('mode-normal-btn').addEventListener('click', () => setGlobalEditorMode('normal'));
-        document.getElementById('mode-source-btn').addEventListener('click', () => setGlobalEditorMode('source'));
+        // Removed listeners for mode toggle buttons
 
         // Listener cho toolbar định dạng
         document.getElementById('format-bold').addEventListener('click', () => applyFormat('bold'));
@@ -1139,8 +977,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Listener cho phím tắt
         document.addEventListener('keydown', (e) => {
-             // Chỉ bắt phím tắt khi đang focus vào field (div hoặc textarea)
-             if (activeElement && (activeElement.classList.contains('field-input-div') || activeElement.classList.contains('field-input-textarea'))) {
+             // Chỉ bắt phím tắt khi đang focus vào field (chỉ là div)
+             if (activeElement && activeElement.classList.contains('field-input-div')) {
                  if (e.ctrlKey && !e.shiftKey && e.key === 'b') { // Ctrl+B
                      e.preventDefault(); applyFormat('bold');
                  } else if (e.ctrlKey && !e.shiftKey && e.key === 'i') { // Ctrl+I
@@ -1178,9 +1016,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('preset-select').disabled = true;
         document.getElementById('save-preset-btn').disabled = true;
         document.getElementById('delete-preset-btn').disabled = true;
-        document.getElementById('mode-normal-btn').disabled = true;
-        document.getElementById('mode-source-btn').disabled = true;
-        
+
         // Vô hiệu hóa toolbar (nếu tồn tại)
         const formatToolbar = document.getElementById('format-toolbar');
         if (formatToolbar) {
@@ -1231,33 +1067,17 @@ async function addNoteToAnki() {
         const fieldIdBase = `field-${safeFieldName}`;
         let value = '';
 
-        if (globalEditorMode === 'normal') {
-            const divElement = fieldGroup.querySelector(`#${fieldIdBase}-div`);
-            if (divElement) {
-                value = divElement.innerHTML; // Lấy HTML từ div
-            } else {
-                console.warn(`Contenteditable div not found for field: ${fieldName}`);
-            }
-        } else { // Source mode
-            const textareaElement = fieldGroup.querySelector(`#${fieldIdBase}-textarea`);
-            if (textareaElement) {
-                value = textareaElement.value; // Lấy text từ textarea
-            } else {
-                 console.warn(`Textarea not found for field: ${fieldName}`);
-            }
+        // Luôn đọc từ div contenteditable
+        const divElement = fieldGroup.querySelector(`#${fieldIdBase}-div`);
+        if (divElement) {
+            value = divElement.innerHTML; // Lấy HTML từ div
+        } else {
+            console.warn(`Contenteditable div not found for field: ${fieldName}`);
         }
 
         fields[fieldName] = value;
-        // Kiểm tra nội dung không chỉ là khoảng trắng hoặc thẻ br trống
-        // dùng textContent của div hoặc value của textarea để kiểm tra nội dung thực sự
-        let checkValue = value;
-        if (globalEditorMode === 'normal') {
-             const divElement = fieldGroup.querySelector(`#${fieldIdBase}-div`);
-             checkValue = divElement?.textContent || '';
-        } else {
-            const textareaElement = fieldGroup.querySelector(`#${fieldIdBase}-textarea`);
-             checkValue = textareaElement?.value || '';
-        }
+        // Kiểm tra nội dung text thực sự
+        let checkValue = divElement?.textContent || '';
         if (checkValue.trim()) {
             hasContent = true;
         }
@@ -1304,7 +1124,6 @@ async function addNoteToAnki() {
             allowDuplicate: false // Hoặc đọc từ cài đặt nếu muốn
             // Thêm duplicateScope nếu cần
         }
-        // Có thể thêm audio, video, picture ở đây nếu cần xử lý từ sidebar
     };
 
     console.log("Sending note data to Anki:", JSON.parse(JSON.stringify(noteData))); // Log deep copy
@@ -1312,8 +1131,7 @@ async function addNoteToAnki() {
     try {
         const result = await invoke('addNote', { note: noteData });
         if (result === null) {
-             // AnkiConnect trả về null thường là do note không được thêm (ví dụ duplicate và allowDuplicate=false)
-             // Cần kiểm tra lại lỗi duplicate cụ thể hơn nếu có thể
+             // AnkiConnect trả về null thường là do note không được thêm
              const canAddResult = await invoke('canAddNotesWithErrorDetail', { notes: [noteData] });
              if (canAddResult && canAddResult.length > 0 && !canAddResult[0].canAdd && canAddResult[0].error) {
                   throw new Error(canAddResult[0].error); // Ném lỗi cụ thể từ canAddNotes
@@ -1348,21 +1166,17 @@ async function addNoteToAnki() {
                 const safeFieldName = fieldName.replace(/\s+/g, '-');
                 const fieldIdBase = `field-${safeFieldName}`;
                 const divElement = fieldGroup.querySelector(`#${fieldIdBase}-div`);
-                const textareaElement = fieldGroup.querySelector(`#${fieldIdBase}-textarea`);
                 const renderedViewElement = fieldGroup.querySelector(`#${fieldIdBase}-rendered`);
                 const previewId = `preview-${fieldIdBase}`;
-                
-                if (divElement) divElement.innerHTML = '';
-                if (textareaElement) textareaElement.value = '';
+
+                if (divElement) divElement.innerHTML = ''; // Xóa nội dung div
                 if (renderedViewElement) renderedViewElement.innerHTML = '';
-                
-                // Trigger input để reset preview và autoExpand
-                if (globalEditorMode === 'normal' && divElement) {
+
+                // Trigger input để reset preview
+                if (divElement) {
                      divElement.dispatchEvent(new Event('input', { bubbles: true }));
-                } else if (globalEditorMode === 'source' && textareaElement) {
-                    textareaElement.dispatchEvent(new Event('input', { bubbles: true }));
                 }
-                
+
                 // Cập nhật preview để xóa ảnh nếu có
                 const previewContainer = document.getElementById(previewId);
                 if (previewContainer) {
@@ -1390,69 +1204,42 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const { field, content, contentType } = message;
         const safeFieldName = field.replace(/\s+/g, '-');
         const fieldIdBase = `field-${safeFieldName}`;
-        const divId = `${fieldIdBase}-div`;
-        const textareaId = `${fieldIdBase}-textarea`;
+        const divId = `${fieldIdBase}-div`; // Chỉ cần ID của div
         const renderedViewId = `${fieldIdBase}-rendered`;
         const previewId = `preview-${fieldIdBase}`;
 
-        const targetDiv = document.getElementById(divId);
-        const targetTextarea = document.getElementById(textareaId);
-        let targetElement = null;
-
-        // Xác định element đích dựa trên mode hiện tại
-        if (globalEditorMode === 'normal') {
-            targetElement = targetDiv;
-        } else {
-            targetElement = targetTextarea;
-        }
+        const targetElement = document.getElementById(divId); // Luôn là div
 
         if (targetElement) {
-            console.log(`Filling field "${field}" (mode: ${globalEditorMode}) with ${contentType}:`, content);
+            console.log(`Filling field "${field}" with ${contentType}:`, content);
 
             let finalContent = content;
-            // Chỉ tạo thẻ img nếu content type là image (background đã gửi tên file)
+            // Tạo thẻ img nếu content type là image
             if (contentType === 'image') {
                 finalContent = `<img src="${content}">`;
             } else if (contentType === 'text') {
-                 // Nếu là text, kiểm tra xem có cần escape HTML không?
-                 // Hiện tại đang chèn thẳng HTML (giả sử content đã an toàn hoặc là HTML mong muốn)
+                 // Chèn thẳng HTML
                  finalContent = content;
             }
 
-
-            // Nối vào nội dung cũ (thêm dấu cách hoặc xuống dòng)
-            const separator = (globalEditorMode === 'normal' ? '<br>' : '\n'); // Xuống dòng tùy mode
-            if (globalEditorMode === 'normal') {
-                 // Dùng insertHTML để chèn vào vị trí con trỏ nếu có thể, hoặc nối vào cuối
-                 targetElement.focus(); // Focus trước khi chèn
-                 document.execCommand('insertHTML', false, (targetElement.innerHTML.trim() ? separator : '') + finalContent);
-            } else { // Source mode (textarea)
-                 const currentValue = targetElement.value;
-                 targetElement.value += (currentValue.trim() ? separator : '') + finalContent;
-            }
+            // Nối vào nội dung cũ
+            const separator = '<br>'; // Luôn dùng <br> cho div
+            targetElement.focus(); // Focus trước khi chèn
+            document.execCommand('insertHTML', false, (targetElement.innerHTML.trim() ? separator : '') + finalContent);
 
 
-            // Đồng bộ hóa giữa div và textarea
-            if (globalEditorMode === 'normal') {
-                syncDivToTextarea(targetDiv, targetTextarea);
-            } else {
-                syncTextareaToDiv(targetTextarea, targetDiv);
-            }
-
-            // Trigger input event để cập nhật preview (ở normal mode) và autoExpand (ở source mode)
+            // Trigger input event để cập nhật preview
             targetElement.dispatchEvent(new Event('input', { bubbles: true }));
-            
+
             // Cập nhật rendered view và media preview
-            if (globalEditorMode === 'normal') {
-                const renderedViewElement = document.getElementById(renderedViewId);
-                const previewContainer = document.getElementById(previewId);
-                if (renderedViewElement) {
-                    updateRenderedView(targetDiv, renderedViewElement);
-                }
-                if (previewContainer) {
-                    // Gọi lại updateMediaPreviewFromContent để đảm bảo preview được cập nhật
-                    updateMediaPreviewFromContent(targetDiv.innerHTML, previewId);
-                }
+            const renderedViewElement = document.getElementById(renderedViewId);
+            const previewContainer = document.getElementById(previewId);
+            if (renderedViewElement) {
+                updateRenderedView(targetElement, renderedViewElement);
+            }
+            if (previewContainer) {
+                // Gọi lại updateMediaPreviewFromContent để đảm bảo preview được cập nhật
+                updateMediaPreviewFromContent(targetElement.innerHTML, previewId);
             }
 
             // Tự động mở field nếu đang bị thu gọn
@@ -1461,21 +1248,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 const header = fieldGroup.querySelector('.field-header');
                 if (header) header.click(); // Simulate click để mở
             }
-            
+
             // Chuyển sang rendered view nếu đang ở code view
-            if (globalEditorMode === 'normal' && fieldGroup && fieldGroup.dataset.viewMode === 'code') {
+            if (fieldGroup && fieldGroup.dataset.viewMode === 'code') {
                 toggleFieldView(fieldGroup);
             }
 
             sendResponse({ success: true, message: `Field "${field}" updated.` });
 
         } else {
-            console.warn(`Target element not found for field "${field}" in mode "${globalEditorMode}". Div found: ${!!targetDiv}, Textarea found: ${!!targetTextarea}`);
+            console.warn(`Target div not found for field "${field}". Div ID: ${divId}`);
             let errorMsg = `Lỗi: Field "${field}" không tìm thấy.`;
             if (!currentModelName) errorMsg = `Lỗi: Chọn Note Type trước khi gửi vào field "${field}"`;
             showStatus(errorMsg, 'error');
             sendResponse({ success: false, message: `Field "${field}" not found.` });
         }
     }
-    // return true; // Cần thiết nếu sendResponse là bất đồng bộ (async), ở đây không cần
+    // return true; // Không cần thiết
 });
+
