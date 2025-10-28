@@ -250,3 +250,21 @@
 - Sửa lỗi 🐞:
     - `background.js`: Sửa lỗi logic gửi ảnh. Thay vì gửi thẻ `<img ...>` (gây lỗi lồng thẻ trong `popup.js`), giờ đây `background.js` chỉ gửi `storedFilename` (tên file) và `contentType: 'image'`.
     - `popup.js`: Cập nhật `onMessage` để xử lý `contentType: 'image'` bằng cách tự tạo thẻ `<img>` từ `content` (tên file), sửa lỗi hiển thị ảnh từ context menu.
+
+## v1.37.0 – 2025-10-28
+- 🖼️ Tính năng Media Preview:
+    - `popup.html`: Thêm cấu trúc modal ẩn (`#image-preview-modal`) để xem ảnh lớn hơn.
+    - `popup.js`:
+        - Cập nhật `createFieldsForModel`: Thay đổi cấu trúc HTML của field, thêm `div.field-input-area` chứa textarea và `div.media-preview-container`.
+        - Thêm hàm `updateMediaPreview(textarea)`: Được gọi khi field được tạo hoặc khi textarea có sự kiện input. Hàm này kiểm tra nội dung textarea, tìm thẻ `<img src="filename">` hoặc `[sound:filename]`.
+        - Ảnh: Nếu tìm thấy, gọi `invoke('retrieveMediaFile')` để lấy base64, tạo thẻ `<img>` với `src="data:..."`, thêm class `preview-image` và gán sự kiện click để gọi `showImageModal`.
+        - Âm thanh: Nếu tìm thấy, tạo nút 🔊 Nghe (`.preview-audio-button`). Gán sự kiện click để gọi `invoke('retrieveMediaFile')`, tạo thẻ `<audio>` tạm thời với `src="data:..."` và `.play()`. Quản lý trạng thái nút (disabled, text). Dừng audio đang phát nếu có.
+        - Thêm hàm `showImageModal(src, caption)` để hiển thị modal xem ảnh.
+        - Cập nhật `toggleFieldCollapse`: Giờ đây ẩn/hiện `div.field-input-area`. Ngăn collapse khi click vào ảnh preview hoặc nút audio.
+        - Cập nhật hàm `addNoteToAnki`: Gọi `updateMediaPreview` sau khi xóa field để xóa preview nếu field bị xóa trắng.
+    - `styles.css`: Thêm các class `.field-input-area`, `.media-preview-container`, `.preview-image`, `.preview-audio-button`, `.preview-error` và toàn bộ style cho `.modal`.
+- 🔗 Tính năng Context Menu cho Link:
+    - `background.js`:
+        - Thêm `CONTEXT_MENU_ID_LINK` và `contexts: ["link"]`.
+        - Cập nhật `updateContextMenu` để tạo menu gốc và menu con cho link.
+        - Cập nhật `onClicked`: Thêm case `send-link-to-`. Lấy `info.linkUrl` và gửi về `popup.js` với `contentType: 'text'`.
