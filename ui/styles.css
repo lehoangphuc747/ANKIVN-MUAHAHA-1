@@ -55,6 +55,7 @@ body {
   height: 100vh; /* Chiều cao tối đa */
   overflow-y: auto; /* Thêm cuộn dọc nếu nội dung vượt quá */
   box-sizing: border-box;
+  padding-bottom: 80px; /* Thêm padding dưới để nội dung không bị che */
 }
 
 /* --- Header chính --- */
@@ -549,6 +550,23 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     opacity: 0.6;
 }
 
+/* --- [NEW] Floating Button Styles --- */
+.floating-button-container {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 100;
+  width: auto;
+  margin-bottom: 0;
+}
+
+.floating-button-container #add-note-btn {
+  width: auto;
+  padding: 0.8rem 1.2rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+
 /* --- Modal xem ảnh --- */
 .modal { display: none; position: fixed; z-index: 1001; padding-top: 50px; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.85); }
 .modal-content { margin: auto; display: block; max-width: 90%; max-height: 80vh; animation-name: zoom; animation-duration: 0.3s; }
@@ -680,4 +698,3 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     border-top: 1px solid var(--border-color-light);
 }
 .random-id-section label { margin-bottom: 8px; }
-
