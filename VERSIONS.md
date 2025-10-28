@@ -1,5 +1,11 @@
 # Version History
 
+## 🎨 v2.2.2 – 2025-11-05
+
+### UI Refinement: **Seamless Sticky Toolbar**
+
+- **`ui/styles.css`**: Removed the background, border, and padding from `#format-toolbar` so that its buttons sit directly on the sticky wrapper. This creates a cleaner, more integrated look without a "box-in-a-box" effect.
+
 ## 🎨 v2.2.1 – 2025-11-04
 
 ### UI Refinement: **Flush Sticky Toolbar**

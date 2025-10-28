@@ -121,7 +121,7 @@ body.header-collapsed #collapsible-header {
     top: 0;
     z-index: 10;
     background-color: var(--sticky-toolbar-bg);
-    padding: 8px 16px;
+    padding: 8px 0;
     border-bottom: 1px solid var(--border-color-light);
     margin-bottom: 1rem;
 }
@@ -188,11 +188,6 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 
 /* --- Thanh công cụ định dạng --- */
 #format-toolbar {
-    background-color: var(--toolbar-bg);
-    border: 1px solid var(--toolbar-border);
-    border-radius: 6px;
-    padding: 5px 8px;
-    margin-top: 0; /* Xóa margin-top vì đã có padding ở wrapper */
     display: flex;
     align-items: center;
     gap: 4px;
