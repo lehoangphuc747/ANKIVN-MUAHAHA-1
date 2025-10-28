@@ -149,7 +149,6 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .editor-mode-toggle button {
     padding: 5px 10px;
     font-size: 0.85rem;
-    margin: 0 2px;
 }
 .editor-mode-toggle button.active {
     /* Style nút đang active */
