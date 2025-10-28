@@ -49,9 +49,6 @@ body {
 
 .container {
   padding: 16px;
-  /* Cho phép container cuộn nếu nội dung dài hơn */
-  /* overflow-y: auto; */ /* Bỏ auto để sticky header hoạt động đúng */
-  /* max-height: 600px; */ /* Giới hạn chiều cao nếu muốn scroll */
 }
 
 /* --- Header chính --- */
@@ -240,4 +237,7 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .status-message.info { background-color: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
 .status-message.success { background-color: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
 .status-message.error { background-color: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
+
+
+}
 
