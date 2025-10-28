@@ -1,5 +1,21 @@
 # Version History
 
+## ✨ v2.1.0 – 2025-10-30
+
+### 🚀 Feature: **Advanced Customization**
+
+This update introduces powerful new customization options in the settings page, giving users more control over their workflow.
+
+**Settings Page Enhancements**
+- **Field Order**: Users can now drag and drop fields to define a custom display order for the sidebar. This order is saved per Note Type.
+- **Context Menu Defaults**: Users can set a default target field for each context menu action (Text, Image, Audio, Link). This speeds up adding content by allowing one-click sending to a predefined field.
+
+**Functional Updates**
+- The sidebar now respects the custom field order set in the settings.
+- The context menu is now dynamic:
+  - The main menu item (e.g., "Gửi ảnh...") will display the default target field if one is set (e.g., "Gửi ảnh đến 'Front'").
+  - Clicking the main menu item directly sends the content to the default field.
+
 ## v1.0.0 – 2025-08-24
 - @ToneDice created manifest.json with basic permissions and action popup
 - Added background.js with minimal event listener
