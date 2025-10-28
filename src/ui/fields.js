@@ -18,12 +18,24 @@ export async function createFieldsForModel(modelName) {
 
     chrome.runtime.sendMessage({ action: "updateFieldsForContextMenu", modelName, fields: fieldNames });
 
-    const settings = await chrome.storage.local.get([`collapsedFields_${modelName}`, `hiddenFields_${modelName}`]);
-    const collapsedFields = settings[`collapsedFields_${modelName}`] || {};
-    const hiddenFields = settings[`hiddenFields_${modelName}`] || {};
+    const settingsKeys = [
+        `collapsedFields_${modelName}`, 
+        `hiddenFields_${modelName}`,
+        `fieldOrder_${modelName}`
+    ];
+    const settings = await chrome.storage.local.get(settingsKeys);
+    const collapsedFields = settings[settingsKeys[0]] || {};
+    const hiddenFields = settings[settingsKeys[1]] || {};
+    const savedOrder = settings[settingsKeys[2]];
+
+    // Sort fields based on saved order, robustly handling added/removed fields
+    let orderedFieldNames = fieldNames;
+    if (savedOrder) {
+        orderedFieldNames = [...new Set([...savedOrder, ...fieldNames])].filter(f => fieldNames.includes(f));
+    }
 
     fieldsContainer.innerHTML = "";
-    fieldNames.forEach(fieldName => {
+    orderedFieldNames.forEach(fieldName => {
       if (hiddenFields[fieldName]) return;
 
       const isCollapsed = collapsedFields[fieldName] || false;

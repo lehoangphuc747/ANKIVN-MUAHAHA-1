@@ -9,10 +9,19 @@ const CONTEXT_MENU_ID_LINK = "ankivnSendLink";
 export async function updateContextMenu(fieldNames = [], modelName = null) {
     await chrome.contextMenus.removeAll();
 
-    chrome.contextMenus.create({ id: CONTEXT_MENU_ID_TEXT, title: "Gửi text đến Field", contexts: ["selection"] });
-    chrome.contextMenus.create({ id: CONTEXT_MENU_ID_IMAGE, title: "Gửi ảnh đến Field", contexts: ["image"] });
-    chrome.contextMenus.create({ id: CONTEXT_MENU_ID_AUDIO, title: "Gửi âm thanh đến Field", contexts: ["audio"] });
-    chrome.contextMenus.create({ id: CONTEXT_MENU_ID_LINK, title: "Gửi link đến Field", contexts: ["link"] });
+    let defaults = {};
+    if (modelName) {
+        const defaultsKey = `contextMenuDefaults_${modelName}`;
+        const data = await chrome.storage.local.get(defaultsKey);
+        defaults = data[defaultsKey] || {};
+    }
+
+    const createTitle = (base, type) => defaults[type] ? `${base} đến "${defaults[type]}"` : `${base} đến Field...`;
+
+    chrome.contextMenus.create({ id: CONTEXT_MENU_ID_TEXT, title: createTitle("Gửi text", "text"), contexts: ["selection"] });
+    chrome.contextMenus.create({ id: CONTEXT_MENU_ID_IMAGE, title: createTitle("Gửi ảnh", "image"), contexts: ["image"] });
+    chrome.contextMenus.create({ id: CONTEXT_MENU_ID_AUDIO, title: createTitle("Gửi âm thanh", "audio"), contexts: ["audio"] });
+    chrome.contextMenus.create({ id: CONTEXT_MENU_ID_LINK, title: createTitle("Gửi link", "link"), contexts: ["link"] });
 
     let visibleFields = fieldNames;
     if (modelName && Array.isArray(fieldNames) && fieldNames.length > 0) {
@@ -23,22 +32,15 @@ export async function updateContextMenu(fieldNames = [], modelName = null) {
             visibleFields = fieldNames.filter(fieldName => !hiddenFields[fieldName]);
         } catch (error) {
             console.error("Error filtering hidden fields:", error);
-            visibleFields = fieldNames;
         }
     } else if (!Array.isArray(fieldNames) || fieldNames.length === 0) {
          visibleFields = [];
     }
 
-    if (visibleFields.length === 0) {
-        const noFieldsTitle = modelName ? "Tất cả fields đã bị ẩn" : "Chọn Note Type trong sidebar...";
+    if (visibleFields.length > 0) {
         const parentIds = [CONTEXT_MENU_ID_TEXT, CONTEXT_MENU_ID_IMAGE, CONTEXT_MENU_ID_AUDIO, CONTEXT_MENU_ID_LINK];
-        parentIds.forEach(parentId => {
-            chrome.contextMenus.create({
-                id: `noVisibleFields_${parentId}`, parentId: parentId,
-                title: noFieldsTitle, contexts: ["all"], enabled: false
-            });
-        });
-    } else {
+        parentIds.forEach(parentId => chrome.contextMenus.create({ id: `separator-for-${parentId}`, parentId, type: 'separator' }));
+        
         visibleFields.forEach(fieldName => {
             chrome.contextMenus.create({ id: `send-text-to-${fieldName}`, parentId: CONTEXT_MENU_ID_TEXT, title: fieldName, contexts: ["selection"] });
             chrome.contextMenus.create({ id: `send-image-to-${fieldName}`, parentId: CONTEXT_MENU_ID_IMAGE, title: fieldName, contexts: ["image"] });
@@ -46,7 +48,17 @@ export async function updateContextMenu(fieldNames = [], modelName = null) {
             chrome.contextMenus.create({ id: `send-link-to-${fieldName}`, parentId: CONTEXT_MENU_ID_LINK, title: fieldName, contexts: ["link"] });
         });
     }
-    console.log("Context menu updated with visible fields:", visibleFields);
+    console.log("Context menu updated with defaults:", defaults);
+}
+
+async function getDefaultField(contextType) {
+    const { lastSelectedModel } = await chrome.storage.local.get('lastSelectedModel');
+    if (!lastSelectedModel) return null;
+    
+    const defaultsKey = `contextMenuDefaults_${lastSelectedModel}`;
+    const data = await chrome.storage.local.get(defaultsKey);
+    const defaults = data[defaultsKey] || {};
+    return defaults[contextType] || null;
 }
 
 export async function handleContextMenuClick(info, tab) {
@@ -58,23 +70,42 @@ export async function handleContextMenuClick(info, tab) {
     let finalContentToSend = null;
 
     try {
-        if (info.menuItemId.startsWith("send-text-to-")) {
-            targetField = info.menuItemId.substring("send-text-to-".length);
+        const menuItemId = info.menuItemId;
+        if (menuItemId.startsWith("send-text-to-")) {
+            targetField = menuItemId.substring("send-text-to-".length);
             finalContentToSend = info.selectionText;
             contentType = 'text';
-        } else if (info.menuItemId.startsWith("send-image-to-")) {
-            targetField = info.menuItemId.substring("send-image-to-".length);
+        } else if (menuItemId.startsWith("send-image-to-")) {
+            targetField = menuItemId.substring("send-image-to-".length);
             contentUrl = info.srcUrl;
             contentType = 'image';
-        } else if (info.menuItemId.startsWith("send-audio-to-")) {
-            targetField = info.menuItemId.substring("send-audio-to-".length);
+        } else if (menuItemId.startsWith("send-audio-to-")) {
+            targetField = menuItemId.substring("send-audio-to-".length);
             contentUrl = info.srcUrl || info.linkUrl;
             contentType = 'audio';
-        } else if (info.menuItemId.startsWith("send-link-to-")) {
-            targetField = info.menuItemId.substring("send-link-to-".length);
+        } else if (menuItemId.startsWith("send-link-to-")) {
+            targetField = menuItemId.substring("send-link-to-".length);
+            finalContentToSend = info.linkUrl;
+            contentType = 'text';
+        } else if (menuItemId === CONTEXT_MENU_ID_TEXT) {
+            targetField = await getDefaultField('text');
+            finalContentToSend = info.selectionText;
+            contentType = 'text';
+        } else if (menuItemId === CONTEXT_MENU_ID_IMAGE) {
+            targetField = await getDefaultField('image');
+            contentUrl = info.srcUrl;
+            contentType = 'image';
+        } else if (menuItemId === CONTEXT_MENU_ID_AUDIO) {
+            targetField = await getDefaultField('audio');
+            contentUrl = info.srcUrl || info.linkUrl;
+            contentType = 'audio';
+        } else if (menuItemId === CONTEXT_MENU_ID_LINK) {
+            targetField = await getDefaultField('link');
             finalContentToSend = info.linkUrl;
             contentType = 'text';
         }
+
+        if (!targetField) return; // No default field set and a parent item was clicked
 
         if (contentType === 'image' || contentType === 'audio') {
             if (!contentUrl) return;
@@ -83,7 +114,6 @@ export async function handleContextMenuClick(info, tab) {
             const defaultExt = contentType === 'image' ? 'webp' : 'mp3';
             const invalidCharsRegex = /[?#&=%]/;
 
-            // Step 1 & 2: Try to get extension from URL path and validate
             const pathBeforeQuery = contentUrl.split('?')[0].split('#')[0];
             const lastSegment = pathBeforeQuery.split('/').pop();
             if (lastSegment.includes('.')) {
@@ -93,23 +123,17 @@ export async function handleContextMenuClick(info, tab) {
                 }
             }
 
-            // Step 3: If no valid extension found, check query parameters for images
             if (!fileExtension && contentType === 'image') {
                 try {
                     const urlParams = new URL(contentUrl).searchParams;
-                    const formatParam = urlParams.get('fm'); // Common in Unsplash, etc.
+                    const formatParam = urlParams.get('fm');
                     if (formatParam && formatParam.length > 1 && formatParam.length < 5 && !invalidCharsRegex.test(formatParam)) {
                         fileExtension = formatParam.toLowerCase();
                     }
-                } catch (e) {
-                    console.warn("Could not parse URL for query params:", e);
-                }
+                } catch (e) { /* Ignore parsing errors */ }
             }
             
-            // Step 4: If still no extension, use the default
-            if (!fileExtension) {
-                fileExtension = defaultExt;
-            }
+            if (!fileExtension) fileExtension = defaultExt;
 
             let filename = `ankivn_${contentType}_${Date.now()}.${fileExtension}`;
             const storedFilename = await invoke('storeMediaFile', { url: contentUrl, filename: filename });

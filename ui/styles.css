@@ -594,14 +594,17 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .status-message.error { background-color: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
 
 
-/* --- Settings Page Specific Styles (Nên giữ ở styles.css để dùng chung) --- */
-.settings-container { /* Style cho container của trang settings */
+/* --- Settings Page Specific Styles --- */
+.settings-container {
     padding: 20px;
-    max-width: 600px; /* Giới hạn chiều rộng tối đa */
-    margin: 0 auto; /* Căn giữa */
+    max-width: 600px;
+    margin: 0 auto;
+}
+.settings-section {
+    margin-bottom: 25px;
 }
 .note-type-selector { margin-bottom: 20px; }
-.settings-fields-controls { /* Controls cho Select All/Deselect All */
+.settings-fields-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -609,26 +612,25 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     padding-bottom: 10px;
     border-bottom: 1px solid var(--border-color-light);
 }
-.settings-fields-controls span { /* Label "Ẩn Fields" / "Ghim Fields" */
+.settings-fields-controls span {
     font-weight: 500;
     font-size: 0.95rem;
     color: var(--text-color-light);
 }
-.settings-fields-controls.sticky-controls span { color: var(--sticky-text-color); } /* Màu riêng cho Ghim */
+.settings-fields-controls.sticky-controls span { color: var(--sticky-text-color); }
 
-.settings-fields-list { /* Container chứa danh sách checkbox */
-    display: grid; /* Layout dạng lưới */
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Tự động chia cột */
-    gap: 8px; /* Khoảng cách giữa các item */
-    max-height: 400px; /* Giới hạn chiều cao và thêm cuộn */
+.settings-fields-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+    max-height: 400px;
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 10px;
     background-color: var(--bg-color-alt);
-    margin-bottom: 20px; /* Khoảng cách với phần dưới */
 }
-.field-checkbox-item { /* Style cho từng item checkbox */
+.field-checkbox-item {
     display: flex;
     align-items: center;
     padding: 10px 12px;
@@ -637,13 +639,12 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     transition: background-color 0.15s ease, border-color 0.15s ease;
     background-color: #fdfdfd;
     border: 1px solid var(--border-color-light);
-    overflow: hidden; /* Ngăn label tràn ra ngoài */
+    overflow: hidden;
 }
 .field-checkbox-item:hover {
     background-color: var(--hover-bg-color);
     border-color: var(--hover-border-color);
 }
-/* Style khi item được check (Ẩn) */
 .field-checkbox-item.checked {
     background-color: var(--checked-bg-color);
     border-color: var(--checked-border-color);
@@ -651,20 +652,19 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .field-checkbox-item.checked label {
     font-weight: 500;
     color: var(--checked-text-color);
-    text-decoration: line-through; /* Gạch ngang chữ */
+    text-decoration: line-through;
 }
 .field-checkbox-item.checked input[type="checkbox"] {
-    accent-color: var(--checked-text-color); /* Đổi màu checkbox */
+    accent-color: var(--checked-text-color);
 }
-/* Style khi item được check (Ghim) */
 .field-checkbox-item.sticky-item.checked {
     background-color: var(--sticky-bg-color);
     border-color: var(--sticky-border-color);
-    text-decoration: none; /* Bỏ gạch ngang */
+    text-decoration: none;
 }
 .field-checkbox-item.sticky-item.checked label {
     color: var(--sticky-text-color);
-    text-decoration: none; /* Bỏ gạch ngang */
+    text-decoration: none;
     font-weight: 500;
 }
 .field-checkbox-item.sticky-item.checked input[type="checkbox"] {
@@ -673,8 +673,8 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 
 .field-checkbox-item input[type="checkbox"] {
     margin-right: 10px;
-    flex-shrink: 0; /* Không co checkbox lại */
-    pointer-events: none; /* Click vào cả item thay vì chỉ checkbox */
+    flex-shrink: 0;
+    pointer-events: none;
 }
 .field-checkbox-item label {
     display: block;
@@ -684,17 +684,57 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     text-overflow: ellipsis;
     cursor: pointer;
     color: var(--text-color);
-    flex-grow: 1; /* Label chiếm phần còn lại */
+    flex-grow: 1;
 }
-/* Scrollbar cho danh sách field */
 .settings-fields-list::-webkit-scrollbar { width: 6px; }
 .settings-fields-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
 .settings-fields-list::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
 .settings-fields-list::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 
-.random-id-section { /* Phần chọn Random ID */
-    margin-top: 25px;
-    padding-top: 15px;
-    border-top: 1px solid var(--border-color-light);
+/* [NEW] Draggable List Styles */
+.draggable-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
-.random-id-section label { margin-bottom: 8px; }
+.draggable-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 5px;
+    background-color: #fdfdfd;
+    border: 1px solid var(--border-color-light);
+    cursor: grab;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.draggable-item:hover {
+    background-color: var(--hover-bg-color);
+    border-color: var(--hover-border-color);
+}
+.draggable-item.dragging {
+    opacity: 0.5;
+    background: #eaf6ff;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.drag-handle {
+    margin-right: 12px;
+    color: #aaa;
+    cursor: grab;
+}
+.draggable-item:active .drag-handle, .draggable-item:active {
+    cursor: grabbing;
+}
+
+/* [NEW] Context Menu Settings Styles */
+.context-menu-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem 1.5rem;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-color-alt);
+}
+.context-menu-settings-grid .form-group {
+    margin-bottom: 0;
+}

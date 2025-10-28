@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cài đặt AnkiVN</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
     <div class="settings-container">
@@ -18,38 +19,89 @@
             </div>
         </div>
 
+        <!-- [MỚI] Thứ tự Field -->
+        <div class="settings-section" id="field-order-section" style="display: none;">
+            <div class="settings-fields-controls">
+                <span>↕️ Sắp xếp thứ tự Fields (Kéo thả để thay đổi):</span>
+            </div>
+            <div class="settings-fields-list draggable-list" id="field-order-list-container">
+                <p><i>Đang tải...</i></p>
+            </div>
+        </div>
+
+        <!-- [MỚI] Cấu hình Context Menu -->
+        <div class="settings-section" id="context-menu-section" style="display: none;">
+            <div class="settings-fields-controls">
+                <span>🖱️ Field mặc định cho Context Menu:</span>
+            </div>
+            <div class="context-menu-settings-grid">
+                <div class="form-group">
+                    <label for="context-default-text">Khi gửi Text:</label>
+                    <select id="context-default-text" class="form-control context-default-select" data-context-type="text">
+                        <option value="">-- Gửi tới Field con --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="context-default-image">Khi gửi Image:</label>
+                    <select id="context-default-image" class="form-control context-default-select" data-context-type="image">
+                        <option value="">-- Gửi tới Field con --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="context-default-audio">Khi gửi Audio:</label>
+                    <select id="context-default-audio" class="form-control context-default-select" data-context-type="audio">
+                        <option value="">-- Gửi tới Field con --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="context-default-link">Khi gửi Link:</label>
+                    <select id="context-default-link" class="form-control context-default-select" data-context-type="link">
+                        <option value="">-- Gửi tới Field con --</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
         <!-- Khu vực Ẩn Field -->
-        <div class="settings-fields-controls">
-             <span>Ẩn Fields (Tích để ẩn):</span>
-             <div>
-                 <button id="select-all-fields" class="btn-secondary">Ẩn tất cả</button>
-                 <button id="deselect-all-fields" class="btn-secondary">Hiện tất cả</button>
+        <div class="settings-section" id="hidden-fields-section" style="display: none;">
+            <div class="settings-fields-controls">
+                 <span>Ẩn Fields (Tích để ẩn):</span>
+                 <div>
+                     <button id="select-all-fields" class="btn-secondary">Ẩn tất cả</button>
+                     <button id="deselect-all-fields" class="btn-secondary">Hiện tất cả</button>
+                 </div>
+            </div>
+            <div class="settings-fields-list" id="settings-fields-list-container">
+                 <p><i>Hãy chọn một Note Type ở trên.</i></p>
+            </div>
+        </div>
+
+        <!-- Khu vực Ghim Field -->
+        <div class="settings-section" id="sticky-fields-section" style="display: none;">
+            <div class="settings-fields-controls sticky-controls">
+                 <span>📌 Ghim Fields (Giữ lại nội dung sau khi thêm):</span>
+                 <div>
+                     <button id="select-all-sticky-fields" class="btn-secondary">Ghim tất cả</button>
+                     <button id="deselect-all-sticky-fields" class="btn-secondary">Bỏ ghim tất cả</button>
+                 </div>
+            </div>
+            <div class="settings-fields-list sticky-fields-list" id="settings-sticky-fields-list-container">
+                 <p><i>Hãy chọn một Note Type ở trên.</i></p>
+            </div>
+        </div>
+
+        <!-- Khu vực Random ID -->
+        <div class="settings-section" id="random-id-section" style="display: none;">
+             <div class="settings-fields-controls">
+                <span>🎲 ID ngẫu nhiên</span>
              </div>
-        </div>
-        <div class="settings-fields-list" id="settings-fields-list-container">
-             <p><i>Hãy chọn một Note Type ở trên.</i></p>
-        </div>
-
-        <!-- [MỚI] Khu vực Ghim Field -->
-        <div class="settings-fields-controls sticky-controls">
-             <span>📌 Ghim Fields (Giữ lại nội dung sau khi thêm):</span>
-             <div>
-                 <button id="select-all-sticky-fields" class="btn-secondary">Ghim tất cả</button>
-                 <button id="deselect-all-sticky-fields" class="btn-secondary">Bỏ ghim tất cả</button>
+             <div class="form-group" style="padding: 0 10px 10px 10px;">
+                <label for="random-id-field-select">Tự động tạo ID ngẫu nhiên cho Field:</label>
+                <select id="random-id-field-select" class="form-control">
+                     <option value="">-- Không tự động tạo ID --</option>
+                </select>
+                <p style="font-size: 12px; color: #666; margin-top: 5px;">Chọn field để tự động điền 14 số ngẫu nhiên khi thêm note mới (nếu field đó trống).</p>
              </div>
-        </div>
-        <div class="settings-fields-list sticky-fields-list" id="settings-sticky-fields-list-container">
-             <p><i>Hãy chọn một Note Type ở trên.</i></p>
-        </div>
-        <!-- [HẾT MỚI] -->
-
-
-        <div class="random-id-section" id="random-id-section" style="display: none;">
-             <label for="random-id-field-select">Tự động tạo ID ngẫu nhiên cho Field:</label>
-             <select id="random-id-field-select" class="form-control">
-                 <option value="">-- Không tự động tạo ID --</option>
-                 </select>
-             <p style="font-size: 12px; color: #666; margin-top: 5px;">Chọn field để tự động điền 14 số ngẫu nhiên khi thêm note mới (nếu field đó trống).</p>
         </div>
         
         <button id="save-settings-btn" class="btn-primary">Lưu Cài đặt</button>

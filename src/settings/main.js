@@ -22,22 +22,19 @@ function showStatus(message, type = 'info') {
     }
 }
 
+function showAllSections(shouldShow) {
+    document.querySelectorAll('.settings-section').forEach(section => {
+        section.style.display = shouldShow ? 'block' : 'none';
+    });
+}
+
 async function loadFieldsForSettings(modelName) {
     currentSettingsModel = modelName;
-    const fieldsListContainer = document.getElementById('settings-fields-list-container');
-    const stickyFieldsListContainer = document.getElementById('settings-sticky-fields-list-container');
-    const randomIdSection = document.getElementById('random-id-section');
-    const randomIdSelect = document.getElementById('random-id-field-select');
-
-    fieldsListContainer.innerHTML = '<p>Đang tải fields...</p>';
-    stickyFieldsListContainer.innerHTML = '<p>Đang tải fields...</p>';
-    randomIdSelect.innerHTML = '<option value="">-- Không tự động tạo ID --</option>';
-    randomIdSection.style.display = 'none';
+    showAllSections(false);
 
     if (!modelName || !allModelsForSettings.includes(modelName)) {
         const msg = `<p><i>${!modelName ? 'Hãy chọn một Note Type hợp lệ.' : 'Tên Note Type không hợp lệ.'}</i></p>`;
-        fieldsListContainer.innerHTML = msg;
-        stickyFieldsListContainer.innerHTML = msg;
+        document.getElementById('settings-fields-list-container').innerHTML = msg;
         return;
     }
     
@@ -45,97 +42,200 @@ async function loadFieldsForSettings(modelName) {
         const fieldNames = await invoke('modelFieldNames', { modelName: modelName });
         if(fieldNames === null) throw new Error("modelFieldNames returned null.");
 
-        const hiddenFieldsKey = `hiddenFields_${modelName}`;
-        const stickyFieldsKey = `stickyFields_${modelName}`;
-        const randomIdFieldKey = `randomIdField_${modelName}`;
+        showAllSections(true);
+
+        const keys = [
+            `hiddenFields_${modelName}`,
+            `stickyFields_${modelName}`,
+            `randomIdField_${modelName}`,
+            `fieldOrder_${modelName}`,
+            `contextMenuDefaults_${modelName}`
+        ];
+        const storedData = await chrome.storage.local.get(keys);
         
-        const storedData = await chrome.storage.local.get([hiddenFieldsKey, stickyFieldsKey, randomIdFieldKey]);
-        
-        const hiddenFields = storedData[hiddenFieldsKey] || {};
-        const stickyFields = storedData[stickyFieldsKey] || {};
-        const selectedRandomIdField = storedData[randomIdFieldKey] || "";
+        const hiddenFields = storedData[keys[0]] || {};
+        const stickyFields = storedData[keys[1]] || {};
+        const selectedRandomIdField = storedData[keys[2]] || "";
+        const fieldOrder = storedData[keys[3]] || fieldNames;
+        const contextMenuDefaults = storedData[keys[4]] || {};
 
-        fieldsListContainer.innerHTML = '';
-        stickyFieldsListContainer.innerHTML = '';
+        // Sort fields based on saved order, keeping new fields at the end
+        const orderedFields = [...new Set([...fieldOrder, ...fieldNames])].filter(f => fieldNames.includes(f));
 
-        if (fieldNames.length === 0) {
-            const msg = '<p><i>Model này không có field nào.</i></p>';
-            fieldsListContainer.innerHTML = msg;
-            stickyFieldsListContainer.innerHTML = msg;
-            return;
-        }
-
-        fieldNames.forEach(fieldName => {
-            const isHidden = hiddenFields[fieldName] || false;
-            const hideItemDiv = document.createElement('div');
-            hideItemDiv.className = `field-checkbox-item ${isHidden ? 'checked' : ''}`;
-            hideItemDiv.innerHTML = `<input type="checkbox" data-field-name="${fieldName}" ${isHidden ? 'checked' : ''} style="pointer-events: none;"><label title="${fieldName}">${fieldName}</label>`;
-            hideItemDiv.addEventListener('click', () => {
-                const checkbox = hideItemDiv.querySelector('input');
-                checkbox.checked = !checkbox.checked;
-                hideItemDiv.classList.toggle('checked', checkbox.checked);
-            });
-            fieldsListContainer.appendChild(hideItemDiv);
-
-            const isSticky = stickyFields[fieldName] || false;
-            const stickyItemDiv = document.createElement('div');
-            stickyItemDiv.className = `field-checkbox-item sticky-item ${isSticky ? 'checked' : ''}`;
-            stickyItemDiv.innerHTML = `<input type="checkbox" data-field-name="${fieldName}" ${isSticky ? 'checked' : ''} style="pointer-events: none;"><label title="${fieldName}">📌 ${fieldName}</label>`;
-            stickyItemDiv.addEventListener('click', () => {
-                const checkbox = stickyItemDiv.querySelector('input');
-                checkbox.checked = !checkbox.checked;
-                stickyItemDiv.classList.toggle('checked', checkbox.checked);
-            });
-            stickyFieldsListContainer.appendChild(stickyItemDiv);
-            
-            const option = document.createElement('option');
-            option.value = fieldName;
-            option.textContent = fieldName;
-            randomIdSelect.appendChild(option);
-        });
-
-        if (selectedRandomIdField) { randomIdSelect.value = selectedRandomIdField; }
-        randomIdSection.style.display = 'block';
+        populateHiddenFields(orderedFields, hiddenFields);
+        populateStickyFields(orderedFields, stickyFields);
+        populateRandomIdSelect(orderedFields, selectedRandomIdField);
+        populateFieldOrderList(orderedFields);
+        populateContextMenuDefaults(orderedFields, contextMenuDefaults);
 
     } catch (error) {
         const errorMsg = `<p style="color: red;">Lỗi tải cấu hình: ${error.message}</p>`;
-        fieldsListContainer.innerHTML = errorMsg;
-        stickyFieldsListContainer.innerHTML = errorMsg;
         showStatus('Lỗi tải cấu hình: ' + error.message, 'error');
-        randomIdSection.style.display = 'none';
+        showAllSections(false);
     }
 }
 
+function populateHiddenFields(fieldNames, hiddenFields) {
+    const container = document.getElementById('settings-fields-list-container');
+    container.innerHTML = fieldNames.length === 0 ? '<p><i>Model này không có field nào.</i></p>' : '';
+    fieldNames.forEach(fieldName => {
+        const isHidden = hiddenFields[fieldName] || false;
+        const itemDiv = document.createElement('div');
+        itemDiv.className = `field-checkbox-item ${isHidden ? 'checked' : ''}`;
+        itemDiv.innerHTML = `<input type="checkbox" data-field-name="${fieldName}" ${isHidden ? 'checked' : ''}><label title="${fieldName}">${fieldName}</label>`;
+        itemDiv.addEventListener('click', () => {
+            const checkbox = itemDiv.querySelector('input');
+            checkbox.checked = !checkbox.checked;
+            itemDiv.classList.toggle('checked', checkbox.checked);
+        });
+        container.appendChild(itemDiv);
+    });
+}
+
+function populateStickyFields(fieldNames, stickyFields) {
+    const container = document.getElementById('settings-sticky-fields-list-container');
+    container.innerHTML = fieldNames.length === 0 ? '<p><i>Model này không có field nào.</i></p>' : '';
+    fieldNames.forEach(fieldName => {
+        const isSticky = stickyFields[fieldName] || false;
+        const itemDiv = document.createElement('div');
+        itemDiv.className = `field-checkbox-item sticky-item ${isSticky ? 'checked' : ''}`;
+        itemDiv.innerHTML = `<input type="checkbox" data-field-name="${fieldName}" ${isSticky ? 'checked' : ''}><label title="${fieldName}">📌 ${fieldName}</label>`;
+        itemDiv.addEventListener('click', () => {
+            const checkbox = itemDiv.querySelector('input');
+            checkbox.checked = !checkbox.checked;
+            itemDiv.classList.toggle('checked', checkbox.checked);
+        });
+        container.appendChild(itemDiv);
+    });
+}
+
+function populateRandomIdSelect(fieldNames, selectedField) {
+    const select = document.getElementById('random-id-field-select');
+    select.innerHTML = '<option value="">-- Không tự động tạo ID --</option>';
+    fieldNames.forEach(fieldName => {
+        const option = document.createElement('option');
+        option.value = fieldName;
+        option.textContent = fieldName;
+        select.appendChild(option);
+    });
+    if (selectedField) { select.value = selectedField; }
+}
+
+function populateFieldOrderList(fieldNames) {
+    const container = document.getElementById('field-order-list-container');
+    container.innerHTML = '';
+    fieldNames.forEach(fieldName => {
+        const item = document.createElement('div');
+        item.className = 'draggable-item';
+        item.draggable = true;
+        item.dataset.fieldName = fieldName;
+        item.innerHTML = `<i class="fas fa-grip-vertical drag-handle"></i><span>${fieldName}</span>`;
+        container.appendChild(item);
+    });
+}
+
+function populateContextMenuDefaults(fieldNames, defaults) {
+    document.querySelectorAll('.context-default-select').forEach(select => {
+        const contextType = select.dataset.contextType;
+        select.innerHTML = '<option value="">-- Gửi tới Field con --</option>';
+        fieldNames.forEach(fieldName => {
+            const option = document.createElement('option');
+            option.value = fieldName;
+            option.textContent = fieldName;
+            select.appendChild(option);
+        });
+        if (defaults[contextType]) {
+            select.value = defaults[contextType];
+        }
+    });
+}
+
 async function saveSettings() {
-    const selectedModel = document.getElementById('settings-model-search').value;
-    if (!selectedModel || !allModelsForSettings.includes(selectedModel)) {
+    const modelName = document.getElementById('settings-model-search').value;
+    if (!modelName || !allModelsForSettings.includes(modelName)) {
         showStatus('Tên Note Type không hợp lệ.', 'error');
         return;
     }
 
     try {
-        const hiddenFieldsState = {};
+        const settingsToSave = {};
+
+        // Hidden Fields
+        const hiddenFields = {};
         document.querySelectorAll('#settings-fields-list-container input[type="checkbox"]').forEach(cb => {
-            hiddenFieldsState[cb.dataset.fieldName] = cb.checked;
+            hiddenFields[cb.dataset.fieldName] = cb.checked;
         });
+        settingsToSave[`hiddenFields_${modelName}`] = hiddenFields;
 
-        const stickyFieldsState = {};
+        // Sticky Fields
+        const stickyFields = {};
         document.querySelectorAll('#settings-sticky-fields-list-container input[type="checkbox"]').forEach(cb => {
-            stickyFieldsState[cb.dataset.fieldName] = cb.checked;
+            stickyFields[cb.dataset.fieldName] = cb.checked;
         });
+        settingsToSave[`stickyFields_${modelName}`] = stickyFields;
 
-        const selectedRandomIdField = document.getElementById('random-id-field-select').value;
+        // Random ID Field
+        settingsToSave[`randomIdField_${modelName}`] = document.getElementById('random-id-field-select').value;
 
-        await chrome.storage.local.set({
-            [`hiddenFields_${selectedModel}`]: hiddenFieldsState,
-            [`stickyFields_${selectedModel}`]: stickyFieldsState,
-            [`randomIdField_${selectedModel}`]: selectedRandomIdField
+        // Field Order
+        const fieldOrder = [...document.querySelectorAll('#field-order-list-container .draggable-item')]
+            .map(item => item.dataset.fieldName);
+        settingsToSave[`fieldOrder_${modelName}`] = fieldOrder;
+
+        // Context Menu Defaults
+        const contextMenuDefaults = {};
+        document.querySelectorAll('.context-default-select').forEach(select => {
+            if (select.value) {
+                contextMenuDefaults[select.dataset.contextType] = select.value;
+            }
         });
+        settingsToSave[`contextMenuDefaults_${modelName}`] = contextMenuDefaults;
 
-        showStatus('Đã lưu cài đặt cho Note Type: ' + selectedModel, 'success');
+        await chrome.storage.local.set(settingsToSave);
+
+        showStatus('Đã lưu cài đặt cho Note Type: ' + modelName, 'success');
     } catch (error) {
         showStatus('Lỗi khi lưu cài đặt: ' + error.message, 'error');
     }
+}
+
+function setupDragAndDrop() {
+    const container = document.getElementById('field-order-list-container');
+    let draggedItem = null;
+
+    container.addEventListener('dragstart', e => {
+        draggedItem = e.target;
+        setTimeout(() => e.target.classList.add('dragging'), 0);
+    });
+
+    container.addEventListener('dragend', e => {
+        draggedItem.classList.remove('dragging');
+        draggedItem = null;
+    });
+
+    container.addEventListener('dragover', e => {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(container, e.clientY);
+        const currentDragged = document.querySelector('.dragging');
+        if (afterElement == null) {
+            container.appendChild(currentDragged);
+        } else {
+            container.insertBefore(currentDragged, afterElement);
+        }
+    });
+}
+
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.draggable-item:not(.dragging)')];
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
 function setAllCheckboxes(containerId, checkedState) {
@@ -167,4 +267,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('deselect-all-fields').addEventListener('click', () => setAllCheckboxes('settings-fields-list-container', false));
     document.getElementById('select-all-sticky-fields').addEventListener('click', () => setAllCheckboxes('settings-sticky-fields-list-container', true));
     document.getElementById('deselect-all-sticky-fields').addEventListener('click', () => setAllCheckboxes('settings-sticky-fields-list-container', false));
+    
+    setupDragAndDrop();
 });
