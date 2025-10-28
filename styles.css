@@ -36,6 +36,9 @@
   --toolbar-bg: #e9ecef;
   --toolbar-border: var(--border-color);
   --toolbar-button-hover-bg: #ced4da;
+  --sticky-toolbar-bg: #ffffff; /* Nền trắng cho toolbar khi sticky */
+  --rendered-view-bg: #fdfdfd; /* Nền cho rendered view */
+  --rendered-view-border: #e4e7ed; /* Viền cho rendered view */
 }
 
 body {
@@ -89,20 +92,11 @@ body {
     color: var(--primary-color);
 }
 
-/* --- Wrapper cho sticky header --- */
-#sticky-header-content {
-    position: sticky;
-    top: -1px; /* Đẩy lên 1px để border không bị che */
-    background-color: var(--bg-color); /* Nền giống body */
-    z-index: 10; /* Đè lên content nhưng dưới suggestions */
-    padding-top: 1px; /* Bù lại top -1px */
-    padding-bottom: 10px;
-    /* Mở rộng nền ra sát cạnh */
-    margin: -16px -16px 0 -16px;
-    padding-left: 16px;
-    padding-right: 16px;
-    border-bottom: 1px solid var(--border-color-light);
-    margin-bottom: 1rem; /* Khoảng cách với fields */
+/* --- Wrapper cho phần KHÔNG sticky (Preset, Deck, Note, Mode) --- */
+#non-sticky-header-content {
+    /* Bỏ position: sticky */
+    padding-bottom: 10px; /* Khoảng cách với toolbar */
+    margin-bottom: 0.5rem; /* Khoảng cách với toolbar */
 }
 
 /* --- Layout chung --- */
@@ -148,7 +142,7 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 /* --- Editor Mode Toggle Buttons --- */
 .editor-mode-toggle {
     margin-top: 10px;
-    margin-bottom: 5px;
+    margin-bottom: 5px; /* Giảm mb */
     text-align: center;
 }
 .editor-mode-toggle button {
@@ -165,16 +159,33 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
 }
 
+/* --- Wrapper CỐ ĐỊNH cho Format Toolbar --- */
+#sticky-toolbar-wrapper {
+    position: sticky;
+    top: -1px; /* Dính sát lên trên cùng */
+    z-index: 10; /* Đè lên các field khi cuộn */
+    background-color: var(--sticky-toolbar-bg); /* Nền trắng */
+    padding-top: 8px; /* Khoảng cách trên */
+    padding-bottom: 8px; /* Khoảng cách dưới */
+    /* Mở rộng nền ra sát cạnh container */
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    border-bottom: 1px solid var(--border-color-light);
+    margin-bottom: 1rem; /* Khoảng cách với field đầu tiên */
+}
+
 /* --- Thanh công cụ định dạng --- */
 #format-toolbar {
     background-color: var(--toolbar-bg);
     border: 1px solid var(--toolbar-border);
     border-radius: 6px;
     padding: 5px 8px;
-    margin-top: 10px;
+    /* margin-top: 10px; -> Đã có padding ở wrapper */
     display: flex;
     align-items: center;
-    gap: 4px; /* Khoảng cách giữa các nút */
+    gap: 4px;
     flex-wrap: wrap; /* Cho phép xuống dòng nếu không đủ chỗ */
 }
 #format-toolbar button {
@@ -284,7 +295,7 @@ body[data-editor-mode="source"] #format-toolbar input[type="color"] {
     padding: 10px;
     background-color: var(--bg-color-alt);
 }
-.field-group { margin-bottom: 0.8rem; }
+.field-group { margin-bottom: 0.8rem; position: relative; } /* Thêm position: relative để nút toggle view định vị */
 .field-header {
     display: flex;
     align-items: center;
@@ -329,6 +340,32 @@ body[data-editor-mode="source"] #format-toolbar input[type="color"] {
 .field-group.collapsed .field-input-area { display: none; } /* Ẩn toàn bộ input area */
 /* Field bị ẩn bởi setting */
 .field-group.field-hidden-by-setting { display: none !important; }
+
+/* --- Nút Toggle View (Show Code/Show Rendered) --- */
+.btn-toggle-view {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 2px 6px;
+    cursor: pointer;
+    font-size: 0.85em;
+    line-height: 1;
+    color: var(--button-secondary-text);
+    transition: all 0.15s ease;
+    margin-left: 8px; /* Khoảng cách với label */
+    flex-shrink: 0; /* Không co lại */
+}
+.btn-toggle-view:hover:not(:disabled) {
+    background-color: var(--toolbar-button-hover-bg);
+    border-color: var(--button-secondary-hover-border);
+}
+.btn-toggle-view:active:not(:disabled) {
+    background-color: var(--button-secondary-border);
+}
+.btn-toggle-view:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
 /* --- Field Input Area (chứa div, textarea, preview) --- */
 .field-input-area {
@@ -376,19 +413,52 @@ body[data-editor-mode="source"] #format-toolbar input[type="color"] {
     /* background-color: #fdfdfe; */
 }
 
+/* Style cho rendered view */
+.rendered-field-view {
+    min-height: calc(1.5em * 2 + 1.2rem + 2px); /* Giống textarea rows=2 */
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--rendered-view-border);
+    border-radius: 4px;
+    background-color: var(--rendered-view-bg);
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-y: auto;
+    max-height: 300px;
+    white-space: pre-wrap;
+    font-family: inherit; /* Dùng font mặc định */
+}
+
+/* Style mô phỏng thẻ [sound:...] trong rendered view */
+.rendered-field-view .sound-placeholder {
+    display: inline-block;
+    padding: 2px 6px;
+    background-color: #e0f7fa;
+    border: 1px solid #80deea;
+    border-radius: 3px;
+    font-size: 0.85em;
+    color: #00838f;
+    margin: 2px 0;
+}
+
 /* Ẩn/Hiện div hoặc textarea dựa trên mode của field-group */
 .field-group[data-editor-mode="normal"] .field-input-textarea { display: none; }
 .field-group[data-editor-mode="normal"] .field-input-div { display: block; }
 .field-group[data-editor-mode="source"] .field-input-div { display: none; }
 .field-group[data-editor-mode="source"] .field-input-textarea { display: block; }
 
+/* Ẩn/Hiện rendered view dựa trên data-view-mode */
+.field-group[data-view-mode="code"] .rendered-field-view { display: none; }
+.field-group[data-view-mode="rendered"] .field-input-div,
+.field-group[data-view-mode="rendered"] .field-input-textarea { display: none; }
+.field-group[data-view-mode="rendered"] .rendered-field-view { display: block; }
+
 
 /* --- Media Preview --- */
 .media-preview-container {
     padding: 8px 5px 5px 5px;
-    min-height: auto; /* Reset min-height */
+    min-height: 30px; /* Tăng min-height */
     border-top: 1px dashed var(--border-color-light);
-    margin-top: 5px; /* Khoảng cách với input */
+    margin-top: 8px; /* Tăng margin-top */
 }
 /* Ẩn preview khi ở Source Mode (CSS này đã có trong setGlobalEditorMode, nhưng để đây cho chắc) */
 .field-group[data-editor-mode="source"] .media-preview-container { display: none; }
