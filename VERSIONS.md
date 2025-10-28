@@ -395,3 +395,32 @@
 
 ### ✅ Xác nhận
 - Chức năng áp dụng định dạng (bold, italic, color, cloze, ...) lên text được bôi đen trong **Normal mode** đã được kiểm tra và hoạt động đúng như mong đợi thông qua việc sử dụng `document.execCommand`.
+
+
+## v1.42.00 
+
+🗺️ popup.html
+
+Thêm nút toggle (ví dụ: id="toggle-header-btn") vào bên trong div.header-container, ngay cạnh nút cài đặt ⚙️ (#open-settings-link).
+
+Toàn bộ nội dung bạn muốn ẩn (Preset, Deck, Note, Nút Mode, và cả Thanh công cụ) cần được bọc trong một div mới (ví dụ: id="collapsible-header-content"). div.header-container sẽ nằm bên ngoài div này để luôn hiển thị.
+
+🎨 styles.css
+
+Thêm style cho nút #toggle-header-btn mới (ví dụ: dùng icon 🔼 / 🔽).
+
+Thêm một quy tắc CSS để ẩn #collapsible-header-content khi nút được kích hoạt (ví dụ: body.header-collapsed #collapsible-header-content { display: none; }).
+
+⚙️ popup.js
+
+Trong DOMContentLoaded, thêm listener cho click vào #toggle-header-btn.
+
+Hàm click này sẽ:
+
+Thêm/xóa class .header-collapsed vào document.body.
+
+Thay đổi icon của nút (🔼 / 🔽).
+
+Quan trọng: Lưu trạng thái (ẩn/hiện) vào chrome.storage.local để sidebar ghi nhớ lựa chọn của bạn cho lần mở tiếp theo.
+
+Khi DOMContentLoaded chạy, nó cũng cần đọc trạng thái đã lưu từ storage để áp dụng ngay.
