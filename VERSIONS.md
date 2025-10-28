@@ -233,6 +233,20 @@
     - Cập nhật hàm `updateContextMenu` để lọc bỏ các fields bị ẩn dựa trên `modelName`.
     - Thêm thông báo trong menu khi tất cả fields đều bị ẩn.
 
-
-
-
+## v1.36.0 – 2025-10-28
+- Tính năng 📌 Ghim Fields:
+    - `settings.html`: Thêm khu vực "Ghim Fields" mới, tách biệt với "Ẩn Fields".
+    - `settings.js`: Cập nhật `loadFieldsForSettings` và `saveSettings` để quản lý `stickyFields_${modelName}` trong `chrome.storage.local`. Thêm logic cho các nút "Ghim tất cả".
+    - `popup.js`: Cập nhật `addNoteToAnki` để đọc cài đặt `stickyFields`. Sau khi thêm note, chỉ xóa nội dung của các field không được ghim.
+    - `styles.css`: Thêm style cho khu vực "Ghim Fields" trong Cài đặt (nền vàng, icon 📌).
+- Tính năng 🎧 Hỗ trợ Audio (Context Menu):
+    - `background.js`: Thêm `CONTEXT_MENU_ID_AUDIO` và `contexts: ["audio"]`. Cập nhật `updateContextMenu` để tạo menu gốc và menu con cho audio, đồng thời lọc các field bị ẩn. Cập nhật `onClicked`: Thêm logic cho `send-audio-to-`. Gọi `storeMediaFile` cho audio URL và tạo thẻ `[sound:filename.ext]`. Gửi thẻ âm thanh dưới dạng `contentType: 'text'`.
+- Tính năng 🧠 Ghi nhớ Deck/Note Type cuối:
+    - `popup.js`: Cập nhật `addNoteToAnki` để lưu `deckName` và `modelName` vào `lastUsedDeck` / `lastUsedModel` trong `chrome.storage.local` sau khi thêm note thành công. Cập nhật `DOMContentLoaded`: Đọc `lastUsedDeck` / `lastUsedModel` khi sidebar mở. Tự động điền giá trị vào ô input và tự động gọi `createFieldsForModel` nếu tìm thấy model đã lưu.
+- Tính năng 📂 Quản lý Cấu hình (Presets):
+    - `popup.html`: Thêm dropdown `preset-select` và các nút `save-preset-btn`, `delete-preset-btn`.
+    - `popup.js`: Thêm các hàm `loadPresets`, `saveCurrentPreset`, `deleteCurrentPreset`, `applyPreset`. `DOMContentLoaded` gọi `loadPresets` và gán sự kiện cho các nút/select mới. `applyPreset` tự động điền Deck, Note Type, Tags và gọi `createFieldsForModel`.
+    - `styles.css`: Thêm style cho khu vực preset mới (`.preset-group`, `.btn-icon`).
+- Sửa lỗi 🐞:
+    - `background.js`: Sửa lỗi logic gửi ảnh. Thay vì gửi thẻ `<img ...>` (gây lỗi lồng thẻ trong `popup.js`), giờ đây `background.js` chỉ gửi `storedFilename` (tên file) và `contentType: 'image'`.
+    - `popup.js`: Cập nhật `onMessage` để xử lý `contentType: 'image'` bằng cách tự tạo thẻ `<img>` từ `content` (tên file), sửa lỗi hiển thị ảnh từ context menu.
