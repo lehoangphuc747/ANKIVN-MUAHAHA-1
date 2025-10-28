@@ -332,6 +332,38 @@
 - Sửa lỗi logic `addNoteToAnki` khi lấy fields.
 - Đảm bảo lấy giá trị từ `textarea` ngay cả khi đang ở chế độ **Rendered View**.
 
+## 🆕 v1.40.0 – 2025-10-28
 
+### ✨ Tính năng mới: **Chế độ soạn thảo Normal/Source**
+
+**popup.html**
+- Thêm cặp nút `✍️ Normal` | `</> Source` vào dưới phần chọn Deck/Note Type để chuyển đổi chế độ soạn thảo.
+- Cập nhật cấu trúc HTML dự kiến cho mỗi field trong `#fields-container` để bao gồm cả `div[contenteditable]` (cho Normal mode) và `textarea` (cho Source mode).
+
+**styles.css**
+- Thêm CSS cho các nút chuyển chế độ (`.editor-mode-toggle`, `.active`).
+- Thêm CSS để `div[contenteditable]` (`.field-input-div`) trông giống như `textarea` mặc định.
+- Thêm CSS để `textarea` (`.field-input-textarea`) hiển thị font monospace khi ở Source mode.
+- Thêm CSS để ẩn/hiện `.field-input-div` hoặc `.field-input-textarea` dựa trên `data-editor-mode` của `.field-group`.
+- Thêm class `.source-mode` vào `body` khi ở Source mode và dùng CSS để disable (làm mờ, `pointer-events: none`) các nút trong `#format-toolbar`.
+
+**popup.js**
+- Thêm biến global `globalEditorMode` (mặc định là 'normal').
+- **`createFieldsForModel`**: Tạo cả `div.field-input-div` (contenteditable) và `textarea.field-input-textarea` cho mỗi field. Gán `data-editor-mode` ban đầu dựa trên `globalEditorMode`. Gán các event listener `input`, `focus`, `blur` cho cả hai element để đồng bộ nội dung và cập nhật `activeElement`.
+- **Hàm Đồng bộ**: Thêm `syncDivToTextarea` và `syncTextareaToDiv` để chuyển nội dung giữa hai element.
+- **`setGlobalEditorMode(newMode)`**: Hàm mới xử lý logic khi click nút chuyển chế độ. Cập nhật `globalEditorMode`, class `active` cho nút, class `.source-mode` cho `body`. Duyệt qua tất cả các field, đồng bộ nội dung, ẩn/hiện element tương ứng (`div` hoặc `textarea`), cập nhật `data-editor-mode` cho field, ẩn/hiện preview, focus lại element đúng nếu có thể.
+- **Loại bỏ**: Hàm `toggleFieldView` và `updateRenderedView` không còn cần thiết.
+- **`updateMediaPreviewFromContent(content, previewId)`**: Sửa lại để nhận `content` và `previewId` làm tham số. Chỉ chạy khi `globalEditorMode === 'normal'`.
+- **`applyFormat`, `addCloze`**: Chỉ hoạt động khi `globalEditorMode === 'normal'` và `activeElement` là `div[contenteditable]`. Sau khi dùng `execCommand`, gọi `syncDivToTextarea` và trigger `input` event trên div để cập nhật preview. Thêm hàm `ensureContentEditableKeepsFocus` để cố gắng giữ focus.
+- **`addNoteToAnki`**: Đọc nội dung từ element đang hiển thị (`div.innerHTML` hoặc `textarea.value`) dựa trên `globalEditorMode`. Sửa logic kiểm tra `hasContent`. Cập nhật logic xóa field: xóa cả `innerHTML` của div và `value` của textarea.
+- **`onMessage` (Context Menu)**: Chèn nội dung vào element phù hợp (`div` hoặc `textarea`) dựa trên `globalEditorMode`. Gọi hàm đồng bộ tương ứng. Trigger event `input` để cập nhật preview (nếu ở normal mode).
+
+---
+
+### 🐛 Sửa lỗi & Cải tiến
+- **Đồng bộ hóa**: Đảm bảo nội dung luôn được đồng bộ giữa chế độ Normal và Source khi chuyển đổi hoặc chỉnh sửa.
+- **Cập nhật Preview**: Media Preview chỉ hiển thị và cập nhật ở Normal Mode.
+- **Toolbar**: Toolbar định dạng bị vô hiệu hóa ở Source Mode.
+- **Focus**: Cố gắng duy trì focus vào đúng element (div hoặc textarea) sau các thao tác.
 
 
