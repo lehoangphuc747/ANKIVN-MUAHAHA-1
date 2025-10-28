@@ -2,9 +2,9 @@
 
 const CONTEXT_MENU_ID_TEXT = "ankivnSendText";
 const CONTEXT_MENU_ID_IMAGE = "ankivnSendImage";
+const CONTEXT_MENU_ID_AUDIO = "ankivnSendAudio"; // [MỚI] Thêm ID cho Audio
 
-// --- [THÊM MỚI] Hàm invoke (copy từ popup.js/settings.js) ---
-// Hàm này cần thiết để background script gọi Anki-Connect
+// --- Hàm invoke (không đổi) ---
 async function invoke(action, params = {}) {
     try {
         const response = await fetch('http://localhost:8765', {
@@ -14,229 +14,216 @@ async function invoke(action, params = {}) {
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         const result = await response.json();
-        if (result.error) throw new Error(`Anki-Connect Error: ${result.error}`); // Thêm tiền tố cho rõ
-        console.log(`Anki-Connect (${action}) successful:`, result.result); // Log success
+        if (result.error) throw new Error(`Anki-Connect Error: ${result.error}`);
+        console.log(`Anki-Connect (${action}) successful:`, result.result);
         return result.result;
     } catch (error) {
         console.error(`Anki-Connect error in background (${action}):`, error);
-        // Ném lỗi để hàm gọi (onClicked) có thể bắt và xử lý
         throw error;
     }
 }
 
 
-// --- [HÀM ĐƯỢC CẬP NHẬT] Hàm updateContextMenu ---
+// --- [CẬP NHẬT] Hàm updateContextMenu ---
 async function updateContextMenu(fieldNames = [], modelName = null) {
-    // Xóa menu cũ trước khi tạo mới để tránh trùng lặp
     await chrome.contextMenus.removeAll();
 
-    // Tạo menu gốc cho Text Selection
+    // --- Tạo menu gốc ---
     chrome.contextMenus.create({
         id: CONTEXT_MENU_ID_TEXT,
         title: "Gửi text đến Field",
-        contexts: ["selection"] // Chỉ hiện khi bôi đen text
+        contexts: ["selection"]
     });
-
-    // Tạo menu gốc cho Image Selection
     chrome.contextMenus.create({
         id: CONTEXT_MENU_ID_IMAGE,
         title: "Gửi ảnh đến Field",
-        contexts: ["image"] // Chỉ hiện khi click phải vào ảnh
+        contexts: ["image"]
+    });
+    // [MỚI] Thêm menu gốc cho Audio
+    chrome.contextMenus.create({
+        id: CONTEXT_MENU_ID_AUDIO,
+        title: "Gửi âm thanh đến Field",
+        contexts: ["audio"]
     });
 
-    // Nếu không có field nào (chưa chọn Note Type), không tạo menu con
-    if (!Array.isArray(fieldNames) || fieldNames.length === 0) {
-        console.log("No fields provided, skipping sub-menu creation.");
-        // Có thể tạo một menu con thông báo "Vui lòng chọn Note Type trong sidebar"
-        chrome.contextMenus.create({
-            id: "noFieldsText",
-            parentId: CONTEXT_MENU_ID_TEXT,
-            title: "Chọn Note Type trong sidebar...",
-            contexts: ["selection"],
-            enabled: false // Không cho click
-        });
-         chrome.contextMenus.create({
-            id: "noFieldsImage",
-            parentId: CONTEXT_MENU_ID_IMAGE,
-            title: "Chọn Note Type trong sidebar...",
-            contexts: ["image"],
-            enabled: false
-        });
-        return;
-    }
-
-    // Nếu có modelName, lọc bỏ các fields bị ẩn trong cài đặt
+    // --- Lọc các field bị ẩn ---
     let visibleFields = fieldNames;
-    if (modelName) {
+    if (modelName && Array.isArray(fieldNames) && fieldNames.length > 0) {
         try {
             const hiddenFieldsKey = `hiddenFields_${modelName}`;
             const storedData = await chrome.storage.local.get(hiddenFieldsKey);
             const hiddenFields = storedData[hiddenFieldsKey] || {};
-            
-            // Lọc bỏ các fields bị ẩn
             visibleFields = fieldNames.filter(fieldName => !hiddenFields[fieldName]);
             console.log(`Filtered fields for model "${modelName}":`, { allFields: fieldNames, hiddenFields, visibleFields });
         } catch (error) {
             console.error("Error filtering hidden fields:", error);
-            // Nếu có lỗi, dùng tất cả fields
-            visibleFields = fieldNames;
+            visibleFields = fieldNames; // Dùng tất cả nếu lỗi
         }
+    } else if (!Array.isArray(fieldNames) || fieldNames.length === 0) {
+         visibleFields = []; // Đảm bảo là mảng rỗng
     }
 
-    // Nếu không có field nào hiển thị sau khi lọc
+
+    // --- Tạo menu con hoặc thông báo ---
     if (visibleFields.length === 0) {
-        console.log("No visible fields after filtering, showing info menu.");
+        // Thông báo nếu không có field nào
+        const noFieldsTitle = modelName ? "Tất cả fields đã bị ẩn" : "Chọn Note Type trong sidebar...";
         chrome.contextMenus.create({
-            id: "noVisibleFieldsText",
-            parentId: CONTEXT_MENU_ID_TEXT,
-            title: "Tất cả fields đã bị ẩn trong cài đặt",
-            contexts: ["selection"],
-            enabled: false
+            id: "noVisibleFieldsText", parentId: CONTEXT_MENU_ID_TEXT,
+            title: noFieldsTitle, contexts: ["selection"], enabled: false
         });
         chrome.contextMenus.create({
-            id: "noVisibleFieldsImage",
-            parentId: CONTEXT_MENU_ID_IMAGE,
-            title: "Tất cả fields đã bị ẩn trong cài đặt",
-            contexts: ["image"],
-            enabled: false
+            id: "noVisibleFieldsImage", parentId: CONTEXT_MENU_ID_IMAGE,
+            title: noFieldsTitle, contexts: ["image"], enabled: false
         });
-        return;
+        // [MỚI] Thêm thông báo cho Audio
+        chrome.contextMenus.create({
+            id: "noVisibleFieldsAudio", parentId: CONTEXT_MENU_ID_AUDIO,
+            title: noFieldsTitle, contexts: ["audio"], enabled: false
+        });
+    } else {
+        // Tạo menu con cho từng field
+        visibleFields.forEach(fieldName => {
+            chrome.contextMenus.create({
+                id: `send-text-to-${fieldName}`,
+                parentId: CONTEXT_MENU_ID_TEXT,
+                title: fieldName,
+                contexts: ["selection"]
+            });
+            chrome.contextMenus.create({
+                id: `send-image-to-${fieldName}`,
+                parentId: CONTEXT_MENU_ID_IMAGE,
+                title: fieldName,
+                contexts: ["image"]
+            });
+            // [MỚI] Thêm menu con cho Audio
+            chrome.contextMenus.create({
+                id: `send-audio-to-${fieldName}`,
+                parentId: CONTEXT_MENU_ID_AUDIO,
+                title: fieldName,
+                contexts: ["audio"]
+            });
+        });
     }
-
-    // Tạo menu con cho từng field hiển thị
-    visibleFields.forEach(fieldName => {
-        // Menu con cho Text
-        chrome.contextMenus.create({
-            id: `send-text-to-${fieldName}`, // ID duy nhất
-            parentId: CONTEXT_MENU_ID_TEXT, // Gắn vào menu gốc Text
-            title: fieldName,
-            contexts: ["selection"]
-        });
-        // Menu con cho Image
-        chrome.contextMenus.create({
-            id: `send-image-to-${fieldName}`, // ID duy nhất
-            parentId: CONTEXT_MENU_ID_IMAGE, // Gắn vào menu gốc Image
-            title: fieldName,
-            contexts: ["image"]
-        });
-    });
     console.log("Context menu updated with visible fields:", visibleFields);
 }
+
 // --- Listener onInstalled (không đổi) ---
 chrome.runtime.onInstalled.addListener(() => {
     console.log("AnkiVN Extension installed/updated.");
-    // Tạo menu lần đầu (chưa có field)
     updateContextMenu([]);
 });
+
 // --- Listener onStartup (không đổi) ---
 chrome.runtime.onStartup.addListener(async () => {
     console.log("Chrome started, restoring context menu.");
-    // Cố gắng đọc field đã lưu từ lần cuối cùng
     try {
         const data = await chrome.storage.local.get(['lastSelectedModel', 'lastModelFields']);
         if (data.lastSelectedModel && data.lastModelFields) {
-            console.log("Restoring fields for model:", data.lastSelectedModel);
             updateContextMenu(data.lastModelFields, data.lastSelectedModel);
         } else {
-             console.log("No last selected model/fields found, creating default menu.");
-             updateContextMenu([]); // Tạo menu mặc định nếu chưa có gì lưu
+             updateContextMenu([]);
         }
     } catch (error) {
         console.error("Error restoring context menu:", error);
-        updateContextMenu([]); // Tạo menu mặc định nếu lỗi
+        updateContextMenu([]);
     }
 });
-// --- [HÀM ĐƯỢC CẬP NHẬT] Listener onMessage (nhận fields từ popup) ---
+
+// --- Listener onMessage (nhận fields từ popup - không đổi) ---
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === "updateFieldsForContextMenu") {
-        console.log("Received fields update from sidebar:", message.fields);
-        if (Array.isArray(message.fields)) {
-            updateContextMenu(message.fields, message.modelName);
-            // Lưu lại để dùng khi khởi động Chrome
-            chrome.storage.local.set({
-                 lastSelectedModel: message.modelName, // Lưu cả model name
-                 lastModelFields: message.fields
-            }).catch(err => console.error("Error saving last fields:", err));
-        } else {
-            console.warn("Received invalid fields data:", message.fields);
-             updateContextMenu([]); // Reset menu nếu dữ liệu không hợp lệ
-        }
-        // Không cần sendResponse vì đây là thông báo một chiều
+        console.log("Received fields update from sidebar:", message.modelName, message.fields);
+        updateContextMenu(message.fields || [], message.modelName);
+        chrome.storage.local.set({
+             lastSelectedModel: message.modelName,
+             lastModelFields: message.fields
+        }).catch(err => console.error("Error saving last fields:", err));
     }
-    // Thêm các xử lý message khác nếu cần
+    // Cần giữ sendResponse nếu bạn muốn gửi phản hồi
+    // sendResponse({ status: "Received" });
+    return true; // Cho phép gửi phản hồi bất đồng bộ (nếu cần)
 });
 
 
-// --- Listener xử lý click context menu (không đổi) ---
+// --- [CẬP NHẬT] Listener xử lý click context menu ---
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     console.log("Context menu clicked:", info);
 
     let targetField = null;
-    let content = null;
+    let contentUrl = null;
     let contentType = null;
     let finalContentToSend = null; // Nội dung cuối cùng gửi tới popup
+    let storedFilename = null; // Tên file trả về từ Anki
 
     try {
-        // Xác định field và nội dung ban đầu
+        // --- Xác định loại context và field ---
         if (info.menuItemId.startsWith("send-text-to-")) {
             targetField = info.menuItemId.substring("send-text-to-".length);
-            content = info.selectionText;
+            finalContentToSend = info.selectionText; // Text thì gửi thẳng
             contentType = 'text';
-            finalContentToSend = content; // Text thì gửi thẳng
         } else if (info.menuItemId.startsWith("send-image-to-")) {
             targetField = info.menuItemId.substring("send-image-to-".length);
-            content = info.srcUrl; // Lấy URL ảnh
+            contentUrl = info.srcUrl;
             contentType = 'image';
+        } else if (info.menuItemId.startsWith("send-audio-to-")) {
+            targetField = info.menuItemId.substring("send-audio-to-".length);
+            contentUrl = info.srcUrl;
+            contentType = 'audio';
+        }
 
-            // [MỚI] Gọi Anki-Connect để lưu ảnh
-            if (content) {
-                console.log(`Attempting to store image via Anki-Connect: ${content}`);
-                // Tạo tên file gợi ý (Anki-Connect có thể đổi nếu trùng)
-                let fileExtension = content.split('.').pop().split(/#|\?/)[0] || 'webp';
-                // Ưu tiên webp, nếu không có thì dùng jpg
-                if (!fileExtension || fileExtension.length > 5 || !/^[a-zA-Z0-9]+$/.test(fileExtension)) {
-                     fileExtension = 'webp'; // Mặc định là webp nếu extension lạ
+        // --- Xử lý media (Image/Audio) ---
+        if (contentType === 'image' || contentType === 'audio') {
+            if (!contentUrl) {
+                console.warn(`Context menu (${contentType}) clicked but no srcUrl found.`);
+                return;
+            }
+            console.log(`Attempting to store ${contentType} via Anki-Connect: ${contentUrl}`);
+            
+            // Tạo tên file
+            let fileExtension = contentUrl.split('.').pop().split(/#|\?/)[0] || 'tmp';
+            if (!fileExtension || fileExtension.length > 5 || !/^[a-zA-Z0-9]+$/.test(fileExtension)) {
+                 if (contentType === 'image') fileExtension = 'webp';
+                 else if (contentType === 'audio') fileExtension = 'mp3'; // Mặc định mp3 cho audio
+            }
+            let filename = `ankivn_${contentType}_${Date.now()}.${fileExtension}`;
+
+            try {
+                // Gọi storeMediaFile
+                storedFilename = await invoke('storeMediaFile', {
+                    url: contentUrl,
+                    filename: filename
+                });
+
+                if (!storedFilename) throw new Error("storeMediaFile did not return a filename.");
+                
+                // [SỬA LỖI] Tạo nội dung dựa trên loại
+                if (contentType === 'image') {
+                    // [SỬA LỖI] Chỉ gửi tên file, popup.js sẽ tạo thẻ <img>
+                    finalContentToSend = storedFilename;
+                } else if (contentType === 'audio') {
+                    // [MỚI] Tạo thẻ [sound:...] và gửi dưới dạng 'text'
+                    finalContentToSend = `[sound:${storedFilename}]`;
+                    contentType = 'text'; // Coi như text để popup chèn thẳng
                 }
-                let filename = `ankivn_img_${Date.now()}.${fileExtension}`;
+                console.log(`Media stored as "${storedFilename}". Content to send: ${finalContentToSend}`);
 
-
-                try {
-                    // *** THÊM filename VÀO ĐÂY ***
-                    const storedFilename = await invoke('storeMediaFile', {
-                        url: content,
-                        filename: filename // Tham số bắt buộc
-                    });
-                    // *** HẾT PHẦN THÊM ***
-
-                    if (storedFilename) {
-                        finalContentToSend = `<img src="${storedFilename}">`;
-                        console.log(`Image stored as "${storedFilename}". Tag: ${finalContentToSend}`);
-                    } else {
-                        throw new Error("storeMediaFile did not return a filename.");
-                    }
-                } catch (ankiconnectError) {
-                    console.error("Failed to store image via Anki-Connect:", ankiconnectError);
-                    // Gửi URL gốc tới popup kèm thông báo lỗi? Hoặc chỉ gửi lỗi?
-                    // Quyết định: Gửi thông báo lỗi tới popup
-                    finalContentToSend = `[Lỗi tải ảnh: ${ankiconnectError.message}] ${content}`; // Gửi URL kèm lỗi
-                    contentType = 'text'; // Coi như text lỗi
-                }
-            } else {
-                 console.warn("Image context menu clicked but no srcUrl found.");
-                 return; // Không làm gì nếu không có URL ảnh
+            } catch (ankiconnectError) {
+                console.error(`Failed to store ${contentType} via Anki-Connect:`, ankiconnectError);
+                finalContentToSend = `[Lỗi tải ${contentType}: ${ankiconnectError.message}] ${contentUrl}`;
+                contentType = 'text'; // Gửi dưới dạng text lỗi
             }
         }
 
-        // Nếu xác định được field và nội dung cuối cùng
-        if (targetField && finalContentToSend !== null) { // Kiểm tra finalContentToSend thay vì content
-            console.log(`Sending final content (${contentType}) to field "${targetField}":`, finalContentToSend);
+        // --- Gửi message đến sidebar ---
+        if (targetField && finalContentToSend !== null) {
+            console.log(`Sending final content (type: ${contentType}) to field "${targetField}":`, finalContentToSend);
 
-            // Gửi message đến sidebar
-             chrome.runtime.sendMessage({
+            chrome.runtime.sendMessage({
                 action: "fillFieldFromContextMenu",
                 field: targetField,
-                content: finalContentToSend, // Gửi nội dung đã xử lý (text hoặc img tag)
-                contentType: contentType
+                content: finalContentToSend,
+                contentType: contentType // 'text', 'image'
              }, (response) => {
                  if (chrome.runtime.lastError) {
                       console.warn("Could not send message to sidebar:", chrome.runtime.lastError.message);
@@ -244,20 +231,16 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
              });
 
             // Mở sidebar
-            const currentWindow = await chrome.windows.getCurrent(); // Lấy cửa sổ hiện tại dễ hơn
+            const currentWindow = await chrome.windows.getCurrent();
             if (currentWindow) {
                  await chrome.sidePanel.open({ windowId: currentWindow.id });
             }
 
         } else if (!targetField) {
              console.warn("Could not determine target field from context menu click:", info);
-        } else {
-             // Trường hợp finalContentToSend là null (ví dụ lỗi không mong muốn)
-             console.error("finalContentToSend is null, cannot send message.");
         }
 
     } catch (error) {
-        // Bắt các lỗi khác (ví dụ lỗi khi gọi chrome.windows.getCurrent)
         console.error("Error handling context menu click:", error);
     }
 });
