@@ -161,22 +161,21 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 }
 
 /* --- Wrapper CỐ ĐỊNH cho Format Toolbar ---
+/*
 #sticky-toolbar-wrapper {
     position: sticky;
-    /* top: -1px; */ /* <<< Đổi thành 0 
-    top: -2px;
+    top: -1px;
     z-index: 10;
-    background-color: var(--sticky-toolbar-bg); /* Nền trắng */
-    /* padding-top: 8px; */ /* <<< XÓA DÒNG NÀY */
-    padding-bottom: 8px; /* Khoảng cách dưới */
-    /* Mở rộng nền ra sát cạnh container */
+    background-color: var(--sticky-toolbar-bg);
+    padding-bottom: 8px;
     margin-left: -16px;
     margin-right: -16px;
     padding-left: 16px;
     padding-right: 16px;
     border-bottom: 1px solid var(--border-color-light);
-    margin-bottom: 1rem; /* Khoảng cách với field đầu tiên */
-} */
+    margin-bottom: 1rem;
+}
+*/
 
 
 /* --- Thanh công cụ định dạng --- */
