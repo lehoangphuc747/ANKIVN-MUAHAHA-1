@@ -51,11 +51,10 @@ body {
 }
 
 .container {
-  padding: 16px;
+  padding: 0 16px 80px 16px;
   height: 100vh; /* Chiều cao tối đa */
   overflow-y: auto; /* Thêm cuộn dọc nếu nội dung vượt quá */
   box-sizing: border-box;
-  padding-bottom: 80px; /* Thêm padding dưới để nội dung không bị che */
 }
 
 /* --- Header chính --- */
@@ -66,6 +65,7 @@ body {
     margin-bottom: 1rem;
     border-bottom: 1px solid var(--border-color-light);
     padding-bottom: 0.8rem;
+    padding-top: 16px;
 }
 .header-container h1 {
     margin: 0;
@@ -118,15 +118,12 @@ body.header-collapsed #collapsible-header {
 /* --- Toolbar (Sticky) --- */
 #sticky-toolbar-wrapper {
     position: sticky;
-    top: 0; /* Sửa thành 0 để dính sát */
+    top: 0;
     z-index: 10;
-    background-color: var(--sticky-toolbar-bg); /* Nền trắng */
-    padding: 8px 16px; /* Khoảng đệm */
-    /* Căn lề âm để chiếm đủ chiều rộng */
-    margin-left: -16px;
-    margin-right: -16px;
+    background-color: var(--sticky-toolbar-bg);
+    padding: 8px 16px;
     border-bottom: 1px solid var(--border-color-light);
-    margin-bottom: 1rem; /* Khoảng cách với fields-container bên dưới */
+    margin-bottom: 1rem;
 }
 
 
