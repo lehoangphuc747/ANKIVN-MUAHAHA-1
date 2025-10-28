@@ -10,7 +10,23 @@
   <div class="container">
     <div class="header-container">
         <h1>AnkiVN - Muahaha</h1>
-        <a href="#" id="open-settings-link" title="Mở Cài đặt">⚙️</a> </div>
+        <a href="#" id="open-settings-link" title="Mở Cài đặt">⚙️</a>
+    </div>
+
+    <!-- [MỚI] Thêm khu vực Presets -->
+    <div class="form-group inline-group preset-group">
+        <label for="preset-select" class="inline-label">Cấu hình:</label>
+        <div class="autocomplete-container inline-input-container">
+            <select id="preset-select" class="form-control">
+                <option value="">-- Chọn cấu hình --</option>
+                <!-- Các cấu hình sẽ được load bằng JS -->
+            </select>
+        </div>
+        <button id="save-preset-btn" class="btn-secondary btn-icon" title="Lưu cấu hình hiện tại">💾</button>
+        <button id="delete-preset-btn" class="btn-secondary btn-icon btn-icon-danger" title="Xóa cấu hình đã chọn">🗑️</button>
+    </div>
+    <!-- [HẾT MỚI] -->
+
     <div class="form-group inline-group">
       <label for="deck-search" class="inline-label">Deck:</label>
       <div class="autocomplete-container inline-input-container">
@@ -26,12 +42,15 @@
       </div>
     </div>
     <div id="fields-container" class="fields-container">
-      </div>
+      <!-- Fields sẽ được load bằng JS -->
+    </div>
 
     <div class="form-group">
-      <label for="tags-input">Tags:</label> <input type="text" id="tags-input" class="form-control" list="tags-datalist" placeholder="Nhập tags, phân cách bằng dấu cách">
+      <label for="tags-input">Tags:</label>
+      <input type="text" id="tags-input" class="form-control" list="tags-datalist" placeholder="Nhập tags, phân cách bằng dấu cách">
       <datalist id="tags-datalist">
-        </datalist>
+        <!-- Tags sẽ được load bằng JS -->
+      </datalist>
     </div>
 
     <div class="form-group">
@@ -40,7 +59,7 @@
 
     <div id="status-message" class="status-message"></div>
 
-    </div>
+  </div>
 
   <script src="popup.js"></script>
 </body>
