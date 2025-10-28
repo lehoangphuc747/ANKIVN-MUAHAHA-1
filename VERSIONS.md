@@ -366,4 +366,32 @@
 - **Toolbar**: Toolbar định dạng bị vô hiệu hóa ở Source Mode.
 - **Focus**: Cố gắng duy trì focus vào đúng element (div hoặc textarea) sau các thao tác.
 
+## 🆕 v1.41.0 – 2025-10-28
 
+### ✨ Cải tiến UI: **Thanh công cụ định dạng Sticky**
+
+**popup.html**
+- Di chuyển `div#format-toolbar` ra khỏi `div#sticky-header-content`.
+- Đổi tên `div#sticky-header-content` thành `div#non-sticky-header-content` cho rõ nghĩa.
+- Thêm `div#sticky-toolbar-wrapper` mới bao quanh `div#format-toolbar`.
+
+**styles.css**
+- Bỏ `position: sticky` khỏi `#non-sticky-header-content` (trước đây là `#sticky-header-content`).
+- Thêm style cho `div#sticky-toolbar-wrapper`:
+    - `position: sticky`
+    - `top: -1px`
+    - `z-index: 10`
+    - `background-color: var(--sticky-toolbar-bg)` (màu nền trắng)
+    - `padding-top`, `padding-bottom`, `margin-left`, `margin-right`, `padding-left`, `padding-right` để căn chỉnh và tạo khoảng cách.
+    - `border-bottom`
+    - `margin-bottom` để tạo khoảng cách với fields.
+- Điều chỉnh `margin-bottom` của `#header-container` và `#non-sticky-header-content` cho phù hợp.
+- Đổi tên biến `--toolbar-bg` thành `--sticky-toolbar-bg` và cập nhật giá trị (nếu cần).
+
+**popup.js**
+- Không cần thay đổi logic JavaScript cho tính năng này. Hàm `applyFormat` và `addCloze` đã hoạt động đúng với text được chọn.
+
+---
+
+### ✅ Xác nhận
+- Chức năng áp dụng định dạng (bold, italic, color, cloze, ...) lên text được bôi đen trong **Normal mode** đã được kiểm tra và hoạt động đúng như mong đợi thông qua việc sử dụng `document.execCommand`.
