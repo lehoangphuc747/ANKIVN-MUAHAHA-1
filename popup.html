@@ -8,23 +8,22 @@
   <!-- Link Font Awesome (nếu bạn chưa có) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
-<body data-editor-mode="normal">
+<body> <!-- Removed data-editor-mode -->
   <div class="container">
-    
+
     <!-- Header luôn hiển thị -->
     <div class="header-container">
         <h1>AnkiVN - Muahaha</h1>
         <div>
-          <!-- Nút Ẩn/Hiện MỚI -->
+          <!-- Nút Ẩn/Hiện -->
           <a href="#" id="toggle-header-btn" title="Ẩn">🔼</a>
           <!-- Nút Cài đặt -->
           <a href="#" id="open-settings-link" title="Mở Cài đặt">⚙️</a>
         </div>
     </div>
 
-    <!-- Phần nội dung có thể thu gọn MỚI -->
+    <!-- Phần nội dung có thể thu gọn -->
     <div id="collapsible-header">
-      <!-- Đây là nội dung từ v1.41.0 -->
       <div id="non-sticky-header-content">
         <div class="form-group inline-group preset-group">
             <label for="preset-select" class="inline-label">Cấu hình:</label>
@@ -50,31 +49,29 @@
             <div id="model-suggestions" class="suggestions-container"></div>
           </div>
         </div>
-        <div id="editor-mode-toggle" class="editor-mode-toggle">
-          <button id="mode-normal-btn" class="btn-secondary active" data-mode="normal">✍️ Normal</button>
-          <button id="mode-source-btn" class="btn-secondary" data-mode="source">&lt;/&gt; Source</button>
-        </div>
+        <!-- Removed editor-mode-toggle -->
       </div>
-
-      <!-- Toolbar (sticky) từ v1.41.0 -->
-      <div id="sticky-toolbar-wrapper">
-        <div id="format-toolbar">
-          <button id="format-bold" title="In đậm (Ctrl+B)"><i class="fas fa-bold"></i></button>
-          <button id="format-italic" title="In nghiêng (Ctrl+I)"><i class="fas fa-italic"></i></button>
-          <button id="format-underline" title="Gạch chân (Ctrl+U)"><i class="fas fa-underline"></i></button>
-          <span class="toolbar-separator">|</span>
-          <button id="format-forecolor" title="Màu chữ"><i class="fas fa-palette"></i></button>
-          <input type="color" id="forecolor-picker" value="#000000" title="Chọn màu chữ">
-          <button id="format-backcolor" title="Màu nền"><i class="fas fa-fill-drip"></i></button>
-          <input type="color" id="backcolor-picker" value="#ffffff" title="Chọn màu nền">
-          <span class="toolbar-separator">|</span>
-          <button id="format-remove" title="Xóa định dạng"><i class="fas fa-eraser"></i></button>
-          <span class="toolbar-separator">|</span>
-          <button id="format-cloze" title="Thêm Cloze (Ctrl+Shift+C)">{ ... }</button>
-        </div>
-      </div>
+      <!-- Removed sticky-toolbar-wrapper from here -->
     </div>
     <!-- Hết phần thu gọn -->
+
+    <!-- Toolbar (sticky) - ĐÃ DI CHUYỂN RA NGOÀI -->
+    <div id="sticky-toolbar-wrapper">
+      <div id="format-toolbar">
+        <button id="format-bold" title="In đậm (Ctrl+B)"><i class="fas fa-bold"></i></button>
+        <button id="format-italic" title="In nghiêng (Ctrl+I)"><i class="fas fa-italic"></i></button>
+        <button id="format-underline" title="Gạch chân (Ctrl+U)"><i class="fas fa-underline"></i></button>
+        <span class="toolbar-separator">|</span>
+        <button id="format-forecolor" title="Màu chữ"><i class="fas fa-palette"></i></button>
+        <input type="color" id="forecolor-picker" value="#000000" title="Chọn màu chữ">
+        <button id="format-backcolor" title="Màu nền"><i class="fas fa-fill-drip"></i></button>
+        <input type="color" id="backcolor-picker" value="#ffffff" title="Chọn màu nền">
+        <span class="toolbar-separator">|</span>
+        <button id="format-remove" title="Xóa định dạng"><i class="fas fa-eraser"></i></button>
+        <span class="toolbar-separator">|</span>
+        <button id="format-cloze" title="Thêm Cloze (Ctrl+Shift+C)">{ ... }</button>
+      </div>
+    </div>
 
 
     <div id="fields-container" class="fields-container">
@@ -99,3 +96,4 @@
   <script src="popup.js"></script>
 </body>
 </html>
+
