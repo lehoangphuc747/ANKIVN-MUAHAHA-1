@@ -52,7 +52,6 @@ body {
 
 .container {
   padding: 16px;
-  /* Cho phép container cuộn thay vì chỉ fields-container */
   height: 100vh; /* Chiều cao tối đa */
   overflow-y: auto; /* Thêm cuộn dọc nếu nội dung vượt quá */
   box-sizing: border-box;
@@ -77,51 +76,61 @@ body {
     text-align: left;
     flex-grow: 1; /* Title chiếm phần lớn không gian */
 }
-.header-container #open-settings-link {
-    font-size: 1.3rem; /* Icon bánh răng */
+/* [CẬP NHẬT] Style chung cho các nút icon trên header */
+.header-container a#open-settings-link,
+.header-container a#toggle-header-btn {
+    font-size: 1.3rem; /* Icon bánh răng & icon mũi tên */
     color: var(--text-color-light);
     text-decoration: none;
     padding: 5px;
     border-radius: 50%;
     transition: background-color 0.2s ease, color 0.2s ease;
     flex-shrink: 0; /* Không co lại */
-    margin-left: 10px; /* Khoảng cách với title */
+    margin-left: 10px; /* Khoảng cách giữa các nút */
+    cursor: pointer;
+    user-select: none;
 }
-.header-container #open-settings-link:hover {
+.header-container a#open-settings-link:hover,
+.header-container a#toggle-header-btn:hover {
     background-color: #eee;
     color: var(--primary-color);
 }
+/* [MỚI] Style cho nút toggle khi xoay */
+.header-container a#toggle-header-btn {
+    font-size: 1.1rem; /* Cho icon mũi tên nhỏ hơn chút */
+    padding: 6px 7px; /* Căn chỉnh lại */
+}
 
-/* --- [THÊM MỚI] Style cho khối header sticky mới --- */
-#sticky-header {
+
+/* --- [MỚI] Logic ẩn/hiện header --- */
+body.header-collapsed #collapsible-header {
+    display: none;
+}
+
+
+/* --- [CẬP NHẬT] Header (NON-sticky) v1.41.0 --- */
+#non-sticky-header-content {
+    /* Bỏ position: sticky */
+    padding-bottom: 1rem; /* Khoảng cách dưới cùng của khối */
+    margin-bottom: 0; /* Xóa margin-bottom vì toolbar wrapper sẽ xử lý */
+}
+
+/* --- [CẬP NHẬT] Toolbar (Sticky) v1.41.0 --- */
+#sticky-toolbar-wrapper {
     position: sticky;
-    top: 0; /* Hoặc -1px nếu cần */
+    top: -1px; /* Dính sát lên top */
     z-index: 10;
-    background-color: var(--bg-color); /* Lấy màu nền của body */
-    padding-bottom: 1rem; /* Khoảng cách dưới cùng của khối sticky */
-    margin-bottom: 1rem; /* Khoảng cách với fields-container bên dưới */
-
-    /* Thêm đoạn này để phần nền sticky không bị thụt vào */
-    margin-left: -16px; /* Bù trừ padding của .container */
-    margin-right: -16px; /* Bù trừ padding của .container */
-    padding-left: 16px; /* Giữ padding nội dung */
-    padding-right: 16px; /* Giữ padding nội dung */
-    /* Có thể thêm border-bottom nhẹ nếu muốn tách biệt rõ hơn khi cuộn */
+    background-color: var(--sticky-toolbar-bg); /* Nền trắng */
+    padding: 8px 0; /* Khoảng đệm */
+    /* Căn lề âm để chiếm đủ chiều rộng */
+    margin-left: -16px; 
+    margin-right: -16px;
+    padding-left: 16px; 
+    padding-right: 16px; 
     border-bottom: 1px solid var(--border-color-light);
+    margin-bottom: 1rem; /* Khoảng cách với fields-container bên dưới */
 }
 
-/* Điều chỉnh lại margin-top cho toolbar nếu cần */
-#format-toolbar {
-    margin-top: 10px; /* Thêm lại margin-top nếu muốn có khoảng cách với nút mode */
-}
-
-/* Đảm bảo container vẫn là scroll container */
-.container {
-  padding: 16px;
-  height: 100vh; /* Chiều cao tối đa */
-  overflow-y: auto; /* Thêm cuộn dọc nếu nội dung vượt quá */
-  box-sizing: border-box;
-}
 
 /* --- Layout chung --- */
 .form-group { margin-bottom: 1rem; }
@@ -189,7 +198,7 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     border: 1px solid var(--toolbar-border);
     border-radius: 6px;
     padding: 5px 8px;
-    /* margin-top: 10px; -> Đã có padding ở wrapper */
+    margin-top: 0; /* Xóa margin-top vì đã có padding ở wrapper */
     display: flex;
     align-items: center;
     gap: 4px;
@@ -205,6 +214,9 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     line-height: 1;
     color: var(--button-secondary-text);
     transition: all 0.15s ease;
+    /* Cho icon Font Awesome */
+    min-width: 26px; 
+    text-align: center;
 }
 #format-toolbar button:hover:not(:disabled) { /* Chỉ hover khi không bị disable */
     background-color: var(--toolbar-button-hover-bg);
@@ -295,7 +307,6 @@ body[data-editor-mode="source"] #format-toolbar input[type="color"] {
 
 /* --- Fields Container và Field Group --- */
 .fields-container {
-    /* Bỏ max-height và overflow-y để cuộn toàn bộ .container */
     margin-bottom: 1rem;
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -391,10 +402,10 @@ body[data-editor-mode="source"] #format-toolbar input[type="color"] {
     overflow-y: auto; /* Thêm cuộn nếu nội dung quá dài */
     max-height: 300px; /* Giới hạn chiều cao tối đa */
     padding: 0.6rem 0.8rem; /* Giống padding của form-control */
-    border: 1px solid transparent; /* Ẩn border mặc định */
-    border-radius: 0; /* Bỏ border-radius */
+    border: 1px solid var(--border-color); /* [THÊM LẠI] Thêm border giống textarea */
+    border-radius: 6px; /* [THÊM LẠI] Thêm border-radius */
     margin: 0; /* Reset margin */
-    /* Thêm placeholder bằng CSS */
+    background-color: var(--bg-color-alt); /* [THÊM LẠI] Thêm màu nền */
 }
 .field-input-div:empty::before {
     content: attr(data-placeholder);
@@ -404,9 +415,8 @@ body[data-editor-mode="source"] #format-toolbar input[type="color"] {
 /* Style focus giống textarea */
 .field-input-div:focus {
     outline: none;
-    /* Có thể thêm border hoặc shadow khi focus nếu muốn */
-    /* border-color: var(--primary-color); */
-    /* box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); */
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
 }
 
 /* Style cho textarea (Source Mode) */
@@ -416,8 +426,7 @@ body[data-editor-mode="source"] #format-toolbar input[type="color"] {
     height: auto;
     line-height: 1.5;
     font-family: monospace; /* Font cho code */
-    /* Có thể thêm màu nền khác để dễ phân biệt */
-    /* background-color: #fdfdfe; */
+    /* Kế thừa style từ .form-control */
 }
 
 /* Style cho rendered view */
@@ -467,7 +476,7 @@ body[data-editor-mode="source"] #format-toolbar input[type="color"] {
     border-top: 1px dashed var(--border-color-light);
     margin-top: 8px; /* Tăng margin-top */
 }
-/* Ẩn preview khi ở Source Mode (CSS này đã có trong setGlobalEditorMode, nhưng để đây cho chắc) */
+/* Ẩn preview khi ở Source Mode */
 .field-group[data-editor-mode="source"] .media-preview-container { display: none; }
 
 .preview-loading {
