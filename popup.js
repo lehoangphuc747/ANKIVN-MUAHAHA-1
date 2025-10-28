@@ -283,6 +283,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (openSettingsLink) {
     openSettingsLink.addEventListener("click", (e) => {
       e.preventDefault();
+      e.stopPropagation(); // (v1.46.0) Ngăn event bubble
       console.log("Opening settings page...");
       chrome.runtime.sendMessage({ action: "openOptionsPage" });
     });
@@ -523,11 +524,8 @@ function setupAutocomplete(container, input, suggestions, onSelectCallback = nul
       const div = document.createElement("div");
       div.className = "suggestion-item";
       div.textContent = item;
-      div.addEventListener("click", () => {
-        input.value = item;
-        suggestionsContainer.style.display = "none";
-        if (onSelectCallback) onSelectCallback(item); // (v1.26.0)
-      });
+      // (v1.46.0) Bỏ "click" listener, chuyển logic vào 'mousedown' của container
+      // div.addEventListener("click", () => { ... });
       suggestionsContainer.appendChild(div);
     });
 
@@ -563,20 +561,37 @@ function setupAutocomplete(container, input, suggestions, onSelectCallback = nul
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (activeSuggestionIndex > -1) {
-        items[activeSuggestionIndex].click();
+        // (v1.46.0) Kích hoạt logic chọn bằng Enter
+        const item = items[activeSuggestionIndex];
+        input.value = item.textContent;
+        suggestionsContainer.style.display = "none";
+        if (onSelectCallback) onSelectCallback(item.textContent);
+      } else {
+        // (v1.46.0) Nếu không chọn gì, chỉ ẩn đi
+        suggestionsContainer.style.display = "none";
       }
-      suggestionsContainer.style.display = "none";
     }
   });
 
-  // (v1.28.0) Ngăn input mất focus khi click vào scrollbar
-  // (v1.45.0) Sửa lỗi: Chỉ preventDefault khi click vào scrollbar, không phải item
+  // (v1.46.0) Sửa lỗi click và scrollbar
+  // Hợp nhất logic vào mousedown
   suggestionsContainer.addEventListener('mousedown', (e) => {
-    // e.target là element được click. Nếu là item, không preventDefault.
-    // Nếu click vào scrollbar, e.target sẽ là chính suggestionsContainer.
-    if (e.target === suggestionsContainer) {
-      e.preventDefault();
+    // Luôn ngăn input bị 'blur' khi click vào danh sách
+    e.preventDefault(); 
+    
+    // Kiểm tra xem có click trúng 'suggestion-item' không
+    let target = e.target;
+    while (target && target !== suggestionsContainer) {
+      if (target.classList.contains('suggestion-item')) {
+        // Click trúng item!
+        input.value = target.textContent;
+        suggestionsContainer.style.display = "none";
+        if (onSelectCallback) onSelectCallback(target.textContent);
+        return;
+      }
+      target = target.parentElement;
     }
+    // Nếu click vào scrollbar, nó sẽ chỉ preventDefault, không làm gì thêm
   });
 
   // (v1.10.0) Đóng khi click ra ngoài
