@@ -164,7 +164,7 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 #sticky-toolbar-wrapper {
     position: sticky;
     /* top: -1px; */ /* <<< Đổi thành 0 */
-    top: -2;
+    top: -2px;
     z-index: 10;
     background-color: var(--sticky-toolbar-bg); /* Nền trắng */
     /* padding-top: 8px; */ /* <<< XÓA DÒNG NÀY */
