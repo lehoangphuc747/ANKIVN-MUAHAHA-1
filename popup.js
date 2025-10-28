@@ -10,6 +10,9 @@ let currentAudio = null; // Để quản lý audio đang phát
 let activeElement = null; // Lưu element đang focus (div hoặc textarea)
 let globalEditorMode = 'normal'; // Chế độ editor mặc định
 
+// --- [MỚI] Khóa lưu trạng thái thu gọn header ---
+const HEADER_COLLAPSE_KEY = 'headerCollapsed';
+
 // --- Hàm invoke (Kết nối AnkiConnect) ---
 async function invoke(action, params = {}) {
     try {
@@ -972,13 +975,59 @@ function addCloze() {
      setTimeout(() => activeElement?.focus(), 0);
 }
 
+// --- [MỚI] Hàm quản lý trạng thái thu gọn Header ---
+function setHeaderCollapsed(isCollapsed) {
+    const toggleHeaderBtn = document.getElementById('toggle-header-btn');
+    document.body.classList.toggle('header-collapsed', isCollapsed);
+    if (toggleHeaderBtn) {
+        toggleHeaderBtn.textContent = isCollapsed ? '🔽' : '🔼';
+        toggleHeaderBtn.title = isCollapsed ? 'Hiện cài đặt nhanh' : 'Ẩn cài đặt nhanh';
+    }
+}
 
 // --- Khởi tạo popup ---
 document.addEventListener('DOMContentLoaded', async function() {
     console.log("Sidebar (popup.js) DOM loaded");
     showStatus("Đang kết nối tới Anki...", 'info');
 
+    // --- [MỚI] Lấy các nút header ---
+    const toggleHeaderBtn = document.getElementById('toggle-header-btn');
+    const settingsLink = document.getElementById('open-settings-link');
+
     try {
+        // --- [MỚI] Tải và áp dụng trạng thái thu gọn header ---
+        try {
+            const data = await chrome.storage.local.get([HEADER_COLLAPSE_KEY]);
+            const isCollapsed = data[HEADER_COLLAPSE_KEY] || false;
+            setHeaderCollapsed(isCollapsed);
+        } catch (e) {
+            console.warn("Error loading header collapse state", e);
+            setHeaderCollapsed(false); // Mặc định là mở
+        }
+
+        // --- [MỚI] Gán sự kiện cho nút thu gọn header ---
+        if (toggleHeaderBtn) {
+            toggleHeaderBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const isNowCollapsed = !document.body.classList.contains('header-collapsed');
+                setHeaderCollapsed(isNowCollapsed);
+                try {
+                    await chrome.storage.local.set({ [HEADER_COLLAPSE_KEY]: isNowCollapsed });
+                } catch (err) {
+                    console.error("Error saving header collapse state", err);
+                }
+            });
+        }
+        
+        // Gán sự kiện cho nút Cài đặt
+        if (settingsLink) {
+            settingsLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                openOptionsPage();
+            });
+        }
+
+
         // Load Presets first
         await loadPresets();
 
@@ -1062,7 +1111,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // --- Gán sự kiện cho các nút ---
         document.getElementById('add-note-btn').addEventListener('click', addNoteToAnki);
-        document.getElementById('open-settings-link').addEventListener('click', openOptionsPage);
+        // document.getElementById('open-settings-link').addEventListener('click', openOptionsPage); // [ĐÃ DI CHUYỂN LÊN TRÊN]
         document.getElementById('preset-select').addEventListener('change', applyPreset);
         document.getElementById('save-preset-btn').addEventListener('click', saveCurrentPreset);
         document.getElementById('delete-preset-btn').addEventListener('click', deleteCurrentPreset);
@@ -1131,8 +1180,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('delete-preset-btn').disabled = true;
         document.getElementById('mode-normal-btn').disabled = true;
         document.getElementById('mode-source-btn').disabled = true;
-        document.getElementById('format-toolbar').style.opacity = '0.5';
-        document.getElementById('format-toolbar').style.pointerEvents = 'none';
+        
+        // Vô hiệu hóa toolbar (nếu tồn tại)
+        const formatToolbar = document.getElementById('format-toolbar');
+        if (formatToolbar) {
+            formatToolbar.style.opacity = '0.5';
+            formatToolbar.style.pointerEvents = 'none';
+        }
     }
 });
 
