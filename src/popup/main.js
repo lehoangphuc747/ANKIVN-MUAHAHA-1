@@ -107,12 +107,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   const foreColorHexInput = document.getElementById('forecolor-hex-input');
   const backColorPicker = document.getElementById('backcolor-picker');
   const backColorHexInput = document.getElementById('backcolor-hex-input');
+  const applyForeColorBtn = document.getElementById('apply-forecolor-btn');
+  const applyBackColorBtn = document.getElementById('apply-backcolor-btn');
 
-  foreColorPicker.addEventListener('input', (e) => { applyFormat('foreColor', e.target.value); foreColorHexInput.value = e.target.value; });
-  backColorPicker.addEventListener('input', (e) => { applyFormat('backColor', e.target.value); backColorHexInput.value = e.target.value; });
+  foreColorPicker.addEventListener('input', (e) => { 
+    foreColorHexInput.value = e.target.value; 
+  });
+  backColorPicker.addEventListener('input', (e) => { 
+    backColorHexInput.value = e.target.value; 
+  });
   
-  foreColorHexInput.addEventListener('input', (e) => { const value = e.target.value; if (/^#[0-9A-F]{6}$/i.test(value)) { applyFormat('foreColor', value); foreColorPicker.value = value; } });
-  backColorHexInput.addEventListener('input', (e) => { const value = e.target.value; if (/^#[0-9A-F]{6}$/i.test(value)) { applyFormat('backColor', value); backColorPicker.value = value; } });
+  foreColorHexInput.addEventListener('input', (e) => { 
+    const value = e.target.value; 
+    if (/^#[0-9A-F]{6}$/i.test(value)) { 
+      foreColorPicker.value = value; 
+    } 
+  });
+  backColorHexInput.addEventListener('input', (e) => { 
+    const value = e.target.value; 
+    if (/^#[0-9A-F]{6}$/i.test(value)) { 
+      backColorPicker.value = value; 
+    } 
+  });
+
+  applyForeColorBtn.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    applyFormat('foreColor', foreColorHexInput.value);
+  });
+  applyBackColorBtn.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    applyFormat('backColor', backColorHexInput.value);
+  });
 
 
   // Keyboard shortcuts

@@ -1,5 +1,13 @@
 # Version History
 
+## ✨ v2.4.0 – 2025-11-07
+
+### 🚀 Feature: **Manual Color Application**
+
+- **New Apply Buttons**: Added "Apply" (✓) buttons next to the foreground and background color pickers.
+- **Updated Behavior**: Colors are no longer applied instantly. Users now select a color using the picker or HEX input, and the color is only applied to the selected text after clicking the corresponding "Apply" button.
+- This prevents accidental color changes and improves the text formatting workflow.
+
 ## ✨ v2.3.0 – 2025-11-06
 
 ### 🚀 Feature: **Enhanced Formatting Toolbar**

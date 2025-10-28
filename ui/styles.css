@@ -124,12 +124,6 @@ body.header-collapsed #collapsible-header {
     padding: 8px 0;
     border-bottom: 1px solid var(--border-color-light);
     margin-bottom: 1rem;
-    margin-left: -16px; /* Giá trị âm bằng với padding-left của .container */
-    margin-right: -16px; /* Giá trị âm bằng với padding-right của .container */
-    /* Giữ nguyên các thuộc tính khác như position: sticky, top, z-index, background-color, border-bottom */
-    /* Có thể cần thêm padding trái/phải cho chính wrapper này để nội dung bên trong nó không bị sát lề */
-    padding-left: 16px;
-    padding-right: 16px;
 }
 
 
@@ -245,7 +239,7 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     padding: 2px 4px;
     font-size: 0.8em;
     margin-left: -2px;
-    margin-right: 4px;
+    margin-right: 2px;
     border: 1px solid var(--border-color-light);
     border-radius: 3px;
     text-align: center;
@@ -766,4 +760,33 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 }
 .context-menu-settings-grid .form-group {
     margin-bottom: 0;
+}
+
+/* Style cho các nút apply color mới */
+#apply-forecolor-btn,
+#apply-backcolor-btn {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    line-height: 1;
+    color: var(--success-text); /* Dùng màu success cho dấu tick */
+    transition: all 0.15s ease;
+    min-width: 26px;
+    text-align: center;
+    margin-left: 2px; /* Thêm chút khoảng cách với hex input */
+    margin-right: 2px;
+}
+
+#apply-forecolor-btn:hover:not(:disabled),
+#apply-backcolor-btn:hover:not(:disabled) {
+    background-color: var(--toolbar-button-hover-bg);
+    border-color: var(--button-secondary-hover-border);
+}
+
+#apply-forecolor-btn:active:not(:disabled),
+#apply-backcolor-btn:active:not(:disabled) {
+    background-color: var(--button-secondary-border);
 }
