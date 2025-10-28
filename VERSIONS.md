@@ -1,5 +1,13 @@
 # Version History
 
+## 🎨 v2.2.1 – 2025-11-04
+
+### UI Refinement: **Flush Sticky Toolbar**
+
+- **`ui/styles.css`**: Adjusted padding and margins to make the sticky toolbar flush with the top of the sidebar on initial load.
+- Removed the top padding from the main `.container` and added it to the `.header-container` to compensate.
+- Simplified the layout rules for `#sticky-toolbar-wrapper` by removing negative margins.
+
 ## ✨ v2.2.0 – 2025-11-03
 
 ### 🚀 Feature: **Drag & Drop Media from Web**
