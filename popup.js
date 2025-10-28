@@ -959,10 +959,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Removed listeners for mode toggle buttons
 
         // Listener cho toolbar định dạng
-document.getElementById('format-bold').addEventListener('mousedown', (e) => {
-  e.preventDefault(); // Ngăn mất focus
-  applyFormat('bold');
-});
+        document.getElementById('format-bold').addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Ngăn mất focus
+        applyFormat('bold');
+        });
         document.getElementById('format-italic').addEventListener('click', () => applyFormat('italic'));
         document.getElementById('format-underline').addEventListener('click', () => applyFormat('underline'));
         document.getElementById('format-remove').addEventListener('click', () => applyFormat('removeFormat'));
