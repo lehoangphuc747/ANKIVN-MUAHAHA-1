@@ -111,7 +111,7 @@ body.header-collapsed #collapsible-header {
 
 /* --- Header (NON-sticky) --- */
 #non-sticky-header-content {
-    padding-bottom: 1rem; /* Khoảng cách dưới cùng của khối */
+    padding-bottom: 0.5rem; /* Giảm padding dưới */
     margin-bottom: 0;
 }
 
@@ -141,8 +141,14 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     display: flex;
     align-items: center;
     margin-bottom: 0.8rem;
-    gap: 6px; /* Khoảng cách giữa label, input, button */
+    gap: 6px;
 }
+/* Tối ưu hóa không gian cho header */
+#non-sticky-header-content .inline-group {
+    margin-bottom: 0.5rem; /* Giảm margin */
+    gap: 4px; /* Giảm khoảng cách */
+}
+
 .inline-label {
     flex: 0 0 auto; /* Không co giãn */
     width: 50px; /* Chiều rộng cố định cho label Deck/Note */
@@ -153,14 +159,22 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     color: var(--text-color);
     text-align: right;
 }
+/* Tối ưu hóa không gian cho header */
+#non-sticky-header-content .inline-label {
+    width: 45px;
+    margin-right: 2px;
+}
+
 .inline-input-container {
     flex: 1 1 auto; /* Input chiếm phần còn lại */
     position: relative; /* Cho suggestion container */
 }
 /* Preset Group specific */
 .preset-group .inline-label { width: 60px; } /* Label "Cấu hình:" rộng hơn */
-.preset-group .inline-input-container { flex-grow: 1; }
-#preset-select { padding-right: 25px; /* Để icon mũi tên ko che text */ }
+/* Tối ưu hóa không gian cho header */
+#non-sticky-header-content .preset-group .inline-label {
+    width: 55px;
+}
 
 /* --- Nút bấm Icon (Save/Delete Preset) --- */
 .btn-icon {
@@ -169,12 +183,13 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     font-size: 1rem;
     line-height: 1;
 }
+/* Tối ưu hóa không gian cho header */
+#non-sticky-header-content .btn-icon {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.9rem;
+}
 .btn-icon-danger { color: var(--error-text); border-color: var(--error-border); }
 .btn-icon-danger:hover { background-color: var(--error-bg); }
-
-/* --- Editor Mode Toggle Buttons (REMOVED) --- */
-/* .editor-mode-toggle { ... } */
-
 
 /* --- Thanh công cụ định dạng --- */
 #format-toolbar {
@@ -232,8 +247,6 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     font-family: monospace;
     padding: 4px 8px;
 }
-/* Disable toolbar khi ở Source mode (REMOVED) */
-/* body[data-editor-mode="source"] #format-toolbar ... { ... } */
 
 
 /* --- Input và Autocomplete --- */
@@ -248,6 +261,11 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     background-color: var(--bg-color-alt);
     line-height: 1.4;
     color: var(--text-color);
+}
+/* Tối ưu hóa không gian cho header */
+#non-sticky-header-content .form-control {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.9rem;
 }
 .form-control::placeholder { color: #aaa; }
 .form-control:focus {
@@ -399,9 +417,6 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
 }
 
-/* Style cho textarea (REMOVED) */
-/* .field-input-textarea { ... } */
-
 /* Style cho rendered view */
 .rendered-field-view {
     min-height: calc(1.5em * 2 + 1.2rem + 2px); /* Giống textarea rows=2 */
@@ -429,10 +444,6 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     margin: 2px 0;
 }
 
-/* Ẩn/Hiện div hoặc textarea (REMOVED) */
-/* .field-group[data-editor-mode="normal"] ... { ... } */
-/* .field-group[data-editor-mode="source"] ... { ... } */
-
 /* Ẩn/Hiện rendered view dựa trên data-view-mode */
 .field-group[data-view-mode="code"] .rendered-field-view { display: none; }
 .field-group[data-view-mode="rendered"] .field-input-div,
@@ -448,8 +459,6 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     margin-top: 8px;
     display: block; /* Luôn hiển thị trừ khi view mode là rendered */
 }
-/* Ẩn preview khi ở Source Mode (REMOVED) */
-/* .field-group[data-editor-mode="source"] .media-preview-container { display: none; } */
 
 .preview-loading {
     font-size: 0.8rem;

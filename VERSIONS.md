@@ -1,5 +1,12 @@
 # Version History
 
+## 🎨 v2.1.2 – 2025-11-01
+
+### UI Refinement: **Compact Header**
+
+- **`ui/styles.css`**: Optimized spacing for the non-sticky header area (`#non-sticky-header-content`).
+- Reduced padding, margins, and element sizes for the Preset, Deck, and Note Type selectors to create a more compact layout.
+
 ## 🎨 v2.1.1 – 2025-10-31
 
 ### UI Refinement: **Compact Fields View**
