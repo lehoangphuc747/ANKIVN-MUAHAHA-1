@@ -1,5 +1,13 @@
 # Version History
 
+## 🐛 v2.1.3 – 2025-11-02
+
+### Bug Fix: **Sticky Toolbar Position**
+
+- **`ui/styles.css`**: Adjusted the CSS for `#sticky-toolbar-wrapper`.
+- Changed `top: -1px` to `top: 0` to eliminate a 1-pixel gap that appeared above the toolbar when scrolling.
+- The toolbar now sticks perfectly to the top edge of the viewport as intended.
+
 ## 🎨 v2.1.2 – 2025-11-01
 
 ### UI Refinement: **Compact Header**

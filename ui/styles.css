@@ -118,15 +118,13 @@ body.header-collapsed #collapsible-header {
 /* --- Toolbar (Sticky) --- */
 #sticky-toolbar-wrapper {
     position: sticky;
-    top: -1px; /* Dính sát lên top */
+    top: 0; /* Sửa thành 0 để dính sát */
     z-index: 10;
     background-color: var(--sticky-toolbar-bg); /* Nền trắng */
-    padding: 8px 0; /* Khoảng đệm */
+    padding: 8px 16px; /* Khoảng đệm */
     /* Căn lề âm để chiếm đủ chiều rộng */
     margin-left: -16px;
     margin-right: -16px;
-    padding-left: 16px;
-    padding-right: 16px;
     border-bottom: 1px solid var(--border-color-light);
     margin-bottom: 1rem; /* Khoảng cách với fields-container bên dưới */
 }
