@@ -280,3 +280,73 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .field-checkbox-item.sticky-item.checked label { color: var(--sticky-text-color); text-decoration: none; font-weight: 500; }
 .field-checkbox-item.sticky-item.checked input[type="checkbox"] { accent-color: var(--sticky-text-color); }
 
+/* ... CSS cũ giữ nguyên ... */
+
+/* [THÊM MỚI] Style cho nút chuyển chế độ */
+.editor-mode-toggle {
+    margin-top: 10px; /* Khoảng cách với phần trên */
+    margin-bottom: 5px;
+    text-align: center; /* Căn giữa nút */
+}
+.editor-mode-toggle button {
+    padding: 5px 10px;
+    font-size: 0.85rem;
+    margin: 0 2px;
+}
+.editor-mode-toggle button.active {
+    background-color: var(--primary-color-dark);
+    color: var(--button-text-color);
+    border-color: var(--primary-color-darker);
+    font-weight: 600;
+}
+
+/* [THÊM MỚI] Style cho div contenteditable */
+.field-input-div {
+    min-height: calc(1.5em * 2 + 1.2rem + 2px); /* Giống textarea */
+    height: auto;
+    line-height: 1.5;
+    white-space: pre-wrap; /* Giữ khoảng trắng và xuống dòng */
+    word-wrap: break-word; /* Xuống dòng nếu từ quá dài */
+    overflow-y: auto; /* Cho phép cuộn nếu quá cao */
+    max-height: 300px; /* Giới hạn chiều cao tối đa */
+}
+.field-input-div:focus {
+    /* Style khi focus giống textarea */
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+}
+
+/* Style cho textarea nguồn (thường ẩn) */
+.field-input-textarea {
+    resize: vertical; /* Cho phép resize chiều dọc */
+    min-height: calc(1.5em * 2 + 1.2rem + 2px);
+    height: auto;
+    line-height: 1.5;
+    font-family: monospace; /* Font cho code */
+    /* Có thể thêm màu nền khác để phân biệt */
+}
+
+/* Ẩn/Hiện dựa trên data-editor-mode */
+.field-group[data-editor-mode="normal"] .field-input-textarea {
+    display: none;
+}
+.field-group[data-editor-mode="normal"] .field-input-div {
+    display: block;
+}
+.field-group[data-editor-mode="source"] .field-input-div {
+    display: none;
+}
+.field-group[data-editor-mode="source"] .field-input-textarea {
+    display: block;
+}
+
+/* Tắt toolbar khi ở source mode */
+body.source-mode #format-toolbar button,
+body.source-mode #format-toolbar input[type="color"] {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+}
+
+/* ... CSS cũ còn lại giữ nguyên ... */
