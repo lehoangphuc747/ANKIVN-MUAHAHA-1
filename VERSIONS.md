@@ -470,6 +470,18 @@ Khi DOMContentLoaded chạy, nó cũng cần đọc trạng thái đã lưu từ
 * 🖋️ Đảm bảo `div.field-input-div` luôn `display: block;` (trừ khi `data-view-mode="rendered"`).
 * 🪶 Thêm style viền & bo góc cho `div.field-input-div` tương tự `.form-control` (nếu cần).
 
+## v1.46.00
 
+Dựa trên báo cáo của bạn (lỗi autocomplete không hiển thị/chọn được VÀ lỗi nút Settings không click được), tôi đã tìm ra cách khắc phục triệt để.
+
+Lỗi Autocomplete (Deck/Note Type): Lỗi này phức tạp. Sự kiện click để chọn (ví dụ: "Basic") bị xung đột với sự kiện blur (mất focus) khỏi ô input, khiến danh sách bị ẩn trước khi bạn kịp chọn.
+
+Lỗi Nút Settings: Lỗi này có thể do một sự kiện click khác (có thể từ autocomplete) can thiệp vào.
+
+Tôi đã tạo v1.46.0 để sửa cả hai lỗi này.
+
+Tôi đã viết lại hoàn toàn logic xử lý click trong setupAutocomplete. Giờ đây, nó sẽ bắt sự kiện mousedown (nhấn chuột xuống) và xử lý việc chọn item ngay lập tức, ngăn chặn xung đột.
+
+Tôi đã thêm e.stopPropagation() vào nút "Settings" để đảm bảo không sự kiện nào khác cản trở nó.
 
 
