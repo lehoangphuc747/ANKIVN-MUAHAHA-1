@@ -140,9 +140,10 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .btn-icon-danger:hover { background-color: var(--error-bg); }
 
 /* --- Editor Mode Toggle Buttons --- */
-.editor-mode-toggle {
+#editor-mode-toggle {
     margin-top: 10px;
-    margin-bottom: 5px; /* Giảm mb */
+    /* margin-bottom: 5px; */ /* Dòng này đã có, giữ nguyên hoặc tăng lên nếu cần */
+    margin-bottom: 10px; /* Tăng khoảng cách dưới nút toggle nếu muốn */
     text-align: center;
 }
 .editor-mode-toggle button {
