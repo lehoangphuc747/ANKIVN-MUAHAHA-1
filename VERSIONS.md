@@ -284,3 +284,54 @@
 - 🐛 Sửa lỗi Media Preview:
     - `popup.js`: Trong `onMessage`, sau khi cập nhật `targetTextarea.value` và dispatch event `input`, gọi lại `updateMediaPreview(targetTextarea)` để đảm bảo preview được cập nhật ngay cả khi chế độ view đã là 'rendered'. Thêm trạng thái loading cho ảnh preview. Cải thiện logic xử lý nút audio (dừng/phát, reset trạng thái).
     - `styles.css`: Thêm style `.preview-loading`. Cập nhật `min-height` và `margin-top` cho `.media-preview-container`.
+
+## 🆕 v1.39.0 – 2025-10-28
+
+### ✨ Tính năng mới: **Thanh công cụ định dạng (Rich Text Editor)**
+
+**popup.html**
+- Thêm `div#format-toolbar` chứa các nút:
+  - **Bold**, **Italic**, **Underline**
+  - **Text Color** (+ color picker)
+  - **Background Color** (+ color picker)
+  - **Remove Format**
+  - **Cloze**
+- Sử dụng **Font Awesome** cho các icon nút.
+- Thêm `div#sticky-header-content` bao quanh phần *Preset*, *Deck*, *Note* và *Toolbar* để làm **sticky header**.
+
+**popup.js**
+- Thêm biến `activeTextarea` để theo dõi field đang được focus.
+- Gán sự kiện **focus** cho các textarea trong `createFieldsForModel` để cập nhật `activeTextarea`.
+- Thêm hàm `applyFormat(command, value)` sử dụng `document.execCommand` cho các định dạng cơ bản và màu sắc.
+- Thêm hàm `addCloze()` để xử lý việc thêm `{{c#:...}}` vào text được chọn trong `activeTextarea`.
+- Gán sự kiện **click** cho các nút trên toolbar để gọi `applyFormat` hoặc `addCloze`.
+- Gán sự kiện **input** cho các color picker để áp dụng màu ngay khi chọn.
+- Thêm listener **keydown** để xử lý phím tắt:
+  - `Ctrl+B` → **Bold**
+  - `Ctrl+I` → **Italic**
+  - `Ctrl+U` → **Underline**
+  - `Ctrl+Shift+C` → **Cloze**
+- Đảm bảo `activeTextarea` được focus trước khi gọi `execCommand`.
+- Trigger event **input** sau khi định dạng để cập nhật **Rendered View / Preview**.
+
+**styles.css**
+- Thêm style cho `#format-toolbar`, các nút bên trong, separator và color picker.
+- Thêm style cho `#sticky-header-content` để làm sticky:
+  ```css
+  position: sticky;
+  top: 0;
+  z-index: ...;
+  background-color: ...;
+  ```
+- Bỏ `max-height` và `overflow-y` của `.fields-container` → để cuộn toàn bộ `.container` thay vì chỉ field.
+
+---
+
+### 🐛 Sửa lỗi
+**popup.js**
+- Sửa lỗi logic `addNoteToAnki` khi lấy fields.
+- Đảm bảo lấy giá trị từ `textarea` ngay cả khi đang ở chế độ **Rendered View**.
+
+
+
+
