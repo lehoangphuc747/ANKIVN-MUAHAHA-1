@@ -95,9 +95,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById('format-italic').addEventListener('mousedown', (e) => { e.preventDefault(); applyFormat('italic'); });
   document.getElementById('format-underline').addEventListener('mousedown', (e) => { e.preventDefault(); applyFormat('underline'); });
   document.getElementById('format-remove').addEventListener('mousedown', (e) => { e.preventDefault(); applyFormat('removeFormat'); });
-  document.getElementById('format-cloze').addEventListener('mousedown', (e) => { e.preventDefault(); addCloze(); });
-  document.getElementById('forecolor-picker').addEventListener('input', (e) => applyFormat('foreColor', e.target.value));
-  document.getElementById('backcolor-picker').addEventListener('input', (e) => applyFormat('backColor', e.target.value));
+  
+  // Cloze buttons
+  document.getElementById('format-cloze-1').addEventListener('mousedown', (e) => { e.preventDefault(); addCloze(1); });
+  document.getElementById('format-cloze-2').addEventListener('mousedown', (e) => { e.preventDefault(); addCloze(2); });
+  document.getElementById('format-cloze-3').addEventListener('mousedown', (e) => { e.preventDefault(); addCloze(3); });
+  document.getElementById('format-cloze-next').addEventListener('mousedown', (e) => { e.preventDefault(); addCloze(); });
+
+  // Color pickers and inputs
+  const foreColorPicker = document.getElementById('forecolor-picker');
+  const foreColorHexInput = document.getElementById('forecolor-hex-input');
+  const backColorPicker = document.getElementById('backcolor-picker');
+  const backColorHexInput = document.getElementById('backcolor-hex-input');
+
+  foreColorPicker.addEventListener('input', (e) => { applyFormat('foreColor', e.target.value); foreColorHexInput.value = e.target.value; });
+  backColorPicker.addEventListener('input', (e) => { applyFormat('backColor', e.target.value); backColorHexInput.value = e.target.value; });
+  
+  foreColorHexInput.addEventListener('input', (e) => { const value = e.target.value; if (/^#[0-9A-F]{6}$/i.test(value)) { applyFormat('foreColor', value); foreColorPicker.value = value; } });
+  backColorHexInput.addEventListener('input', (e) => { const value = e.target.value; if (/^#[0-9A-F]{6}$/i.test(value)) { applyFormat('backColor', value); backColorPicker.value = value; } });
+
 
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
@@ -106,7 +122,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (e.key.toLowerCase() === 'b') { e.preventDefault(); applyFormat('bold'); }
       if (e.key.toLowerCase() === 'i') { e.preventDefault(); applyFormat('italic'); }
       if (e.key.toLowerCase() === 'u') { e.preventDefault(); applyFormat('underline'); }
-      if (e.shiftKey && e.key.toLowerCase() === 'c') { e.preventDefault(); addCloze(); }
+      if (e.shiftKey) {
+        if (e.key.toLowerCase() === 'c') { e.preventDefault(); addCloze(); }
+        if (e.key === '1') { e.preventDefault(); addCloze(1); }
+        if (e.key === '2') { e.preventDefault(); addCloze(2); }
+        if (e.key === '3') { e.preventDefault(); addCloze(3); }
+      }
     }
   });
 

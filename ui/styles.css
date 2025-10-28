@@ -124,12 +124,6 @@ body.header-collapsed #collapsible-header {
     padding: 8px 0;
     border-bottom: 1px solid var(--border-color-light);
     margin-bottom: 1rem;
-    margin-left: -16px; /* Giá trị âm bằng với padding-left của .container */
-    margin-right: -16px; /* Giá trị âm bằng với padding-right của .container */
-    /* Giữ nguyên các thuộc tính khác như position: sticky, top, z-index, background-color, border-bottom */
-    /* Có thể cần thêm padding trái/phải cho chính wrapper này để nội dung bên trong nó không bị sát lề */
-    padding-left: 16px;
-    padding-right: 16px;
 }
 
 
@@ -238,10 +232,27 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     vertical-align: middle;
     border-radius: 3px;
 }
-#format-toolbar #format-cloze { /* Nút Cloze */
+
+/* Định dạng ô nhập HEX */
+.hex-color-input {
+    width: 70px;
+    padding: 2px 4px;
+    font-size: 0.8em;
+    margin-left: -2px;
+    margin-right: 4px;
+    border: 1px solid var(--border-color-light);
+    border-radius: 3px;
+    text-align: center;
+    vertical-align: middle;
+    font-family: monospace;
+}
+
+/* Định dạng các nút Cloze */
+#format-toolbar .cloze-button {
     font-weight: bold;
     font-family: monospace;
     padding: 4px 8px;
+    min-width: 28px;
 }
 
 

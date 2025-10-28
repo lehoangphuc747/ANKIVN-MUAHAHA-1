@@ -1,5 +1,14 @@
 # Version History
 
+## ✨ v2.3.0 – 2025-11-06
+
+### 🚀 Feature: **Enhanced Formatting Toolbar**
+
+- **HEX Color Inputs**: Added text fields next to color pickers, allowing direct input of HEX color codes. The color picker and text field are synchronized.
+- **Dedicated Cloze Buttons**: Added specific buttons for C1, C2, and C3 cloze deletions for faster access.
+- **New Keyboard Shortcuts**: Added `Ctrl+Shift+1/2/3` shortcuts for the new cloze buttons.
+- The generic cloze button now inserts the next sequential cloze (e.g., C4, C5...).
+
 ## 🎨 v2.2.2 – 2025-11-05
 
 ### UI Refinement: **Seamless Sticky Toolbar**
