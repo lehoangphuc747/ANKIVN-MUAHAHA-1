@@ -286,11 +286,11 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 
 /* --- Fields Container và Field Group --- */
 .fields-container {
-    margin-bottom: 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 10px;
-    background-color: var(--bg-color-alt);
+    margin-bottom: 0.5rem; /* Giảm margin dưới */
+    border: none;          /* Xóa border */
+    border-radius: 0;      /* Xóa bo góc */
+    padding: 0;            /* Xóa padding */
+    background-color: transparent; /* Xóa màu nền */
 }
 .field-group { margin-bottom: 0.8rem; position: relative; } /* Thêm position: relative để nút toggle view định vị */
 .field-header {
