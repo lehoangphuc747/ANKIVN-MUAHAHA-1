@@ -1,5 +1,13 @@
 # Version History
 
+## 🎨 v2.1.1 – 2025-10-31
+
+### UI Refinement: **Compact Fields View**
+
+- **`ui/styles.css`**: Modified the `.fields-container` to remove its background, border, and padding.
+- The bottom margin was also reduced for a tighter layout.
+- This change creates a cleaner, more seamless interface by reducing visual clutter around the input fields.
+
 ## ✨ v2.1.0 – 2025-10-30
 
 ### 🚀 Feature: **Advanced Customization**
