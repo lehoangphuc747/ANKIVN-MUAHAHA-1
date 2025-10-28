@@ -963,9 +963,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         e.preventDefault(); // Ngăn mất focus
         applyFormat('bold');
         });
-        document.getElementById('format-italic').addEventListener('click', () => applyFormat('italic'));
-        document.getElementById('format-underline').addEventListener('click', () => applyFormat('underline'));
-        document.getElementById('format-remove').addEventListener('click', () => applyFormat('removeFormat'));
+        document.getElementById('format-italic').addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Ngăn mất focus
+        applyFormat('italic');
+        });
+
+        document.getElementById('format-underline').addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Ngăn mất focus
+        applyFormat('underline');
+        });
+
+        document.getElementById('format-remove').addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Ngăn mất focus
+        applyFormat('removeFormat');
+        });
         document.getElementById('format-cloze').addEventListener('click', addCloze);
 
         // Listener cho color pickers
