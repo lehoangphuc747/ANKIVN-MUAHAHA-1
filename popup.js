@@ -1,1283 +1,1154 @@
-// popup.js
-let allDecks = [];
-let allModels = [];
-let allTags = [];
-let allPresets = {};
-let currentModelName = '';
-let currentFieldNames = [];
-let statusTimeout = null;
-let currentAudio = null; // Để quản lý audio đang phát
-let activeElement = null; // Lưu element đang focus (chỉ là div contenteditable)
+/**
+ * popup.js
+ * * Logic cho AnkiVN MUAHAHA Extension Sidebar.
+ * Quản lý việc lấy decks, models, tạo fields, thêm note,
+ * quản lý presets, media preview, và rich text formatting.
+ */
 
-// --- Khóa lưu trạng thái thu gọn header ---
-const HEADER_COLLAPSE_KEY = 'headerCollapsed';
+// --- Globals ---
+const ANKI_CONNECT_URL = "http://localhost:8765";
+const ANKI_CONNECT_VERSION = 6;
+const HEADER_COLLAPSE_KEY = 'ankivn_header_collapsed';
+const LAST_USED_DECK_KEY = 'ankivn_lastUsedDeck';
+const LAST_USED_MODEL_KEY = 'ankivn_lastUsedModel';
+const PRESETS_KEY = 'ankivn_presets';
 
-// --- Hàm invoke (Kết nối AnkiConnect) ---
+let modelFieldsCache = {}; // Cache { modelName: [field1, field2] }
+let modelTemplatesCache = {}; // Cache { modelName: [...] }
+let modelCssCache = {}; // Cache { modelName: "css..." }
+
+let activeElement = null; // (v1.39.0) Theo dõi field (div contenteditable) đang focus
+let currentClozeIndex = 1; // (v1.39.0) Theo dõi chỉ số cloze
+let currentPlayingAudio = null; // (v1.37.0) Theo dõi audio đang phát
+
+// --- Anki-Connect API ---
+
+/**
+ * Gửi yêu cầu đến Anki-Connect
+ * @param {string} action - Tên action (vd: 'deckNames')
+ * @param {object} params - Các tham số cho action
+ * @returns {Promise<any>} - Kết quả từ Anki-Connect
+ */
 async function invoke(action, params = {}) {
-    try {
-        const response = await fetch('http://localhost:8765', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: action, version: 6, params: params })
-        });
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const result = await response.json();
-        // Ném lỗi nếu AnkiConnect trả về lỗi
-        if (Object.prototype.hasOwnProperty.call(result, 'error') && result.error) {
-            throw new Error(result.error);
-        }
-        return result.result;
-    } catch (error) {
-        console.error(`Anki-Connect error (${action}):`, error);
-        // Ném lỗi để hàm gọi có thể bắt và xử lý riêng
-        throw error;
-    }
-}
-
-// --- Hàm tạo Fields ---
-async function createFieldsForModel(modelName) {
-    console.log("Creating fields for model:", modelName);
-    currentModelName = modelName;
-    const fieldsContainer = document.getElementById('fields-container');
-    fieldsContainer.innerHTML = '<p>Đang tải fields...</p>'; // Thông báo đang tải
-
-    try {
-        const fieldNames = await invoke('modelFieldNames', { modelName: modelName });
-        if (!Array.isArray(fieldNames)) throw new Error("Received invalid data for field names.");
-        currentFieldNames = fieldNames;
-        console.log("Fields received:", currentFieldNames);
-
-        // Gửi danh sách fields cho background script để cập nhật context menu
-        chrome.runtime.sendMessage({ action: "updateFieldsForContextMenu", modelName: modelName, fields: fieldNames })
-              .catch(err => console.warn("Could not send fields to background:", err));
-
-        fieldsContainer.innerHTML = ''; // Xóa thông báo "Đang tải"
-
-        // Lấy cài đặt ẩn/thu gọn từ storage
-        const settingsKeys = [`hiddenFields_${modelName}`, `collapsedFields_${modelName}`];
-        const settings = await chrome.storage.local.get(settingsKeys);
-        const hiddenFields = settings[settingsKeys[0]] || {};
-        const collapsedFields = settings[settingsKeys[1]] || {};
-        console.log("Retrieved settings:", { hiddenFields, collapsedFields });
-
-        if (fieldNames.length === 0) {
-            fieldsContainer.innerHTML = '<p><i>Note Type này không có field nào.</i></p>';
-            return;
-        }
-
-        // Tạo HTML cho từng field
-        fieldNames.forEach(fieldName => {
-            const safeFieldName = fieldName.replace(/\s+/g, '-'); // Tạo id an toàn
-            const fieldIdBase = `field-${safeFieldName}`;
-            const divId = `${fieldIdBase}-div`; // Chỉ cần ID cho div
-            const previewId = `preview-${fieldIdBase}`;
-            const renderedViewId = `${fieldIdBase}-rendered`; // Giữ lại ID cho rendered view
-            const toggleViewBtnId = `toggle-view-${safeFieldName}`;
-
-            const isHidden = hiddenFields[fieldName] || false;
-            const isCollapsed = collapsedFields[fieldName] || false;
-
-            const fieldGroup = document.createElement('div');
-            fieldGroup.className = `form-group field-group ${isCollapsed ? 'collapsed' : ''} ${isHidden ? 'field-hidden-by-setting' : ''}`;
-            fieldGroup.dataset.fieldName = fieldName;
-            // fieldGroup.dataset.editorMode = 'normal'; // Không cần nữa
-            fieldGroup.dataset.viewMode = 'code'; // Mặc định là code view (hiển thị div)
-
-            // --- Field Header ---
-            const fieldHeader = document.createElement('div');
-            fieldHeader.className = 'field-header';
-            fieldHeader.addEventListener('click', toggleFieldCollapse); // Listener collapse
-
-            const toggleCollapse = document.createElement('span');
-            toggleCollapse.className = 'collapse-toggle';
-            toggleCollapse.textContent = isCollapsed ? '▶' : '🔽';
-            toggleCollapse.style.pointerEvents = 'none'; // Không bắt sự kiện click trên icon
-
-            const label = document.createElement('label');
-            label.textContent = fieldName;
-            label.title = fieldName; // Hiển thị tên đầy đủ khi hover
-            label.style.pointerEvents = 'none'; // Không bắt sự kiện click trên label
-            label.style.flexGrow = '1'; // Cho label chiếm hết phần còn lại
-
-            // Nút toggle view
-            const toggleViewBtn = document.createElement('button');
-            toggleViewBtn.id = toggleViewBtnId;
-            toggleViewBtn.className = 'btn-toggle-view';
-            toggleViewBtn.title = 'Show Rendered';
-            toggleViewBtn.innerHTML = '🖼️';
-            toggleViewBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleFieldView(fieldGroup);
-            });
-
-            fieldHeader.appendChild(toggleCollapse);
-            fieldHeader.appendChild(label);
-            fieldHeader.appendChild(toggleViewBtn);
-            fieldGroup.appendChild(fieldHeader);
-            // --- Hết Header ---
-
-            // --- Field Input Area (chứa div, preview, rendered view) ---
-            const inputContainer = document.createElement('div');
-            inputContainer.className = 'field-input-area';
-            if (isCollapsed) inputContainer.style.display = 'none'; // Ẩn ban đầu nếu collapsed
-
-            // Div ContentEditable (Luôn là Normal Mode)
-            const inputDiv = document.createElement('div');
-            inputDiv.id = divId;
-            inputDiv.contentEditable = true;
-            inputDiv.className = 'form-control field-input-div';
-            inputDiv.dataset.placeholder = `Nội dung ${fieldName}...`; // Dùng CSS để hiển thị placeholder
-            // inputDiv.style.display = ''; // Luôn hiển thị trừ khi view mode là 'rendered'
-            inputDiv.addEventListener('input', handleInputEvent);
-            inputDiv.addEventListener('focus', handleFocusEvent);
-            inputDiv.addEventListener('blur', handleBlurEvent);
-            inputContainer.appendChild(inputDiv);
-
-            // Removed Textarea
-
-            // Rendered View
-            const renderedView = document.createElement('div');
-            renderedView.id = renderedViewId;
-            renderedView.className = 'rendered-field-view';
-            renderedView.style.display = 'none'; // Ẩn ban đầu
-            inputContainer.appendChild(renderedView);
-
-            // Media Preview Container
-            const previewContainer = document.createElement('div');
-            previewContainer.id = previewId;
-            previewContainer.className = 'media-preview-container';
-            // previewContainer.style.display = ''; // Luôn hiển thị trừ khi view mode là 'rendered'
-            inputContainer.appendChild(previewContainer);
-
-            fieldGroup.appendChild(inputContainer);
-            fieldsContainer.appendChild(fieldGroup);
-
-            // Update preview và rendered view lần đầu
-            updateMediaPreviewFromContent(inputDiv.innerHTML, previewId);
-            updateRenderedView(inputDiv, renderedView);
-        });
-        console.log("Fields created successfully.");
-
-    } catch (error) {
-        console.error('Error creating/loading fields:', error);
-        showStatus(`Lỗi tải fields: ${error.message}`, 'error');
-        currentModelName = ''; // Reset model name
-        currentFieldNames = []; // Reset fields
-        fieldsContainer.innerHTML = `<p class="status-message error"><i>Lỗi tải fields. Vui lòng thử lại hoặc kiểm tra Anki.</i></p>`;
-        // Gửi danh sách trống cho background
-        chrome.runtime.sendMessage({ action: "updateFieldsForContextMenu", fields: [], modelName: null })
-              .catch(err => console.warn("Could not send empty fields to background:", err));
-    }
-}
-
-// --- Hàm xử lý sự kiện input chung ---
-function handleInputEvent(event) {
-    const target = event.target; // Luôn là div
-    const fieldGroup = target.closest('.field-group');
-    if (!fieldGroup) return;
-
-    const fieldName = fieldGroup.dataset.fieldName;
-    const safeFieldName = fieldName.replace(/\s+/g, '-');
-    const previewId = `preview-field-${safeFieldName}`;
-    const renderedViewId = `field-${safeFieldName}-rendered`;
-    const renderedViewElement = fieldGroup.querySelector(`#${renderedViewId}`);
-
-    updateMediaPreviewFromContent(target.innerHTML, previewId);
-    updateRenderedView(target, renderedViewElement);
-}
-
-// --- Hàm xử lý sự kiện focus/blur ---
-function handleFocusEvent(event) {
-    activeElement = event.target; // Cập nhật element đang focus (luôn là div)
-    console.log("Focus on:", activeElement.id);
-}
-function handleBlurEvent(event) {
-    // Không cần đồng bộ div -> textarea nữa
-    if (activeElement === event.target) {
-        console.log("Blur from:", activeElement.id);
-        activeElement = null;
-    }
-}
-
-// --- Hàm đồng bộ nội dung (đã loại bỏ) ---
-// function syncDivToTextarea(...) { ... }
-// function syncTextareaToDiv(...) { ... }
-
-// --- Hàm chuyển chế độ global (đã loại bỏ) ---
-// function setGlobalEditorMode(...) { ... }
-
-// --- Hàm toggle field view (Code/Rendered) ---
-function toggleFieldView(fieldGroup) {
-    const fieldName = fieldGroup.dataset.fieldName;
-    const safeFieldName = fieldName.replace(/\s+/g, '-');
-    const fieldIdBase = `field-${safeFieldName}`;
-    const divId = `${fieldIdBase}-div`;
-    const renderedViewId = `${fieldIdBase}-rendered`;
-    const previewId = `preview-${fieldIdBase}`; // Cần ID preview
-    const toggleViewBtnId = `toggle-view-${safeFieldName}`;
-
-    const divElement = fieldGroup.querySelector(`#${divId}`);
-    const renderedViewElement = fieldGroup.querySelector(`#${renderedViewId}`);
-    const previewContainer = fieldGroup.querySelector(`#${previewId}`); // Lấy container preview
-    const toggleViewBtn = fieldGroup.querySelector(`#${toggleViewBtnId}`);
-
-    if (!divElement || !renderedViewElement || !toggleViewBtn || !previewContainer) {
-        console.error("Toggle view elements not found!");
-        return;
-    }
-
-    const isCurrentlyRendered = fieldGroup.dataset.viewMode === 'rendered';
-    const newViewMode = isCurrentlyRendered ? 'code' : 'rendered';
-
-    fieldGroup.dataset.viewMode = newViewMode;
-
-    if (newViewMode === 'rendered') {
-        // Chuyển sang rendered view
-        divElement.style.display = 'none';
-        previewContainer.style.display = 'none'; // Ẩn preview
-        renderedViewElement.style.display = '';
-        toggleViewBtn.title = 'Show Editor'; // Đổi title
-        toggleViewBtn.innerHTML = '✍️'; // Đổi icon
-        // Cập nhật nội dung rendered view
-        updateRenderedView(divElement, renderedViewElement);
-    } else {
-        // Chuyển sang code view (editor)
-        renderedViewElement.style.display = 'none';
-        divElement.style.display = '';
-        previewContainer.style.display = ''; // Hiện preview
-        toggleViewBtn.title = 'Show Rendered';
-        toggleViewBtn.innerHTML = '🖼️';
-    }
-}
-
-// --- Hàm cập nhật Rendered View ---
-function updateRenderedView(sourceElement, renderedViewElement) {
-    if (!sourceElement || !renderedViewElement) return;
-
-    const content = sourceElement.innerHTML || '';
-    // Xử lý thẻ [sound:...] để hiển thị như placeholder
-    const processedContent = content.replace(/\[sound:(.*?)\]/g, '<span class="sound-placeholder">🔊 $1</span>');
-    renderedViewElement.innerHTML = processedContent;
-}
-
-// --- Hàm cập nhật Media Preview ---
-async function updateMediaPreviewFromContent(content, previewId) {
-    const previewContainer = document.getElementById(previewId);
-    if (!previewContainer) {
-        // console.warn("Preview container not found:", previewId);
-        return;
-    }
-
-    // Luôn hiển thị preview trừ khi view mode là 'rendered'
-    const fieldGroup = previewContainer.closest('.field-group');
-    if (fieldGroup && fieldGroup.dataset.viewMode === 'rendered') {
-        previewContainer.innerHTML = '';
-        previewContainer.style.display = 'none';
-        return;
-    }
-    previewContainer.style.display = ''; // Đảm bảo hiển thị
-    previewContainer.innerHTML = ''; // Xóa preview cũ
-
-
-    // Tìm thẻ img đầu tiên
-    const imgMatch = content.match(/<img src="([^"]+)"[^>]*>/i);
-    if (imgMatch) {
-        const filename = imgMatch[1];
-        // Bỏ qua nếu là data URI (đã là base64)
-        if (filename.startsWith('data:')) {
-            const img = document.createElement('img');
-            img.src = filename;
-            img.alt = "Image Preview";
-            img.className = 'preview-image';
-            img.title = `Click để xem lớn hơn`;
-            img.addEventListener('click', () => showImageModal(img.src, "Image Preview"));
-            previewContainer.appendChild(img);
-        } else {
-            // Tải base64 từ Anki nếu là tên file
-            previewContainer.innerHTML = `<span class="preview-loading">⏳ Đang tải ảnh "${filename}"...</span>`;
-            try {
-                const base64Data = await invoke('retrieveMediaFile', { filename: filename });
-                const currentPreviewContainer = document.getElementById(previewId); // Lấy lại container phòng trường hợp bị xóa/thay đổi
-                if (!currentPreviewContainer || currentPreviewContainer.closest('.field-group')?.dataset.viewMode === 'rendered') return; // Kiểm tra lại mode và container
-
-                if (base64Data) {
-                    currentPreviewContainer.innerHTML = ''; // Xóa loading
-                    const img = document.createElement('img');
-                    let mimeType = 'image/webp'; // Mặc định webp
-                    if (filename.toLowerCase().endsWith('.png')) mimeType = 'image/png';
-                    else if (filename.toLowerCase().endsWith('.jpg') || filename.toLowerCase().endsWith('.jpeg')) mimeType = 'image/jpeg';
-                    else if (filename.toLowerCase().endsWith('.gif')) mimeType = 'image/gif';
-                    else if (filename.toLowerCase().endsWith('.svg')) mimeType = 'image/svg+xml';
-
-                    img.src = `data:${mimeType};base64,${base64Data}`;
-                    img.alt = filename;
-                    img.className = 'preview-image';
-                    img.title = `Click để xem lớn hơn: ${filename}`;
-                    img.addEventListener('click', () => showImageModal(img.src, filename));
-                    currentPreviewContainer.appendChild(img);
-                } else {
-                    currentPreviewContainer.innerHTML = `<span class="preview-error">⚠️ Ảnh "${filename}" không tìm thấy!</span>`;
-                }
-            } catch (error) {
-                console.error("Error retrieving image preview:", error);
-                const currentPreviewContainer = document.getElementById(previewId);
-                 if (currentPreviewContainer && currentPreviewContainer.closest('.field-group')?.dataset.viewMode !== 'rendered') {
-                    currentPreviewContainer.innerHTML = `<span class="preview-error">⚠️ Lỗi tải ảnh "${filename}": ${error.message}</span>`;
-                }
-            }
-        }
-    }
-
-    // Tìm thẻ sound đầu tiên
-    const soundMatch = content.match(/\[sound:(.*?)\]/i);
-    if (soundMatch) {
-        const filename = soundMatch[1];
-        const button = document.createElement('button');
-        button.className = 'btn-secondary preview-audio-button';
-        button.textContent = '🔊 Nghe';
-        button.title = filename;
-        let isPlaying = false;
-        let audioObject = null; // Lưu trữ thẻ <audio>
-
-        button.onclick = async (event) => {
-            event.stopPropagation(); // Ngăn sự kiện click lan ra header (gây collapse)
-            if (currentAudio && currentAudio !== audioObject) {
-                currentAudio.pause(); // Dừng audio khác nếu đang phát
-            }
-
-            if (isPlaying) {
-                if (audioObject) audioObject.pause();
-            } else {
-                button.textContent = '⏳ Tải...';
-                button.disabled = true;
-                try {
-                    const base64Data = await invoke('retrieveMediaFile', { filename: filename });
-                    const currentPrevContainer = document.getElementById(previewId); // Re-fetch container
-                    if (!currentPrevContainer || currentPrevContainer.closest('.field-group')?.dataset.viewMode === 'rendered') return; // Re-check mode
-
-                    if (base64Data) {
-                        if (!audioObject) { // Tạo thẻ audio nếu chưa có
-                             audioObject = new Audio();
-                             let mimeType = 'audio/mpeg'; // Mặc định mp3
-                             if (filename.toLowerCase().endsWith('.ogg')) mimeType = 'audio/ogg';
-                             else if (filename.toLowerCase().endsWith('.wav')) mimeType = 'audio/wav';
-                             // Thêm các mime type khác nếu cần
-                             audioObject.src = `data:${mimeType};base64,${base64Data}`;
-                             audioObject.onplay = () => {
-                                 isPlaying = true; button.textContent = '❚❚ Dừng'; currentAudio = audioObject; button.disabled = false;
-                             };
-                             audioObject.onpause = () => {
-                                 isPlaying = false; button.textContent = '🔊 Nghe'; audioObject.currentTime = 0; if (currentAudio === audioObject) currentAudio = null; button.disabled = false;
-                             };
-                             audioObject.onerror = (e) => {
-                                 console.error("Audio playback error:", e);
-                                 showStatus(`Lỗi phát audio "${filename}"`, 'error');
-                                 isPlaying = false; button.textContent = '⚠️ Lỗi'; button.disabled = true; if (currentAudio === audioObject) currentAudio = null;
-                             };
-                             audioObject.onended = () => { // Tự reset khi phát xong
-                                 isPlaying = false; button.textContent = '🔊 Nghe'; if (currentAudio === audioObject) currentAudio = null; button.disabled = false;
-                             }
-                        }
-                        audioObject.play();
-                    } else {
-                        throw new Error("File audio không tìm thấy.");
-                    }
-                } catch (error) {
-                    console.error("Error retrieving/playing audio preview:", error);
-                     const currentPrevContainer = document.getElementById(previewId);
-                      if (currentPrevContainer && currentPrevContainer.closest('.field-group')?.dataset.viewMode !== 'rendered') {
-                         currentPrevContainer.innerHTML = `<span class="preview-error">⚠️ Lỗi tải audio "${filename}": ${error.message}</span>`;
-                     }
-                    isPlaying = false; button.textContent = '⚠️ Lỗi'; button.disabled = true;
-                }
-            }
-        };
-        // Thêm nút vào container (kiểm tra lại mode)
-        const finalPreviewContainer = document.getElementById(previewId);
-        if (finalPreviewContainer && finalPreviewContainer.closest('.field-group')?.dataset.viewMode !== 'rendered') {
-            finalPreviewContainer.appendChild(button);
-        }
-    }
-}
-
-
-// --- Hàm hiển thị Modal ảnh ---
-function showImageModal(src, caption) {
-    const modal = document.getElementById("image-preview-modal");
-    const modalImg = document.getElementById("modal-image");
-    const captionText = document.getElementById("modal-caption");
-    const span = modal.querySelector(".modal-close-btn");
-
-    modal.style.display = "block";
-    modalImg.src = src;
-    captionText.textContent = caption || "Image Preview";
-
-    span.onclick = function() {
-        modal.style.display = "none";
-    }
-    // Đóng modal khi click ra ngoài ảnh
-    modal.onclick = function(event) {
-        if (event.target === modal || event.target === captionText) {
-             modal.style.display = "none";
-        }
-    }
-}
-
-// --- Hàm toggleFieldCollapse ---
-async function toggleFieldCollapse(event) {
-    const fieldHeader = event.currentTarget;
-    const fieldGroup = fieldHeader.closest('.field-group');
-    if (!fieldGroup) return;
-
-    // Ngăn collapse khi click vào các nút control bên trong header
-    if (event.target !== fieldHeader &&
-        !event.target.classList.contains('collapse-toggle') &&
-        !event.target.closest('label') &&
-        !event.target.classList.contains('btn-toggle-view')) { // Không collapse khi click nút view
-       // console.log("Click inside header control, preventing collapse.");
-       return;
-    }
-
-
-    const fieldName = fieldGroup.dataset.fieldName;
-    const inputArea = fieldGroup.querySelector('.field-input-area');
-    const toggleIcon = fieldHeader.querySelector('.collapse-toggle');
-    const label = fieldHeader.querySelector('label');
-
-    if (!inputArea || !fieldName || !toggleIcon || !label) { console.error("Collapse elements not found!"); return; }
-
-    const isCurrentlyCollapsed = fieldGroup.classList.contains('collapsed');
-    const newState = !isCurrentlyCollapsed;
-
-    fieldGroup.classList.toggle('collapsed', newState);
-    if (newState) {
-        inputArea.style.display = 'none';
-        label.style.opacity = '0.65';
-        toggleIcon.textContent = '▶';
-    } else {
-        inputArea.style.display = '';
-        label.style.opacity = '1';
-        toggleIcon.textContent = '🔽';
-        // Không cần trigger autoExpand nữa vì không còn textarea
-    }
-
-    // Lưu trạng thái collapse vào storage
-    const storageKey = `collapsedFields_${currentModelName}`;
-    try {
-        const currentState = await chrome.storage.local.get(storageKey);
-        const updatedState = currentState[storageKey] || {};
-        updatedState[fieldName] = newState;
-        await chrome.storage.local.set({ [storageKey]: updatedState });
-        // console.log("Saved collapse state:", { [storageKey]: updatedState });
-    } catch (error) {
-        console.error('Error saving collapse state:', error);
-    }
-}
-
-
-// --- Các hàm tiện ích ---
-// function autoExpandTextarea(...) { ... } // Không cần nữa
-function openOptionsPage() {
-    chrome.runtime.openOptionsPage();
-}
-function generateRandomId(length = 14) {
-    let result = '';
-    const characters = '0123456789';
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return result;
-}
-function showStatus(message, type = 'info') {
-    const statusElement = document.getElementById('status-message');
-    if (!statusElement) return;
-    statusElement.textContent = message;
-    statusElement.className = `status-message ${type}`; // Reset class
-    statusElement.style.display = 'block'; // Ensure visible
-
-    if (statusTimeout) clearTimeout(statusTimeout);
-
-    if (type === 'success') {
-        statusTimeout = setTimeout(() => {
-            if (statusElement.textContent === message) { // Chỉ ẩn nếu nội dung chưa bị thay đổi
-                statusElement.textContent = '';
-                statusElement.className = 'status-message';
-                statusElement.style.display = 'none';
-            }
-            statusTimeout = null;
-        }, 4000); // Tự ẩn sau 4 giây
-    } else {
-        statusTimeout = null; // Không tự ẩn lỗi hoặc info
-    }
-}
-
-// --- Hàm setupAutocomplete ---
-function setupAutocomplete(inputId, containerId, sourceArray, onSelectCallback = null) {
-  console.log(`Setting up autocomplete for input: #${inputId} with ${sourceArray ? sourceArray.length : 0} items`);
-  const input = document.getElementById(inputId);
-  const container = document.getElementById(containerId);
-  if (!input || !container) { console.error(`Autocomplete setup failed: Cannot find elements #${inputId} or #${containerId}`); return; }
-  let currentFocus = -1;
-
-  function showSuggestions(value) {
-    container.innerHTML = '';
-    const valLower = value.toLowerCase();
-    const keywords = valLower.split(' ').filter(k => k.trim() !== ''); // Tách keywords
-    const validSource = Array.isArray(sourceArray) ? sourceArray : []; // Đảm bảo là mảng
-
-    const suggestions = validSource.filter(item => {
-        if (typeof item !== 'string') return false;
-        const target = item.toLowerCase();
-        // Kiểm tra xem target có chứa TẤT CẢ các keywords không
-        return keywords.every(keyword => target.includes(keyword));
+  console.log(`invoke: ${action}`, params);
+  try {
+    const response = await fetch(ANKI_CONNECT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        action: action,
+        version: ANKI_CONNECT_VERSION,
+        params: params,
+      }),
     });
 
-    if (suggestions.length === 0) {
-      container.style.display = 'none';
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.error) {
+      throw new Error(`Anki-Connect error: ${data.error}`);
+    }
+
+    console.log(`invoke success: ${action}`, data.result);
+    return data.result;
+  } catch (error) {
+    console.error(`Error invoking Anki-Connect action '${action}':`, error);
+    // (v1.26.0) Ném lỗi ra ngoài để DOMContentLoaded có thể bắt
+    throw error;
+  }
+}
+
+// --- DOMContentLoaded (Main Entry Point) ---
+
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("AnkiVN MUAHAHA Sidebar DOMContentLoaded");
+
+  const deckInput = document.getElementById("deck-name");
+  const modelInput = document.getElementById("model-name");
+  const tagsInput = document.getElementById("tags");
+  const addNoteBtn = document.getElementById("add-note-btn");
+  const openSettingsLink = document.getElementById("open-settings-link");
+  const statusMessage = document.getElementById("status-message");
+  const toggleHeaderBtn = document.getElementById('toggle-header-btn'); // (v1.42.0)
+
+  // (v1.36.0) Preset controls
+  const presetSelect = document.getElementById('preset-select');
+  const savePresetBtn = document.getElementById('save-preset-btn');
+  const deletePresetBtn = document.getElementById('delete-preset-btn');
+
+  // Hàm hiển thị trạng thái
+  const showStatus = (message, isError = false) => {
+    console.log(`showStatus (isError: ${isError}): ${message}`);
+    statusMessage.textContent = message;
+    statusMessage.className = isError ? "status-error" : "status-success";
+    statusMessage.style.display = "block";
+
+    // (v1.19.0) Tự động ẩn thông báo thành công
+    if (!isError) {
+      setTimeout(() => {
+        if (statusMessage.textContent === message) {
+          statusMessage.style.display = "none";
+          statusMessage.textContent = "";
+        }
+      }, 4000);
+    }
+  };
+
+  // --- (v1.42.0) Header Collapse Logic ---
+  const setHeaderCollapsed = (isCollapsed) => {
+    if (isCollapsed) {
+      document.body.classList.add('header-collapsed');
+      toggleHeaderBtn.textContent = '🔽';
+      toggleHeaderBtn.title = 'Hiện header';
+    } else {
+      document.body.classList.remove('header-collapsed');
+      toggleHeaderBtn.textContent = '🔼';
+      toggleHeaderBtn.title = 'Ẩn header';
+    }
+  };
+
+  toggleHeaderBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const isCollapsed = document.body.classList.contains('header-collapsed');
+    setHeaderCollapsed(!isCollapsed);
+    chrome.storage.local.set({ [HEADER_COLLAPSE_KEY]: !isCollapsed });
+  });
+
+  // Khôi phục trạng thái collapse
+  chrome.storage.local.get(HEADER_COLLAPSE_KEY, (result) => {
+    setHeaderCollapsed(result[HEADER_COLLAPSE_KEY] || false);
+  });
+
+  // --- (v1.36.0) Preset Logic ---
+  const loadPresets = async () => {
+    presetSelect.innerHTML = '<option value="">Chọn preset...</option>';
+    try {
+      const result = await chrome.storage.local.get(PRESETS_KEY);
+      const presets = result[PRESETS_KEY] || {};
+      for (const presetName in presets) {
+        const option = document.createElement('option');
+        option.value = presetName;
+        option.textContent = presetName;
+        presetSelect.appendChild(option);
+      }
+    } catch (e) {
+      console.error("Error loading presets:", e);
+    }
+  };
+
+  const saveCurrentPreset = async () => {
+    const presetName = prompt("Đặt tên cho preset này:", presetSelect.value || "Preset mới");
+    if (!presetName) return;
+
+    try {
+      const result = await chrome.storage.local.get(PRESETS_KEY);
+      const presets = result[PRESETS_KEY] || {};
+      presets[presetName] = {
+        deckName: deckInput.value,
+        modelName: modelInput.value,
+        tags: tagsInput.value
+      };
+      await chrome.storage.local.set({ [PRESETS_KEY]: presets });
+      await loadPresets();
+      presetSelect.value = presetName;
+      showStatus(`Đã lưu preset '${presetName}'`);
+    } catch (e) {
+      console.error("Error saving preset:", e);
+      showStatus(`Lỗi khi lưu preset: ${e.message}`, true);
+    }
+  };
+
+  const deleteCurrentPreset = async () => {
+    const presetName = presetSelect.value;
+    if (!presetName) {
+      showStatus("Vui lòng chọn preset để xóa", true);
+      return;
+    }
+    if (!confirm(`Bạn có chắc muốn xóa preset '${presetName}'?`)) {
       return;
     }
 
-    suggestions.forEach((item, index) => {
-      const suggestionItem = document.createElement('div');
-      suggestionItem.className = 'suggestion-item';
-      suggestionItem.textContent = item;
-      suggestionItem.addEventListener('click', () => {
-        console.log(`Suggestion clicked: ${item} for #${inputId}`);
-        input.value = item; // Điền giá trị
-        closeAllLists();    // Đóng danh sách
-        // Trigger input event để xử lý logic sau khi chọn (ví dụ: load fields)
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-        if (onSelectCallback) {
-            onSelectCallback(item); // Gọi callback nếu có
+    try {
+      const result = await chrome.storage.local.get(PRESETS_KEY);
+      const presets = result[PRESETS_KEY] || {};
+      delete presets[presetName];
+      await chrome.storage.local.set({ [PRESETS_KEY]: presets });
+      await loadPresets();
+      showStatus(`Đã xóa preset '${presetName}'`);
+    } catch (e) {
+      console.error("Error deleting preset:", e);
+      showStatus(`Lỗi khi xóa preset: ${e.message}`, true);
+    }
+  };
+
+  const applyPreset = async (presetName) => {
+    if (!presetName) return;
+
+    try {
+      const result = await chrome.storage.local.get(PRESETS_KEY);
+      const presets = result[PRESETS_KEY] || {};
+      const preset = presets[presetName];
+      if (preset) {
+        deckInput.value = preset.deckName || "";
+        modelInput.value = preset.modelName || "";
+        tagsInput.value = preset.tags || "";
+        showStatus(`Đã áp dụng preset '${presetName}'`);
+        // Tự động tải fields
+        if (preset.modelName) {
+          await createFieldsForModel(preset.modelName, showStatus);
+        } else {
+          document.getElementById("fields-container").innerHTML = ""; // Xóa fields nếu preset không có model
         }
-      });
-      container.appendChild(suggestionItem);
+      }
+    } catch (e) {
+      console.error("Error applying preset:", e);
+      showStatus(`Lỗi khi áp dụng preset: ${e.message}`, true);
+    }
+  };
+
+  // Gán sự kiện cho preset
+  presetSelect.addEventListener('change', () => applyPreset(presetSelect.value));
+  savePresetBtn.addEventListener('click', saveCurrentPreset);
+  deletePresetBtn.addEventListener('click', deleteCurrentPreset);
+
+  // --- Tải dữ liệu ban đầu ---
+  try {
+    const [deckNames, modelNames, tagNames] = await Promise.all([
+      invoke("deckNames"),
+      invoke("modelNames"),
+      invoke("getTags"),
+      loadPresets() // (v1.36.0)
+    ]);
+
+    if (!Array.isArray(deckNames) || !Array.isArray(modelNames) || !Array.isArray(tagNames)) {
+      throw new Error("Dữ liệu trả về từ Anki-Connect không hợp lệ.");
+    }
+
+    console.log("Decks, models, tags loaded.");
+
+    // (v1.10.0) Setup autocomplete cho Decks
+    setupAutocomplete(
+      document.getElementById("deck-input-group"),
+      deckInput,
+      deckNames
+    );
+
+    // (v1.10.0) Setup autocomplete cho Models
+    setupAutocomplete(
+      document.getElementById("model-input-group"),
+      modelInput,
+      modelNames,
+      async (selectedModel) => {
+        // (v1.26.0) Callback khi chọn model
+        console.log(`Model selected: ${selectedModel}`);
+        await createFieldsForModel(selectedModel, showStatus);
+      }
+    );
+
+    // Setup datalist cho Tags (dùng datalist chuẩn của HTML)
+    const tagDatalist = document.getElementById("tag-suggestions");
+    tagDatalist.innerHTML = "";
+    tagNames.forEach((tag) => {
+      const option = document.createElement("option");
+      option.value = tag;
+      tagDatalist.appendChild(option);
     });
-    container.style.display = 'block';
-    currentFocus = -1; // Reset focus index
+
+    // (v1.36.0) Khôi phục deck/model cuối cùng
+    const lastUsed = await chrome.storage.local.get([LAST_USED_DECK_KEY, LAST_USED_MODEL_KEY]);
+    if (lastUsed[LAST_USED_DECK_KEY]) {
+      deckInput.value = lastUsed[LAST_USED_DECK_KEY];
+      console.log(`Restored last used deck: ${deckInput.value}`);
+    }
+    if (lastUsed[LAST_USED_MODEL_KEY]) {
+      modelInput.value = lastUsed[LAST_USED_MODEL_KEY];
+      console.log(`Restored last used model: ${modelInput.value}`);
+      // Tự động tải fields
+      await createFieldsForModel(modelInput.value, showStatus);
+    }
+
+  } catch (error) {
+    console.error("Failed to initialize popup:", error);
+    showStatus(`Lỗi kết nối Anki-Connect: ${error.message}. Hãy chắc chắn Anki đang chạy và Anki-Connect đã được cài đặt.`, true);
   }
 
-  input.addEventListener('input', () => {
-    // console.log(`Input event on #${inputId}: ${input.value}`);
-    showSuggestions(input.value);
-    // Gọi callback ngay khi input thay đổi (nếu cần xử lý autocomplete tức thì)
-    // if (onSelectCallback) onSelectCallback(input.value); // Bỏ comment nếu muốn
-  });
+  // --- Gán sự kiện cho các nút ---
 
-  input.addEventListener('focus', () => {
-    console.log(`Focus event on #${inputId}`);
-    showSuggestions(''); // Hiển thị tất cả khi focus (nếu danh sách không quá dài)
-  });
-
-  input.addEventListener('keydown', (e) => {
-    let items = container.getElementsByClassName('suggestion-item');
-    if (items.length === 0) return;
-    // console.log(`Keydown event on #${inputId}: ${e.key}`);
-    if (e.key === 'ArrowDown') { // Down arrow
+  // (v1.26.0) Sửa lỗi nút Settings
+  if (openSettingsLink) {
+    openSettingsLink.addEventListener("click", (e) => {
       e.preventDefault();
-      currentFocus++;
-      if (currentFocus >= items.length) currentFocus = 0;
-      addActive(items);
-    } else if (e.key === 'ArrowUp') { // Up arrow
-      e.preventDefault();
-      currentFocus--;
-      if (currentFocus < 0) currentFocus = items.length - 1;
-      addActive(items);
-    } else if (e.key === 'Enter') { // Enter
-      e.preventDefault(); // Ngăn submit form (nếu có)
-      if (currentFocus > -1) {
-        items[currentFocus].click(); // Simulate click on the active item
-      } else if (items.length > 0 && input.value.trim() !== '') {
-         // Nếu không có item nào được chọn nhưng có suggestion và input có giá trị
-         // -> chọn suggestion đầu tiên khớp hoặc điền giá trị hiện tại?
-         // Tạm thời: Không làm gì, để user tự click hoặc chọn lại
-         console.log("Enter pressed with no active suggestion");
-      }
-    } else if (e.key === 'Escape') { // Escape
-      closeAllLists();
-    }
-  });
-
-  function addActive(items) {
-    if (!items || items.length === 0) return false;
-    removeActive(items);
-    if (currentFocus >= items.length) currentFocus = 0;
-    if (currentFocus < 0) currentFocus = items.length - 1;
-    items[currentFocus].classList.add('active');
-    // Scroll into view if needed
-    items[currentFocus].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      console.log("Opening settings page...");
+      chrome.runtime.sendMessage({ action: "openOptionsPage" });
+    });
+  } else {
+    console.error("Could not find #open-settings-link");
   }
 
-  function removeActive(items) {
-    for (let i = 0; i < items.length; i++) {
-      items[i].classList.remove('active');
-    }
-  }
+  // (v1.39.0) Khởi tạo `activeElement` khi focus vào field
+  // (Logic này giờ nằm trong `createFieldsForModel` vì field được tạo động)
 
-  function closeAllLists() {
-    // console.log(`Closing suggestions for #${inputId}`);
-    container.innerHTML = '';
-    container.style.display = 'none';
-  }
-
-  // Ngăn input mất focus khi click vào scrollbar của suggestions
-  container.addEventListener('mousedown', (e) => {
-      if (e.target === container) { // Chỉ ngăn khi click trực tiếp vào container (scrollbar)
-          e.preventDefault();
-      }
+  // --- Format toolbar listeners (v1.39.0) ---
+  // v1.44.0: Chuyển sang 'mousedown' và 'preventDefault' để tránh mất focus
+  document.getElementById('format-bold').addEventListener('mousedown', (e) => {
+    e.preventDefault(); // Ngăn mất focus
+    applyFormat('bold');
   });
 
-  // Đóng suggestions khi click ra ngoài
-  document.addEventListener('click', (e) => {
-    // Đóng nếu click không phải vào input và không phải vào container suggestions
-    if (e.target !== input && !container.contains(e.target)) {
-      closeAllLists();
-    }
+  document.getElementById('format-italic').addEventListener('mousedown', (e) => {
+    e.preventDefault(); // Ngăn mất focus
+    applyFormat('italic');
   });
-}
 
+  document.getElementById('format-underline').addEventListener('mousedown', (e) => {
+    e.preventDefault(); // Ngăn mất focus
+    applyFormat('underline');
+  });
 
-// --- Các hàm xử lý Preset ---
-async function loadPresets() {
-    const presetSelect = document.getElementById('preset-select');
-    presetSelect.innerHTML = '<option value="">-- Chọn cấu hình --</option>'; // Reset
-    try {
-        const data = await chrome.storage.local.get(['presets']);
-        allPresets = data.presets || {};
-        console.log("Presets loaded:", Object.keys(allPresets).length);
-        for (const name in allPresets) {
-            const option = document.createElement('option');
-            option.value = name;
-            option.textContent = name;
-            presetSelect.appendChild(option);
-        }
-    } catch (error) {
-        console.error("Error loading presets:", error);
-        showStatus("Lỗi tải cấu hình.", 'error');
-    }
-}
-async function saveCurrentPreset() {
-    const deckName = document.getElementById('deck-search').value.trim();
-    const modelName = document.getElementById('model-search').value.trim();
-    const tags = document.getElementById('tags-input').value.trim();
+  document.getElementById('format-remove').addEventListener('mousedown', (e) => {
+    e.preventDefault(); // Ngăn mất focus
+    applyFormat('removeFormat');
+  });
 
-    if (!deckName || !modelName) {
-        showStatus("Vui lòng chọn Deck và Note Type trước khi lưu.", 'error');
-        return;
-    }
-
-    const presetName = prompt("Nhập tên cho cấu hình này:", `${deckName} - ${modelName}`);
-    if (!presetName) return; // User cancelled
-
-    allPresets[presetName] = { deckName, modelName, tags };
-
-    try {
-        await chrome.storage.local.set({ presets: allPresets });
-        showStatus(`Đã lưu cấu hình "${presetName}".`, 'success');
-        await loadPresets(); // Tải lại danh sách dropdown
-        document.getElementById('preset-select').value = presetName; // Chọn preset vừa lưu
-    } catch (error) {
-        console.error("Error saving preset:", error);
-        showStatus("Lỗi lưu cấu hình.", 'error');
-    }
-}
-async function deleteCurrentPreset() {
-    const presetSelect = document.getElementById('preset-select');
-    const presetName = presetSelect.value;
-    if (!presetName) {
-        showStatus("Vui lòng chọn cấu hình để xóa.", 'error');
-        return;
-    }
-    if (!allPresets[presetName]) {
-         showStatus(`Cấu hình "${presetName}" không tồn tại.`, 'error');
-         return;
-    }
-
-    if (confirm(`Bạn có chắc muốn xóa cấu hình "${presetName}" không?`)) {
-        delete allPresets[presetName];
-        try {
-            await chrome.storage.local.set({ presets: allPresets });
-            showStatus(`Đã xóa cấu hình "${presetName}".`, 'success');
-            await loadPresets(); // Tải lại dropdown
-        } catch (error) {
-            console.error("Error deleting preset:", error);
-            showStatus("Lỗi xóa cấu hình.", 'error');
-        }
-    }
-}
-async function applyPreset() {
-    const presetSelect = document.getElementById('preset-select');
-    const presetName = presetSelect.value;
-    if (!presetName || !allPresets[presetName]) return;
-
-    const preset = allPresets[presetName];
-    console.log("Applying preset:", presetName, preset);
-
-    const deckInput = document.getElementById('deck-search');
-    const modelInput = document.getElementById('model-search');
-    const tagsInput = document.getElementById('tags-input');
-
-    deckInput.value = preset.deckName || '';
-    modelInput.value = preset.modelName || '';
-    tagsInput.value = preset.tags || '';
-
-    // Quan trọng: Trigger input event để load field sau khi đổi model
-    modelInput.dispatchEvent(new Event('input', { bubbles: true }));
-
-    // Tải lại fields cho model mới
-    if (preset.modelName && allModels.includes(preset.modelName)) {
-        await createFieldsForModel(preset.modelName);
-    } else {
-        // Xóa fields nếu model không hợp lệ
-        document.getElementById('fields-container').innerHTML = '';
-        currentModelName = '';
-        currentFieldNames = [];
-        chrome.runtime.sendMessage({ action: "updateFieldsForContextMenu", fields: [], modelName: null })
-              .catch(err => console.warn("Could not send empty fields:", err));
-    }
-}
-
-
-// --- Hàm xử lý định dạng (Bold, Italic, v.v.) ---
-function applyFormat(command, value = null) {
-    // Luôn ở normal mode
-    if (!activeElement || !activeElement.isContentEditable) {
-        showStatus("Vui lòng đặt con trỏ vào field cần định dạng.", "warning");
-        activeElement?.focus(); // Thử focus lại element cuối cùng
-        if (!activeElement || !activeElement.isContentEditable) return; // Vẫn không được thì bỏ qua
-    }
-
-    activeElement.focus(); // Đảm bảo focus đúng element (div)
-    document.execCommand(command, false, value);
-
-    // Cập nhật preview sau khi định dạng
-    const fieldGroup = activeElement.closest('.field-group');
-    if (fieldGroup) {
-        const fieldName = fieldGroup.dataset.fieldName;
-        const safeFieldName = fieldName.replace(/\s+/g, '-');
-        const previewId = `preview-field-${safeFieldName}`;
-        const renderedViewId = `field-${safeFieldName}-rendered`;
-        const renderedViewElement = document.getElementById(renderedViewId);
-        updateMediaPreviewFromContent(activeElement.innerHTML, previewId);
-        updateRenderedView(activeElement, renderedViewElement);
-    }
-     // Thử giữ focus sau execCommand
-     setTimeout(() => activeElement?.focus(), 0);
-}
-
-// --- Hàm xử lý Cloze ---
-function addCloze() {
-    // Luôn ở normal mode
-     if (!activeElement || !activeElement.isContentEditable) {
-        showStatus("Vui lòng đặt con trỏ vào field cần tạo Cloze.", "warning");
-        activeElement?.focus();
-        if (!activeElement || !activeElement.isContentEditable) return;
-    }
-
+  // Color pickers vẫn dùng 'input' là ổn
+  document.getElementById('format-text-color').addEventListener('input', (e) => {
+    if (!activeElement) return;
     activeElement.focus();
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
-        showStatus("Vui lòng bôi đen phần text cần làm cloze.", "error");
-        return;
+    applyFormat('foreColor', e.target.value);
+  });
+
+  document.getElementById('format-bg-color').addEventListener('input', (e) => {
+    if (!activeElement) return;
+    activeElement.focus();
+    applyFormat('backColor', e.target.value);
+  });
+
+  // v1.44.0: Chuyển sang 'mousedown' và 'preventDefault'
+  document.getElementById('cloze-button').addEventListener('mousedown', (e) => {
+    e.preventDefault(); // Ngăn mất focus
+    addCloze();
+  });
+
+  // --- Keyboard shortcuts ---
+  document.addEventListener('keydown', (e) => {
+    if (!activeElement) return;
+
+    if (e.ctrlKey) {
+      switch (e.key.toLowerCase()) {
+        case 'b': // Ctrl+B
+          e.preventDefault();
+          applyFormat('bold');
+          break;
+        case 'i': // Ctrl+I
+          e.preventDefault();
+          applyFormat('italic');
+          break;
+        case 'u': // Ctrl+U
+          e.preventDefault();
+          applyFormat('underline');
+          break;
+        case 'c': // Ctrl+C (Check for Shift)
+          if (e.shiftKey) { // Ctrl+Shift+C
+            e.preventDefault();
+            addCloze();
+          }
+          break;
+      }
+    }
+  });
+
+  // Nút Thêm Note
+  addNoteBtn.addEventListener("click", async () => {
+    // Ẩn thông báo lỗi cũ
+    statusMessage.style.display = "none";
+    statusMessage.textContent = "";
+
+    const deckName = deckInput.value;
+    const modelName = modelInput.value;
+    const tags = tagsInput.value
+      .split(/[\s,]+/)
+      .filter((tag) => tag.length > 0);
+
+    // Validate
+    if (!deckName) {
+      showStatus("Vui lòng chọn Deck", true);
+      deckInput.focus();
+      return;
+    }
+    if (!modelName) {
+      showStatus("Vui lòng chọn Note Type", true);
+      modelInput.focus();
+      return;
     }
 
+    await addNoteToAnki(deckName, modelName, tags, showStatus);
+  });
+
+  // (v1.25.0) Lắng nghe nội dung từ context menu
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === "fillField") {
+      console.log("Received message to fill field:", message);
+      const { fieldName, content, contentType } = message;
+
+      // (v1.43.0) Tìm div.field-input-div
+      const targetDiv = document.querySelector(`.field-input-div[data-field="${fieldName}"]`);
+
+      if (targetDiv) {
+        console.log(`Found target field: ${fieldName}`);
+
+        // (v1.36.0) Xử lý ảnh
+        let contentToInsert = "";
+        if (contentType === 'image') {
+          // (v1.36.0 Bug fix) content là filename
+          contentToInsert = `<img src="${content}">`;
+        } else if (contentType === 'text' || contentType === 'audio' || contentType === 'link') {
+          // (v1.43.0) Escape HTML đặc biệt
+          contentToInsert = escapeHTML(content);
+        } else {
+          contentToInsert = escapeHTML(content); // Mặc định
+        }
+
+        // (v1.43.0) Chèn vào contenteditable div
+        // Focus để đảm bảo execCommand hoạt động
+        targetDiv.focus();
+        document.execCommand('insertHTML', false, contentToInsert);
+
+        // (v1.43.0) Kích hoạt event 'input' để cập nhật preview
+        targetDiv.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+
+        // (v1.25.0) Tùy chọn: Tự động mở rộng field nếu nó đang thu gọn
+        const fieldGroup = targetDiv.closest(".field-group");
+        if (fieldGroup && fieldGroup.classList.contains("collapsed")) {
+          toggleFieldCollapse(fieldGroup);
+        }
+
+        // (v1.38.0) Tùy chọn: Tự động chuyển sang view 'rendered' (đã bị loại bỏ ở v1.43.0)
+
+        showStatus(`Đã thêm nội dung vào field "${fieldName}"`);
+        sendResponse({ success: true });
+      } else {
+        console.warn(`Field "${fieldName}" not found in UI.`);
+        showStatus(`Field "${fieldName}" không tìm thấy.`, true);
+        sendResponse({ success: false, error: "Field not found" });
+      }
+    }
+  });
+
+}); // --- End of DOMContentLoaded ---
+
+// --- (v1.43.0) Helper functions cho contenteditable ---
+
+/**
+ * Xử lý sự kiện 'input' trên div contenteditable.
+ * Đồng bộ nội dung, cập nhật media preview.
+ * @param {Event} e - Sự kiện input
+ */
+function handleInputEvent(e) {
+  const div = e.target;
+  const fieldGroup = div.closest('.field-group');
+  if (!fieldGroup) return;
+
+  const previewContainer = fieldGroup.querySelector('.media-preview-container');
+  
+  // Cập nhật media preview (nếu có)
+  if (previewContainer) {
+    updateMediaPreview(div.innerHTML, previewContainer);
+  }
+}
+
+/**
+ * Xử lý sự kiện 'focus' trên div contenteditable.
+ * @param {Event} e - Sự kiện focus
+ */
+function handleFocusEvent(e) {
+  activeElement = e.target; // (v1.43.0)
+  console.log("Focus set on:", activeElement.dataset.field);
+}
+
+/**
+ * Xử lý sự kiện 'blur' trên div contenteditable.
+ * @param {Event} e - Sự kiện blur
+ */
+function handleBlurEvent(e) {
+  if (activeElement === e.target) {
+    // Tạm thời giữ activeElement để toolbar click hoạt động
+    // Nó sẽ bị ghi đè khi focus vào element khác
+    // console.log("Blur on:", e.target.dataset.field);
+  }
+}
+
+
+// --- (v1.10.0) Autocomplete ---
+/**
+ * Thiết lập autocomplete cho một cặp input và suggestions container
+ * @param {HTMLElement} container - Element cha (vd: .input-group)
+ * @param {HTMLInputElement} input - Ô input
+ * @param {string[]} suggestions - Danh sách các gợi ý
+ * @param {function(string)} [onSelectCallback] - (v1.26.0) Callback khi chọn
+ */
+function setupAutocomplete(container, input, suggestions, onSelectCallback = null) {
+  let suggestionsContainer = container.querySelector(".suggestions-container");
+  if (!suggestionsContainer) {
+    suggestionsContainer = document.createElement("div");
+    suggestionsContainer.className = "suggestions-container";
+    container.appendChild(suggestionsContainer);
+  }
+
+  let activeSuggestionIndex = -1;
+
+  const filterSuggestions = () => {
+    const value = input.value.toLowerCase();
+    // (v1.11.0) Tách value thành các từ khóa
+    const keywords = value.split(/\s+/).filter(Boolean);
+    suggestionsContainer.innerHTML = "";
+    activeSuggestionIndex = -1;
+
+    if (keywords.length === 0 && document.activeElement !== input) {
+      suggestionsContainer.style.display = "none";
+      return;
+    }
+
+    const filtered = suggestions.filter((item) => {
+      const target = item.toLowerCase();
+      // (v1.11.0) Kiểm tra mọi từ khóa
+      return keywords.every(keyword => target.includes(keyword));
+    });
+
+    filtered.forEach((item, index) => {
+      const div = document.createElement("div");
+      div.className = "suggestion-item";
+      div.textContent = item;
+      div.addEventListener("click", () => {
+        input.value = item;
+        suggestionsContainer.style.display = "none";
+        if (onSelectCallback) onSelectCallback(item); // (v1.26.0)
+      });
+      suggestionsContainer.appendChild(div);
+    });
+
+    suggestionsContainer.style.display = filtered.length > 0 ? "block" : "none";
+  };
+
+  const highlightSuggestion = () => {
+    const items = suggestionsContainer.querySelectorAll(".suggestion-item");
+    items.forEach((item, index) => {
+      if (index === activeSuggestionIndex) {
+        item.classList.add("active");
+        item.scrollIntoView({ block: "nearest" });
+      } else {
+        item.classList.remove("active");
+      }
+    });
+  };
+
+  input.addEventListener("input", filterSuggestions);
+  input.addEventListener("focus", filterSuggestions); // (v1.10.0)
+  input.addEventListener("keydown", (e) => { // (v1.10.0)
+    const items = suggestionsContainer.querySelectorAll(".suggestion-item");
+    if (items.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      activeSuggestionIndex = (activeSuggestionIndex + 1) % items.length;
+      highlightSuggestion();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      activeSuggestionIndex = (activeSuggestionIndex - 1 + items.length) % items.length;
+      highlightSuggestion();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeSuggestionIndex > -1) {
+        items[activeSuggestionIndex].click();
+      }
+      suggestionsContainer.style.display = "none";
+    }
+  });
+
+  // (v1.28.0) Ngăn input mất focus khi click vào scrollbar
+  suggestionsContainer.addEventListener('mousedown', (e) => {
+    e.preventDefault();
+  });
+
+  // (v1.10.0) Đóng khi click ra ngoài
+  document.addEventListener("click", (e) => {
+    // (v1.28.0) Sửa lỗi: kiểm tra kỹ hơn
+    if (e.target !== input && !container.contains(e.target)) {
+      suggestionsContainer.style.display = "none";
+    }
+  });
+}
+
+// --- (v1.37.0) Media Preview & Modal ---
+let previewCounter = 0; // Đảm bảo ID là duy nhất
+
+/**
+ * Hiển thị modal xem ảnh
+ * @param {string} src - Nguồn ảnh (base64 data)
+ * @param {string} caption - Tiêu đề (tên file)
+ */
+function showImageModal(src, caption) {
+  const modal = document.getElementById('image-preview-modal');
+  const modalImg = document.getElementById('modal-image');
+  const modalCaption = document.getElementById('modal-caption');
+  const modalClose = document.getElementById('modal-close');
+
+  modalImg.src = src;
+  modalCaption.textContent = caption;
+  modal.style.display = 'block';
+
+  const closeModal = () => {
+    modal.style.display = 'none';
+    modalClose.removeEventListener('click', closeModal);
+    modal.removeEventListener('click', closeModalOutside);
+  };
+
+  const closeModalOutside = (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  };
+
+  modalClose.addEventListener('click', closeModal);
+  modal.addEventListener('click', closeModalOutside);
+}
+
+/**
+ * Dừng audio đang phát (nếu có)
+ */
+function stopCurrentAudio() {
+  if (currentPlayingAudio) {
+    currentPlayingAudio.pause();
+    currentPlayingAudio.currentTime = 0;
+    currentPlayingAudio = null;
+    // Reset tất cả các nút audio
+    document.querySelectorAll('.preview-audio-button.playing').forEach(btn => {
+      btn.classList.remove('playing');
+      btn.textContent = '🔊 Nghe';
+      btn.disabled = false;
+    });
+  }
+}
+
+/**
+ * Cập nhật media preview cho một field
+ * @param {string} content - (v1.43.0) Nội dung HTML của field
+ * @param {HTMLElement} previewContainer - (v1.43.0) Element chứa preview
+ */
+async function updateMediaPreview(content, previewContainer) {
+  if (!previewContainer) {
+    console.warn("updateMediaPreview: previewContainer is null");
+    return;
+  }
+  
+  // Dọn dẹp preview cũ
+  previewContainer.innerHTML = '';
+  const currentPreviewId = `preview-${previewCounter++}`;
+  previewContainer.dataset.previewId = currentPreviewId;
+
+  // 1. Tìm ảnh
+  // (v1.38.0) Dùng regex đơn giản hơn thay vì DOM parser
+  const imgRegex = /<img\s+src="([^"]+)"[^>]*>/g;
+  let imgMatch = imgRegex.exec(content);
+
+  // 2. Tìm audio
+  const audioRegex = /\[sound:([^\]]+)\]/g;
+  let audioMatch = audioRegex.exec(content);
+
+  if (!imgMatch && !audioMatch) {
+    previewContainer.style.display = 'none';
+    return;
+  }
+
+  previewContainer.style.display = 'block';
+
+  // Xử lý ảnh
+  while (imgMatch) {
+    const filename = imgMatch[1];
+    if (!filename) {
+      imgMatch = imgRegex.exec(content);
+      continue;
+    }
+
+    const imgPreviewWrapper = document.createElement('div');
+    imgPreviewWrapper.className = 'preview-loading';
+    imgPreviewWrapper.textContent = `Đang tải ${filename}...`;
+    previewContainer.appendChild(imgPreviewWrapper);
+
+    try {
+      // (v1.37.0) Lấy base64
+      const base64Data = await invoke('retrieveMediaFile', { filename });
+      if (previewContainer.dataset.previewId !== currentPreviewId) return; // Đã có input mới
+
+      if (base64Data) {
+        const mimeType = base64Data.startsWith('data:') ? base64Data.split(';')[0].split(':')[1] : 'image/jpeg'; // Đoán mime
+        const src = base64Data.startsWith('data:') ? base64Data : `data:${mimeType};base64,${base64Data}`;
+
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = `Preview ${filename}`;
+        img.className = 'preview-image';
+        img.title = `Click để xem lớn: ${filename}`;
+        img.addEventListener('click', (e) => {
+          e.stopPropagation(); // (v1.37.0) Ngăn collapse
+          showImageModal(src, filename);
+        });
+        imgPreviewWrapper.innerHTML = '';
+        imgPreviewWrapper.className = '';
+        imgPreviewWrapper.appendChild(img);
+      } else {
+        throw new Error("Không nhận được dữ liệu base64");
+      }
+    } catch (err) {
+      console.error(`Lỗi tải preview ảnh ${filename}:`, err);
+      if (previewContainer.dataset.previewId === currentPreviewId) {
+        imgPreviewWrapper.textContent = `Lỗi tải ${filename}`;
+        imgPreviewWrapper.className = 'preview-error';
+      }
+    }
+    imgMatch = imgRegex.exec(content);
+  }
+
+  // Xử lý audio
+  while (audioMatch) {
+    const filename = audioMatch[1];
+    if (!filename) {
+      audioMatch = audioRegex.exec(content);
+      continue;
+    }
+
+    const audioButton = document.createElement('button');
+    audioButton.className = 'preview-audio-button';
+    audioButton.textContent = '🔊 Nghe';
+    audioButton.title = `Phát file: ${filename}`;
+
+    audioButton.addEventListener('click', async (e) => {
+      e.stopPropagation(); // Ngăn collapse
+      if (audioButton.classList.contains('playing')) {
+        stopCurrentAudio();
+        return;
+      }
+
+      stopCurrentAudio(); // Dừng file khác (nếu có)
+      audioButton.disabled = true;
+      audioButton.textContent = 'Đang tải...';
+
+      try {
+        const base64Data = await invoke('retrieveMediaFile', { filename });
+        if (previewContainer.dataset.previewId !== currentPreviewId) return;
+
+        if (base64Data) {
+          const mimeType = base64Data.startsWith('data:') ? base64Data.split(';')[0].split(':')[1] : 'audio/mpeg';
+          const src = base64Data.startsWith('data:') ? base64Data : `data:${mimeType};base64,${base64Data}`;
+
+          const audio = new Audio(src);
+          currentPlayingAudio = audio; // (v1.37.0)
+          
+          audio.addEventListener('play', () => {
+            audioButton.textContent = '⏸️ Dừng';
+            audioButton.disabled = false;
+            audioButton.classList.add('playing');
+          });
+
+          audio.addEventListener('ended', () => {
+            stopCurrentAudio(); // Reset
+          });
+
+          audio.addEventListener('error', (err) => {
+            console.error(`Lỗi phát audio ${filename}:`, err);
+            showStatus(`Lỗi phát audio ${filename}`, true);
+            stopCurrentAudio();
+          });
+
+          audio.play();
+        } else {
+          throw new Error("Không nhận được dữ liệu base64");
+        }
+      } catch (err) {
+        console.error(`Lỗi tải audio ${filename}:`, err);
+        showStatus(`Lỗi tải audio ${filename}: ${err.message}`, true);
+        stopCurrentAudio(); // Reset
+      }
+    });
+    previewContainer.appendChild(audioButton);
+    audioMatch = audioRegex.exec(content);
+  }
+}
+
+// --- (v1.39.0) Rich Text Formatting ---
+
+/**
+ * Áp dụng định dạng rich text cho selection
+ * @param {string} command - Lệnh (vd: 'bold', 'foreColor')
+ * @param {string} [value] - Giá trị (vd: '#FF0000')
+ */
+function applyFormat(command, value = null) {
+  if (!activeElement) {
+    console.warn("applyFormat: No active element to format");
+    return;
+  }
+
+  // (v1.39.0) Đảm bảo focus trước khi thực thi
+  activeElement.focus();
+
+  try {
+    document.execCommand(command, false, value);
+  } catch (e) {
+    console.error(`Error executing format command '${command}':`, e);
+  }
+
+  // (v1.43.0) Kích hoạt 'input' event để cập nhật preview
+  activeElement.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+}
+
+/**
+ * (v1.39.0) Thêm định dạng cloze
+ */
+function addCloze() {
+  if (!activeElement) {
+    console.warn("addCloze: No active element");
+    return;
+  }
+
+  activeElement.focus();
+  const selection = window.getSelection();
+  if (!selection.rangeCount || selection.isCollapsed) {
+    // Không có gì được chọn, chèn cloze rỗng
+    document.execCommand('insertText', false, `{{c${currentClozeIndex}::}}`);
+  } else {
+    // Bọc text được chọn
     const range = selection.getRangeAt(0);
     const selectedText = range.toString();
+    const clozeText = `{{c${currentClozeIndex}::${selectedText}}}`;
+    
+    // Dùng insertText sẽ thay thế, giống hành vi của Anki
+    document.execCommand('insertText', false, clozeText);
+  }
 
-    // Tìm số cloze lớn nhất hiện có trong field này
-    let highestCloze = 0;
-    const clozeRegex = /\{\{c(\d+)::/g;
-    let match;
-    const fullContent = activeElement.innerHTML; // Lấy HTML
-    while ((match = clozeRegex.exec(fullContent)) !== null) {
-        const num = parseInt(match[1], 10);
-        if (!isNaN(num) && num > highestCloze) {
-            highestCloze = num;
-        }
-    }
-    const nextClozeNum = highestCloze + 1;
-    const clozeText = `{{c${nextClozeNum}::${selectedText}}}`;
+  // Tăng index
+  currentClozeIndex++;
 
-    // Thay thế nội dung đã chọn bằng clozeText (dùng insertHTML)
-    document.execCommand('insertHTML', false, clozeText);
-
-    // Cập nhật preview
-    const fieldGroup = activeElement.closest('.field-group');
-    if (fieldGroup) {
-        const fieldName = fieldGroup.dataset.fieldName;
-        const safeFieldName = fieldName.replace(/\s+/g, '-');
-        const previewId = `preview-field-${safeFieldName}`;
-        const renderedViewId = `field-${safeFieldName}-rendered`;
-        const renderedViewElement = document.getElementById(renderedViewId);
-        updateMediaPreviewFromContent(activeElement.innerHTML, previewId);
-        updateRenderedView(activeElement, renderedViewElement);
-    }
-     // Thử giữ focus sau execCommand
-     setTimeout(() => activeElement?.focus(), 0);
+  // (v1.43.0) Kích hoạt 'input' event
+  activeElement.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
 }
 
-// --- Hàm quản lý trạng thái thu gọn Header ---
-function setHeaderCollapsed(isCollapsed) {
-    const toggleHeaderBtn = document.getElementById('toggle-header-btn');
-    document.body.classList.toggle('header-collapsed', isCollapsed);
-    if (toggleHeaderBtn) {
-        toggleHeaderBtn.textContent = isCollapsed ? '🔽' : '🔼';
-        toggleHeaderBtn.title = isCollapsed ? 'Hiện cài đặt nhanh' : 'Ẩn cài đặt nhanh';
-    }
+// --- Core Logic ---
+
+/**
+ * (v1.12.0) Thu gọn/Mở rộng field
+ * @param {HTMLElement} fieldGroup - Element .field-group
+ */
+function toggleFieldCollapse(fieldGroup) {
+  if (!fieldGroup) return;
+  const isCollapsed = fieldGroup.classList.toggle("collapsed");
+  const modelName = fieldGroup.dataset.model;
+  const fieldName = fieldGroup.dataset.field;
+  const toggleIcon = fieldGroup.querySelector(".collapse-toggle");
+
+  if (toggleIcon) {
+    // (v1.32.0) Sửa logic icon
+    toggleIcon.textContent = isCollapsed ? "▶" : "🔽";
+  }
+  
+  // (v1.21.0) Label mờ đi
+  const label = fieldGroup.querySelector(".field-label");
+  if (label) {
+    label.style.opacity = isCollapsed ? "0.7" : "1";
+  }
+
+  // (v1.12.0) Lưu trạng thái
+  if (modelName && fieldName) {
+    const key = `field_collapse_${modelName}`;
+    chrome.storage.local.get([key], (result) => {
+      const collapsedFields = result[key] || {};
+      collapsedFields[fieldName] = isCollapsed;
+      chrome.storage.local.set({ [key]: collapsedFields });
+    });
+  }
 }
 
-// --- Khởi tạo popup ---
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log("Sidebar (popup.js) DOM loaded");
-    showStatus("Đang kết nối tới Anki...", 'info');
+/**
+ * (v1.21.0) Tự động mở rộng textarea (ĐÃ BỊ LOẠI BỎ ở v1.43.0, vì dùng div)
+ */
+// function autoExpandTextarea(textarea) { ... }
 
-    // --- Lấy các nút header ---
-    const toggleHeaderBtn = document.getElementById('toggle-header-btn');
-    const settingsLink = document.getElementById('open-settings-link');
+/**
+ * (v1.43.0) Escape HTML
+ */
+function escapeHTML(str) {
+  return str.replace(/[&<>"']/g, function(m) {
+    return {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    }[m];
+  });
+}
 
-    try {
-        // --- Tải và áp dụng trạng thái thu gọn header ---
-        try {
-            const data = await chrome.storage.local.get([HEADER_COLLAPSE_KEY]);
-            const isCollapsed = data[HEADER_COLLAPSE_KEY] || false;
-            setHeaderCollapsed(isCollapsed);
-        } catch (e) {
-            console.warn("Error loading header collapse state", e);
-            setHeaderCollapsed(false); // Mặc định là mở
-        }
+/**
+ * Tạo các input field dựa trên model
+ * @param {string} modelName - Tên model
+ * @param {function(string, boolean)} showStatus - Hàm hiển thị trạng thái
+ */
+async function createFieldsForModel(modelName, showStatus) {
+  const fieldsContainer = document.getElementById("fields-container");
+  if (!modelName) {
+    fieldsContainer.innerHTML = "";
+    return;
+  }
 
-        // --- Gán sự kiện cho nút thu gọn header ---
-        if (toggleHeaderBtn) {
-            toggleHeaderBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                const isNowCollapsed = !document.body.classList.contains('header-collapsed');
-                setHeaderCollapsed(isNowCollapsed);
-                try {
-                    await chrome.storage.local.set({ [HEADER_COLLAPSE_KEY]: isNowCollapsed });
-                } catch (err) {
-                    console.error("Error saving header collapse state", err);
-                }
-            });
-        }
-        
-        // Gán sự kiện cho nút Cài đặt
-        if (settingsLink) {
-            settingsLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                openOptionsPage();
-            });
-        }
+  console.log(`Creating fields for model: ${modelName}`);
+  fieldsContainer.innerHTML = '<div class="loading-spinner">Đang tải fields...</div>';
 
-
-        // Load Presets first
-        await loadPresets();
-
-        // Load Decks, Models, Tags, Last Used Settings concurrently
-        const results = await Promise.all([
-            invoke('deckNames'),
-            invoke('modelNames'),
-            invoke('getTags'),
-            chrome.storage.local.get(['lastUsedDeck', 'lastUsedModel'])
-        ]);
-
-        allDecks = Array.isArray(results[0]) ? results[0] : [];
-        allModels = Array.isArray(results[1]) ? results[1] : [];
-        allTags = Array.isArray(results[2]) ? results[2] : [];
-        const lastSettings = results[3] || {};
-
-        console.log("Decks loaded:", allDecks.length);
-        console.log("Models loaded:", allModels.length);
-        console.log("Tags loaded:", allTags.length);
-        console.log("Last settings:", lastSettings);
-
-        // Setup Autocomplete
-        setupAutocomplete('deck-search', 'deck-suggestions', allDecks);
-        setupAutocomplete('model-search', 'model-suggestions', allModels, async (selectedModel) => {
-             // Hàm callback này sẽ được gọi KHI MỘT SUGGESTION ĐƯỢC CLICK
-             console.log(`Autocomplete callback selected model: ${selectedModel}`);
-             if (selectedModel && allModels.includes(selectedModel)) {
-                  await createFieldsForModel(selectedModel);
-             } else if (!selectedModel) { // Trường hợp xóa sạch input
-                 document.getElementById('fields-container').innerHTML = '';
-                 currentModelName = '';
-                 currentFieldNames = [];
-                 chrome.runtime.sendMessage({ action: "updateFieldsForContextMenu", fields: [], modelName: null })
-                       .catch(err => console.warn("Could not send empty fields:", err));
-             }
-         });
-        // Xử lý khi input model thay đổi (gõ hoặc xóa) - để cập nhật context menu realtime
-         document.getElementById('model-search').addEventListener('input', (event) => {
-             const currentInput = event.target.value;
-             if (!currentInput) { // Nếu xóa sạch input
-                  document.getElementById('fields-container').innerHTML = '';
-                  currentModelName = '';
-                  currentFieldNames = [];
-                  chrome.runtime.sendMessage({ action: "updateFieldsForContextMenu", fields: [], modelName: null })
-                       .catch(err => console.warn("Could not send empty fields:", err));
-             } else if (allModels.includes(currentInput) && currentInput !== currentModelName) {
-                  // Nếu gõ đúng tên model và khác model hiện tại -> Tải field
-                  // createFieldsForModel(currentInput); // Bỏ comment nếu muốn tải field ngay khi gõ đúng tên
-             }
-         });
-
-
-        // Populate Tags Datalist
-        const tagsDatalist = document.getElementById('tags-datalist');
-        tagsDatalist.innerHTML = ''; // Clear old options
-        allTags.forEach(tag => {
-            const option = document.createElement('option');
-            option.value = tag;
-            tagsDatalist.appendChild(option);
-        });
-
-        // Restore last used Deck/Model and load fields
-        let modelToLoad = null;
-        if (lastSettings.lastUsedDeck && allDecks.includes(lastSettings.lastUsedDeck)) {
-            document.getElementById('deck-search').value = lastSettings.lastUsedDeck;
-        }
-        if (lastSettings.lastUsedModel && allModels.includes(lastSettings.lastUsedModel)) {
-            document.getElementById('model-search').value = lastSettings.lastUsedModel;
-            modelToLoad = lastSettings.lastUsedModel; // Chỉ định model cần load
-        }
-        // Load fields cho model cuối cùng (nếu có) SAU KHI GÁN XONG CÁC EVENT LISTENER
-        if (modelToLoad) {
-            console.log("Loading fields for last used model:", modelToLoad);
-            await createFieldsForModel(modelToLoad);
-        } else {
-            // Nếu không có model nào được load, gửi danh sách field trống cho context menu
-            chrome.runtime.sendMessage({ action: "updateFieldsForContextMenu", fields: [], modelName: null })
-                  .catch(err => console.warn("Could not send empty fields:", err));
-        }
-
-
-        // --- Gán sự kiện cho các nút ---
-        document.getElementById('add-note-btn').addEventListener('click', addNoteToAnki);
-        document.getElementById('preset-select').addEventListener('change', applyPreset);
-        document.getElementById('save-preset-btn').addEventListener('click', saveCurrentPreset);
-        document.getElementById('delete-preset-btn').addEventListener('click', deleteCurrentPreset);
-
-        // Removed listeners for mode toggle buttons
-
-        // Listener cho toolbar định dạng
-        document.getElementById('format-bold').addEventListener('mousedown', (e) => {
-        e.preventDefault(); // Ngăn mất focus
-        applyFormat('bold');
-        });
-        document.getElementById('format-italic').addEventListener('mousedown', (e) => {
-        e.preventDefault(); // Ngăn mất focus
-        applyFormat('italic');
-        });
-
-        document.getElementById('format-underline').addEventListener('mousedown', (e) => {
-        e.preventDefault(); // Ngăn mất focus
-        applyFormat('underline');
-        });
-
-        document.getElementById('format-remove').addEventListener('mousedown', (e) => {
-        e.preventDefault(); // Ngăn mất focus
-        applyFormat('removeFormat');
-        });
-        document.getElementById('format-cloze').addEventListener('click', addCloze);
-
-        // Listener cho color pickers
-        const foreColorPicker = document.getElementById('forecolor-picker');
-        const backColorPicker = document.getElementById('backcolor-picker');
-        foreColorPicker.addEventListener('input', (e) => applyFormat('foreColor', e.target.value));
-        backColorPicker.addEventListener('input', (e) => applyFormat('backColor', e.target.value));
-        // Reset picker màu khi click nút tương ứng (để chọn lại dễ hơn)
-        document.getElementById('format-forecolor').addEventListener('click', () => foreColorPicker.click());
-        document.getElementById('format-backcolor').addEventListener('click', () => backColorPicker.click());
-
-
-        // Listener cho phím tắt
-        document.addEventListener('keydown', (e) => {
-             // Chỉ bắt phím tắt khi đang focus vào field (chỉ là div)
-             if (activeElement && activeElement.classList.contains('field-input-div')) {
-                 if (e.ctrlKey && !e.shiftKey && e.key === 'b') { // Ctrl+B
-                     e.preventDefault(); applyFormat('bold');
-                 } else if (e.ctrlKey && !e.shiftKey && e.key === 'i') { // Ctrl+I
-                     e.preventDefault(); applyFormat('italic');
-                 } else if (e.ctrlKey && !e.shiftKey && e.key === 'u') { // Ctrl+U
-                     e.preventDefault(); applyFormat('underline');
-                 } else if (e.ctrlKey && e.shiftKey && e.key === 'C') { // Ctrl+Shift+C
-                     e.preventDefault(); addCloze();
-                 }
-            }
-        });
-
-        // Listener đóng modal ảnh
-        const modal = document.getElementById("image-preview-modal");
-        const span = modal.querySelector(".modal-close-btn");
-        span.onclick = function() { modal.style.display = "none"; }
-        modal.onclick = function(event) {
-            if (event.target === modal || event.target === document.getElementById("modal-caption")) {
-                modal.style.display = "none";
-            }
-        }
-
-
-        showStatus("Sẵn sàng!", 'success'); // Xóa thông báo "Đang kết nối"
-
-    } catch (error) {
-        // Lỗi nghiêm trọng khi khởi tạo (không kết nối được Anki)
-        console.error("Critical error during sidebar initialization:", error);
-        showStatus(`Lỗi kết nối Anki: ${error.message}. Anki có đang chạy không?`, 'error');
-        // Vô hiệu hóa các thành phần UI chính
-        document.getElementById('deck-search').disabled = true;
-        document.getElementById('model-search').disabled = true;
-        document.getElementById('add-note-btn').disabled = true;
-        document.getElementById('tags-input').disabled = true;
-        document.getElementById('preset-select').disabled = true;
-        document.getElementById('save-preset-btn').disabled = true;
-        document.getElementById('delete-preset-btn').disabled = true;
-
-        // Vô hiệu hóa toolbar (nếu tồn tại)
-        const formatToolbar = document.getElementById('format-toolbar');
-        if (formatToolbar) {
-            formatToolbar.style.opacity = '0.5';
-            formatToolbar.style.pointerEvents = 'none';
-        }
-    }
-});
-
-// --- Hàm thêm note vào Anki ---
-async function addNoteToAnki() {
-    console.log("Attempting to add note...");
-    showStatus('Đang thêm note...', 'info');
-
-    const deckName = document.getElementById('deck-search').value.trim();
-    const modelName = document.getElementById('model-search').value.trim();
-    const tagsInput = document.getElementById('tags-input').value.trim();
-
-    // --- Validate inputs ---
-    if (!deckName) { showStatus('Vui lòng chọn hoặc nhập Deck.', 'error'); return; }
-    if (!modelName) { showStatus('Vui lòng chọn hoặc nhập Note Type.', 'error'); return; }
-    if (!Array.isArray(allDecks) || !allDecks.includes(deckName)) {
-        showStatus('Tên Deck không hợp lệ. Vui lòng chọn từ gợi ý hoặc kiểm tra lại.', 'error'); return;
-    }
-    if (!Array.isArray(allModels) || !allModels.includes(modelName)) {
-         showStatus('Tên Note Type không hợp lệ. Vui lòng chọn từ gợi ý hoặc kiểm tra lại.', 'error'); return;
-    }
-    if (currentModelName !== modelName) { // Đảm bảo fields đang hiển thị đúng là của model đã chọn
-         showStatus('Note Type đã thay đổi, vui lòng đợi fields tải lại hoặc kiểm tra lại lựa chọn.', 'error'); return;
+  try {
+    // Lấy field names
+    const fieldNames = await invoke("modelFieldNames", { modelName });
+    if (!Array.isArray(fieldNames)) {
+      throw new Error("Không thể lấy field names.");
     }
 
-
-    const fields = {};
-    let hasContent = false;
-    let fieldReadError = false;
-
-    // Lấy nội dung từ các field đang hiển thị (không bị ẩn bởi setting)
-    document.querySelectorAll('#fields-container .field-group:not(.field-hidden-by-setting)').forEach(fieldGroup => {
-        if (fieldReadError) return; // Dừng nếu có lỗi
-        const fieldName = fieldGroup.dataset.fieldName;
-        if (!fieldName) {
-            console.error("Field group missing data-field-name:", fieldGroup);
-            fieldReadError = true;
-            return;
-        }
-
-        const safeFieldName = fieldName.replace(/\s+/g, '-');
-        const fieldIdBase = `field-${safeFieldName}`;
-        let value = '';
-
-        // Luôn đọc từ div contenteditable
-        const divElement = fieldGroup.querySelector(`#${fieldIdBase}-div`);
-        if (divElement) {
-            value = divElement.innerHTML; // Lấy HTML từ div
-        } else {
-            console.warn(`Contenteditable div not found for field: ${fieldName}`);
-        }
-
-        fields[fieldName] = value;
-        // Kiểm tra nội dung text thực sự
-        let checkValue = divElement?.textContent || '';
-        if (checkValue.trim()) {
-            hasContent = true;
-        }
+    // (v1.25.0) Gửi field names cho background script để cập nhật context menu
+    chrome.runtime.sendMessage({
+      action: "updateContextMenuFields",
+      modelName: modelName,
+      fieldNames: fieldNames,
     });
 
-    if (fieldReadError) {
-         showStatus('Lỗi khi đọc nội dung fields. Vui lòng thử lại.', 'error'); return;
-    }
+    // (v1.12.0 + v1.13.0) Lấy cài đặt collapse và hidden
+    const collapseKey = `field_collapse_${modelName}`;
+    const hiddenKey = `hiddenFields_${modelName}`;
+    const settings = await chrome.storage.local.get([collapseKey, hiddenKey]);
+    const collapsedFields = settings[collapseKey] || {};
+    const hiddenFields = settings[hiddenKey] || [];
 
-    // Xử lý Random ID Field (nếu được cấu hình và field đó trống)
-    const randomIdFieldKey = `randomIdField_${modelName}`;
-    let randomIdField = null;
-    try {
-        const storedData = await chrome.storage.local.get(randomIdFieldKey);
-        randomIdField = storedData[randomIdFieldKey];
-        if (randomIdField && fields.hasOwnProperty(randomIdField) && fields[randomIdField].trim() === '') {
-            fields[randomIdField] = generateRandomId();
-            hasContent = true; // Nếu chỉ có ID được tạo thì vẫn tính là có nội dung
-            console.log(`Generated Random ID for field "${randomIdField}": ${fields[randomIdField]}`);
-        } else if (randomIdField && !fields.hasOwnProperty(randomIdField)) {
-             console.warn(`Random ID Field "${randomIdField}" is configured but not found or hidden.`);
+    fieldsContainer.innerHTML = ""; // Xóa spinner
+
+    fieldNames.forEach((fieldName) => {
+      const isHidden = hiddenFields.includes(fieldName);
+      if (isHidden) {
+        console.log(`Field "${fieldName}" is hidden by settings.`);
+        return; // (v1.13.0) Bỏ qua field bị ẩn
+      }
+
+      const isCollapsed = collapsedFields[fieldName] || false;
+      const fieldGroupId = `field-group-${fieldName.replace(/\s+/g, '-')}`;
+      
+      // (v1.43.0) Cấu trúc HTML mới (chỉ dùng div contenteditable)
+      const fieldGroup = document.createElement("div");
+      fieldGroup.className = `field-group ${isCollapsed ? "collapsed" : ""}`;
+      fieldGroup.id = fieldGroupId;
+      fieldGroup.dataset.field = fieldName;
+      fieldGroup.dataset.model = modelName;
+      fieldGroup.dataset.viewMode = 'normal'; // Mặc định là 'normal' (tên cũ, nhưng giờ là contenteditable)
+
+      // (v1.21.0) Header
+      const fieldHeader = document.createElement("div");
+      fieldHeader.className = "field-header";
+
+      const collapseToggle = document.createElement("span");
+      collapseToggle.className = "collapse-toggle";
+      collapseToggle.textContent = isCollapsed ? "▶" : "🔽"; // (v1.30.0)
+      collapseToggle.title = "Thu gọn/Mở rộng";
+
+      const fieldLabel = document.createElement("label");
+      fieldLabel.className = "field-label";
+      fieldLabel.textContent = fieldName;
+      fieldLabel.htmlFor = `field-${fieldName}`;
+      if (isCollapsed) fieldLabel.style.opacity = "0.7";
+
+      // (v1.38.0) Nút Toggle View (đã bị loại bỏ ở v1.43.0)
+      // (v1.39.0) Nút Toggle View (đã bị loại bỏ ở v1.43.0)
+
+      fieldHeader.appendChild(collapseToggle);
+      fieldHeader.appendChild(fieldLabel);
+
+      // (v1.21.0) Gán sự kiện click cho toàn bộ header
+      fieldHeader.addEventListener("click", (e) => {
+        // (v1.37.0) Ngăn collapse khi click vào preview
+        if (e.target.closest('.media-preview-container') || e.target.closest('.btn-toggle-view')) {
+          return;
         }
-    } catch (storageError) {
-         console.error("Error reading randomIdField setting:", storageError);
-         // Không cần dừng, tiếp tục thêm note
+        toggleFieldCollapse(fieldGroup);
+      });
+
+      // (v1.37.0) Input Area (chứa div và preview)
+      const inputArea = document.createElement('div');
+      inputArea.className = 'field-input-area';
+
+      // (v1.43.0) Chỉ tạo div contenteditable
+      const fieldDiv = document.createElement('div');
+      fieldDiv.id = `field-${fieldName}`;
+      fieldDiv.className = 'field-input-div form-control'; // Dùng class của textarea
+      fieldDiv.contentEditable = 'true';
+      fieldDiv.dataset.field = fieldName;
+
+      // (v1.43.0) Gán các listener mới
+      fieldDiv.addEventListener('input', handleInputEvent);
+      fieldDiv.addEventListener('focus', handleFocusEvent);
+      fieldDiv.addEventListener('blur', handleBlurEvent);
+      
+      // (v1.37.0) Media Preview
+      const mediaPreviewContainer = document.createElement('div');
+      mediaPreviewContainer.className = 'media-preview-container';
+      
+      // (v1.43.0) Cập nhật preview lần đầu (với nội dung rỗng)
+      updateMediaPreview(fieldDiv.innerHTML, mediaPreviewContainer);
+
+      inputArea.appendChild(fieldDiv);
+      inputArea.appendChild(mediaPreviewContainer);
+      
+      fieldGroup.appendChild(fieldHeader);
+      fieldGroup.appendChild(inputArea);
+
+      fieldsContainer.appendChild(fieldGroup);
+    });
+
+  } catch (error) {
+    console.error(`Error creating fields for ${modelName}:`, error);
+    showStatus(`Lỗi tải fields: ${error.message}`, true);
+    fieldsContainer.innerHTML = `<div class="status-error">Lỗi tải fields: ${error.message}</div>`;
+  }
+}
+
+/**
+ * Thêm note vào Anki
+ * @param {string} deckName
+ * @param {string} modelName
+ * @param {string[]} tags
+ * @param {function(string, boolean)} showStatus
+ */
+async function addNoteToAnki(deckName, modelName, tags, showStatus) {
+  try {
+    const fields = {};
+    let hasContent = false;
+
+    // (v1.13.0) Lấy cài đặt ẩn + (v1.18.0) Lấy cài đặt random ID
+    const hiddenKey = `hiddenFields_${modelName}`;
+    const randomIdKey = `randomIdField_${modelName}`;
+    const settings = await chrome.storage.local.get([hiddenKey, randomIdKey]);
+    const hiddenFields = settings[hiddenKey] || [];
+    const randomIdField = settings[randomIdKey] || null;
+
+    // Lấy field names từ cache hoặc invoke
+    let fieldNames = modelFieldsCache[modelName];
+    if (!fieldNames) {
+      fieldNames = await invoke("modelFieldNames", { modelName });
+      modelFieldsCache[modelName] = fieldNames;
     }
 
-
-    // Kiểm tra lại nội dung sau khi có thể đã tạo ID
-    if (!hasContent) {
-        showStatus('Vui lòng nhập nội dung cho ít nhất một field (hoặc cấu hình Random ID Field).', 'error');
+    // (v1.43.0) Lấy nội dung từ div.field-input-div
+    fieldNames.forEach((fieldName) => {
+      // (v1.13.0) Nếu field bị ẩn, gán rỗng
+      if (hiddenFields.includes(fieldName)) {
+        fields[fieldName] = "";
         return;
+      }
+
+      // (v1.18.0) Xử lý Random ID
+      if (fieldName === randomIdField) {
+        fields[fieldName] = generateRandomId();
+        hasContent = true; // Coi như có nội dung
+        return;
+      }
+
+      // (v1.43.0) Lấy nội dung từ `div.innerHTML`
+      const fieldDiv = document.querySelector(`.field-input-div[data-field="${fieldName}"]`);
+      if (fieldDiv) {
+        const content = fieldDiv.innerHTML;
+        fields[fieldName] = content;
+        // (v1.43.0) Cập nhật check 'hasContent'
+        // Kiểm tra nội dung không rỗng VÀ không phải là thẻ rỗng (vd: <br>)
+        if (content.trim() && content.trim() !== '<br>') { 
+          hasContent = true;
+        }
+      } else {
+        // Trường hợp field không bị ẩn nhưng không tìm thấy (lỗi)
+        console.warn(`Field div not found for: ${fieldName}. Setting empty string.`);
+        fields[fieldName] = "";
+      }
+    });
+
+    if (!hasContent) {
+      showStatus("Vui lòng nhập nội dung cho ít nhất một field (ngoài field ID)", true);
+      return;
     }
 
-    const tagsArray = tagsInput.split(/[\s,]+/).filter(tag => tag.trim() !== '').map(tag => tag.trim());
-
-    // --- Tạo object note cho AnkiConnect ---
-    const noteData = {
+    // Gửi note
+    const result = await invoke("addNote", {
+      note: {
         deckName: deckName,
         modelName: modelName,
         fields: fields,
-        tags: tagsArray,
-        options: {
-            allowDuplicate: false // Hoặc đọc từ cài đặt nếu muốn
-            // Thêm duplicateScope nếu cần
-        }
-    };
+        tags: tags,
+      },
+    });
 
-    console.log("Sending note data to Anki:", JSON.parse(JSON.stringify(noteData))); // Log deep copy
-
-    try {
-        const result = await invoke('addNote', { note: noteData });
-        if (result === null) {
-             // AnkiConnect trả về null thường là do note không được thêm
-             const canAddResult = await invoke('canAddNotesWithErrorDetail', { notes: [noteData] });
-             if (canAddResult && canAddResult.length > 0 && !canAddResult[0].canAdd && canAddResult[0].error) {
-                  throw new Error(canAddResult[0].error); // Ném lỗi cụ thể từ canAddNotes
-             } else {
-                 throw new Error("AnkiConnect returned null, possibly a duplicate note.");
-             }
-        }
-
-        showStatus(`Thêm thành công! Note ID: ${result}`, 'success');
-
-        // Lưu Deck/Model cuối cùng
-        try {
-            await chrome.storage.local.set({ lastUsedDeck: deckName, lastUsedModel: modelName });
-            console.log("Saved last used deck and model.");
-        } catch (storageError) {
-            console.error("Error saving last used deck/model:", storageError);
-        }
-
-        // Xóa nội dung fields không được ghim
-        const stickyFieldsKey = `stickyFields_${modelName}`;
-        let stickyFields = {};
-        try {
-             const stickyData = await chrome.storage.local.get(stickyFieldsKey);
-             stickyFields = stickyData[stickyFieldsKey] || {};
-        } catch (storageError) {
-             console.error("Error reading stickyFields setting:", storageError);
-        }
-
-        document.querySelectorAll('#fields-container .field-group:not(.field-hidden-by-setting)').forEach(fieldGroup => {
-            const fieldName = fieldGroup.dataset.fieldName;
-            if (fieldName && !stickyFields[fieldName]) { // Chỉ xóa nếu không được ghim
-                const safeFieldName = fieldName.replace(/\s+/g, '-');
-                const fieldIdBase = `field-${safeFieldName}`;
-                const divElement = fieldGroup.querySelector(`#${fieldIdBase}-div`);
-                const renderedViewElement = fieldGroup.querySelector(`#${fieldIdBase}-rendered`);
-                const previewId = `preview-${fieldIdBase}`;
-
-                if (divElement) divElement.innerHTML = ''; // Xóa nội dung div
-                if (renderedViewElement) renderedViewElement.innerHTML = '';
-
-                // Trigger input để reset preview
-                if (divElement) {
-                     divElement.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-
-                // Cập nhật preview để xóa ảnh nếu có
-                const previewContainer = document.getElementById(previewId);
-                if (previewContainer) {
-                    previewContainer.innerHTML = '';
-                }
-            } else if (fieldName && stickyFields[fieldName]) {
-                 console.log(`Keeping content for sticky field: ${fieldName}`);
-            }
-        });
-
-        // Tùy chọn: Xóa tags hoặc giữ lại? Hiện tại đang giữ lại.
-        // document.getElementById('tags-input').value = '';
-
-    } catch (error) {
-        console.error('Error adding note:', error);
-        showStatus(`Lỗi thêm note: ${error.message}`, 'error');
+    if (!result) {
+      throw new Error("Không thể thêm note. ID trả về là null.");
     }
+
+    showStatus(`Note đã được thêm thành công (ID: ${result})`);
+
+    // (v1.36.0) Lưu deck/model
+    await chrome.storage.local.set({
+      [LAST_USED_DECK_KEY]: deckName,
+      [LAST_USED_MODEL_KEY]: modelName
+    });
+
+    // (v1.36.0) Lấy cài đặt sticky
+    const stickyKey = `stickyFields_${modelName}`;
+    const stickySettings = await chrome.storage.local.get(stickyKey);
+    const stickyFields = stickySettings[stickyKey] || [];
+
+    // Xóa nội dung fields (trừ những field được ghim)
+    document.querySelectorAll(".field-group").forEach(fieldGroup => {
+      const fieldName = fieldGroup.dataset.field;
+      if (stickyFields.includes(fieldName)) {
+        return; // Bỏ qua field được ghim
+      }
+
+      // (v1.43.0) Xóa nội dung div
+      const fieldDiv = fieldGroup.querySelector('.field-input-div');
+      if (fieldDiv) {
+        fieldDiv.innerHTML = '';
+      }
+      
+      // (v1.43.0) Cập nhật preview (để xóa preview cũ)
+      const previewContainer = fieldGroup.querySelector('.media-preview-container');
+      if (previewContainer) {
+        updateMediaPreview('', previewContainer);
+      }
+    });
+
+    // Xóa tags (trừ khi tags được ghim - logic này chưa có, tạm thời xóa)
+    // (Kiểm tra nếu "Tags" nằm trong stickyFields - logic này cần xem lại)
+    if (!stickyFields.includes("Tags")) { // Giả sử "Tags" là tên field ảo
+        document.getElementById("tags").value = "";
+    }
+    
+    // Reset cloze index
+    currentClozeIndex = 1;
+
+  } catch (error) {
+    console.error("Error adding note:", error);
+    showStatus(`Lỗi khi thêm note: ${error.message}`, true);
+  }
 }
 
-
-// --- Listener nhận message từ background.js (Context Menu) ---
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log("Sidebar received message:", message);
-    if (message.action === "fillFieldFromContextMenu") {
-        const { field, content, contentType } = message;
-        const safeFieldName = field.replace(/\s+/g, '-');
-        const fieldIdBase = `field-${safeFieldName}`;
-        const divId = `${fieldIdBase}-div`; // Chỉ cần ID của div
-        const renderedViewId = `${fieldIdBase}-rendered`;
-        const previewId = `preview-${fieldIdBase}`;
-
-        const targetElement = document.getElementById(divId); // Luôn là div
-
-        if (targetElement) {
-            console.log(`Filling field "${field}" with ${contentType}:`, content);
-
-            let finalContent = content;
-            // Tạo thẻ img nếu content type là image
-            if (contentType === 'image') {
-                finalContent = `<img src="${content}">`;
-            } else if (contentType === 'text') {
-                 // Chèn thẳng HTML
-                 finalContent = content;
-            }
-
-            // Nối vào nội dung cũ
-            const separator = '<br>'; // Luôn dùng <br> cho div
-            targetElement.focus(); // Focus trước khi chèn
-            document.execCommand('insertHTML', false, (targetElement.innerHTML.trim() ? separator : '') + finalContent);
-
-
-            // Trigger input event để cập nhật preview
-            targetElement.dispatchEvent(new Event('input', { bubbles: true }));
-
-            // Cập nhật rendered view và media preview
-            const renderedViewElement = document.getElementById(renderedViewId);
-            const previewContainer = document.getElementById(previewId);
-            if (renderedViewElement) {
-                updateRenderedView(targetElement, renderedViewElement);
-            }
-            if (previewContainer) {
-                // Gọi lại updateMediaPreviewFromContent để đảm bảo preview được cập nhật
-                updateMediaPreviewFromContent(targetElement.innerHTML, previewId);
-            }
-
-            // Tự động mở field nếu đang bị thu gọn
-            const fieldGroup = targetElement.closest('.field-group');
-            if (fieldGroup && fieldGroup.classList.contains('collapsed')) {
-                const header = fieldGroup.querySelector('.field-header');
-                if (header) header.click(); // Simulate click để mở
-            }
-
-            // Chuyển sang rendered view nếu đang ở code view
-            if (fieldGroup && fieldGroup.dataset.viewMode === 'code') {
-                toggleFieldView(fieldGroup);
-            }
-
-            sendResponse({ success: true, message: `Field "${field}" updated.` });
-
-        } else {
-            console.warn(`Target div not found for field "${field}". Div ID: ${divId}`);
-            let errorMsg = `Lỗi: Field "${field}" không tìm thấy.`;
-            if (!currentModelName) errorMsg = `Lỗi: Chọn Note Type trước khi gửi vào field "${field}"`;
-            showStatus(errorMsg, 'error');
-            sendResponse({ success: false, message: `Field "${field}" not found.` });
-        }
-    }
-    // return true; // Không cần thiết
-});
+/**
+ * (v1.18.0) Tạo ID ngẫu nhiên
+ * @returns {string} - ID ngẫu nhiên 14 chữ số
+ */
+function generateRandomId() {
+  // Tạo 14 chữ số ngẫu nhiên
+  const part1 = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
+  const part2 = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
+  return part1 + part2;
+}
 
