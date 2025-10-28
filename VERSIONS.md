@@ -268,3 +268,19 @@
         - Thêm `CONTEXT_MENU_ID_LINK` và `contexts: ["link"]`.
         - Cập nhật `updateContextMenu` để tạo menu gốc và menu con cho link.
         - Cập nhật `onClicked`: Thêm case `send-link-to-`. Lấy `info.linkUrl` và gửi về `popup.js` với `contentType: 'text'`.
+
+## v1.38.0 – 2025-10-28
+- ✨ Tính năng Nút "Show Code"/"Show Rendered":
+    - `popup.html`: Không thay đổi cấu trúc chính.
+    - `popup.js`:
+        - Cập nhật `createFieldsForModel`: Thêm nút < > / 🖼️ (`.btn-toggle-view`) vào `field-header`. Thêm `div.rendered-field-view` bên cạnh textarea. Lưu trạng thái `data-view-mode` vào `field-group`. Hiển thị/ẩn textarea hoặc `div.rendered-field-view` dựa trên mode mặc định.
+        - Thêm hàm `toggleFieldView(fieldGroup)`: Xử lý click nút, thay đổi `data-view-mode`, đổi icon/title nút, ẩn/hiện textarea và `div.rendered-field-view`. Gọi `updateRenderedView` và `updateMediaPreview` khi chuyển sang "Rendered".
+        - Thêm hàm `updateRenderedView(textarea)`: Cập nhật `innerHTML` của `div.rendered-field-view` bằng `textarea.value`.
+        - Cập nhật `createFieldsForModel`: Gọi `updateRenderedView` và `updateMediaPreview` lần đầu khi tạo field.
+        - Cập nhật `addNoteToAnki`: Gọi `updateRenderedView` và `updateMediaPreview` sau khi xóa field (để cập nhật view nếu field đó không bị xóa trắng do sticky).
+        - Cập nhật `onMessage`: Khi nhận nội dung từ context menu, trigger input event (đã có) sẽ tự động gọi `updateRenderedView` và `updateMediaPreview`. Chuyển sang chế độ "Rendered" nếu đang ở "Code".
+        - Cập nhật `toggleFieldCollapse`: Ngăn collapse khi click nút "Show Code".
+    - `styles.css`: Thêm class `.btn-toggle-view` và `.rendered-field-view`. Style cơ bản cho `.rendered-field-view` để giống textarea, hiển thị HTML cơ bản. Thêm style mô phỏng thẻ `[sound:...]` trong rendered view.
+- 🐛 Sửa lỗi Media Preview:
+    - `popup.js`: Trong `onMessage`, sau khi cập nhật `targetTextarea.value` và dispatch event `input`, gọi lại `updateMediaPreview(targetTextarea)` để đảm bảo preview được cập nhật ngay cả khi chế độ view đã là 'rendered'. Thêm trạng thái loading cho ảnh preview. Cải thiện logic xử lý nút audio (dừng/phát, reset trạng thái).
+    - `styles.css`: Thêm style `.preview-loading`. Cập nhật `min-height` và `margin-top` cho `.media-preview-container`.
