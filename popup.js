@@ -6,10 +6,10 @@ let allPresets = {};
 let currentModelName = '';
 let currentFieldNames = [];
 let statusTimeout = null;
-let currentAudio = null;
+let currentAudio = null; // Để quản lý audio đang phát
 
 // --- Hàm invoke (không đổi) ---
-async function invoke(action, params = {}) { /* ... giữ nguyên ... */
+async function invoke(action, params = {}) {
     try {
         const response = await fetch('http://localhost:8765', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: action, version: 6, params: params }) });
         if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -55,7 +55,7 @@ async function createFieldsForModel(modelName) {
             const fieldGroup = document.createElement('div');
             fieldGroup.className = `form-group field-group ${isCollapsed ? 'collapsed' : ''} ${isHidden ? 'field-hidden-by-setting' : ''}`;
             fieldGroup.dataset.fieldName = fieldName;
-            fieldGroup.dataset.viewMode = isCodeViewDefault ? 'code' : 'rendered'; // [MỚI] Lưu trạng thái view
+            fieldGroup.dataset.viewMode = isCodeViewDefault ? 'code' : 'rendered'; // Lưu trạng thái view
 
             // --- Header (Toggle + Label + Show Code Button) ---
             const fieldHeader = document.createElement('div');
@@ -72,7 +72,7 @@ async function createFieldsForModel(modelName) {
             label.style.pointerEvents = 'none';
             label.style.flexGrow = '1'; // Cho label chiếm không gian
 
-            // [MỚI] Nút Show Code/Rendered
+            // Nút Show Code/Rendered
             const toggleViewBtn = document.createElement('button');
             toggleViewBtn.className = 'btn-secondary btn-toggle-view';
             toggleViewBtn.textContent = isCodeViewDefault ? '🖼️' : ' </> '; // Icon Rendered / Code
@@ -103,13 +103,13 @@ async function createFieldsForModel(modelName) {
             input.rows = 2;
             input.addEventListener('input', () => {
                  autoExpandTextarea({ target: input });
-                 updateRenderedView(input); // [MỚI] Cập nhật rendered view khi gõ
-                 updateMediaPreview(input);
+                 updateRenderedView(input); // Cập nhật rendered view khi gõ
+                 updateMediaPreview(input); // Cập nhật preview media khi gõ
             });
             input.style.display = isCodeViewDefault ? '' : 'none'; // Ẩn/hiện theo view mode
             inputContainer.appendChild(input);
 
-             // [MỚI] Rendered View Div
+             // Rendered View Div
             const renderedView = document.createElement('div');
             renderedView.id = `rendered-${fieldId}`;
             renderedView.className = 'rendered-field-view form-control'; // Style giống form-control
@@ -130,8 +130,8 @@ async function createFieldsForModel(modelName) {
             fieldsContainer.appendChild(fieldGroup);
 
             autoExpandTextarea({ target: input });
-            updateRenderedView(input); // [MỚI] Cập nhật lần đầu
-            updateMediaPreview(input);
+            updateRenderedView(input); // Cập nhật lần đầu
+            updateMediaPreview(input); // Cập nhật preview lần đầu
         });
         console.log("Fields created successfully.");
 
@@ -144,13 +144,18 @@ async function createFieldsForModel(modelName) {
     }
 }
 
-// --- [MỚI] Hàm chuyển đổi View Mode (Code/Rendered) ---
+// --- Hàm chuyển đổi View Mode (Code/Rendered) ---
 function toggleFieldView(fieldGroup) {
     const fieldId = `field-${fieldGroup.dataset.fieldName}`;
     const textarea = fieldGroup.querySelector(`#${fieldId}`);
     const renderedView = fieldGroup.querySelector(`#rendered-${fieldId}`);
     const previewContainer = fieldGroup.querySelector(`#preview-${fieldId}`);
     const toggleBtn = fieldGroup.querySelector('.btn-toggle-view');
+
+    if (!textarea || !renderedView || !previewContainer || !toggleBtn) {
+        console.error("Elements for view toggle not found in field group:", fieldGroup);
+        return;
+    }
 
     const currentMode = fieldGroup.dataset.viewMode;
     const newMode = currentMode === 'code' ? 'rendered' : 'code';
@@ -173,41 +178,76 @@ function toggleFieldView(fieldGroup) {
     }
 }
 
-// --- [MỚI] Hàm cập nhật nội dung Rendered View ---
+// --- Hàm cập nhật nội dung Rendered View ---
 function updateRenderedView(textarea) {
     const fieldId = textarea.id;
     const renderedView = document.getElementById(`rendered-${fieldId}`);
     if (renderedView) {
-        // TODO: Cân nhắc sanitize HTML ở đây nếu cần bảo mật
-        // Hiện tại chỉ gán trực tiếp để hiển thị đúng format
+        // Rất cơ bản, không an toàn nếu HTML có script độc hại
+        // Cần thư viện sanitize nếu extension xử lý HTML từ nguồn không tin cậy
+        // Hiện tại chỉ là HTML từ người dùng nhập hoặc từ context menu (ảnh/sound tag)
         renderedView.innerHTML = textarea.value;
     }
 }
 
 
-// --- Hàm cập nhật Media Preview (không đổi) ---
-async function updateMediaPreview(textarea) { /* ... giữ nguyên ... */
+// --- Hàm cập nhật Media Preview ---
+async function updateMediaPreview(textarea) {
     const fieldId = textarea.id;
     const previewContainer = document.getElementById(`preview-${fieldId}`);
     if (!previewContainer) return;
-    previewContainer.innerHTML = '';
+
+    // Chỉ hiển thị preview nếu đang ở chế độ 'rendered'
+    const fieldGroup = textarea.closest('.field-group');
+    if (!fieldGroup || fieldGroup.dataset.viewMode !== 'rendered') {
+        previewContainer.innerHTML = ''; // Xóa preview nếu không ở chế độ rendered
+        previewContainer.style.display = 'none';
+        return;
+    }
+    previewContainer.style.display = ''; // Hiển thị lại container nếu đang ở rendered
+
+    previewContainer.innerHTML = ''; // Xóa preview cũ
     const content = textarea.value;
+
+    // Tìm thẻ img đầu tiên
     const imgMatch = content.match(/<img src="([^"]+)"[^>]*>/i);
     if (imgMatch) {
         const filename = imgMatch[1];
+        // Hiển thị loading
+        previewContainer.innerHTML = `<span class="preview-loading">⏳ Đang tải ảnh "${filename}"...</span>`;
         try {
             const base64Data = await invoke('retrieveMediaFile', { filename: filename });
+            // Kiểm tra xem preview container còn tồn tại không (phòng trường hợp user chuyển view nhanh)
+            const currentPreviewContainer = document.getElementById(`preview-${fieldId}`);
+            if (!currentPreviewContainer || !currentPreviewContainer.closest('.field-group') || currentPreviewContainer.closest('.field-group').dataset.viewMode !== 'rendered') return;
+
             if (base64Data) {
+                currentPreviewContainer.innerHTML = ''; // Xóa loading
                 const img = document.createElement('img');
-                img.src = `data:image/webp;base64,${base64Data}`;
+                // Thử đoán mime type cơ bản
+                let mimeType = 'image/webp'; // Mặc định webp
+                if (filename.toLowerCase().endsWith('.png')) mimeType = 'image/png';
+                else if (filename.toLowerCase().endsWith('.jpg') || filename.toLowerCase().endsWith('.jpeg')) mimeType = 'image/jpeg';
+                else if (filename.toLowerCase().endsWith('.gif')) mimeType = 'image/gif';
+                else if (filename.toLowerCase().endsWith('.svg')) mimeType = 'image/svg+xml';
+
+                img.src = `data:${mimeType};base64,${base64Data}`;
                 img.alt = filename;
                 img.className = 'preview-image';
                 img.title = `Click để xem lớn hơn: ${filename}`;
                 img.addEventListener('click', () => showImageModal(img.src, filename));
-                previewContainer.appendChild(img);
-            } else { previewContainer.innerHTML = `<span class="preview-error">⚠️ Ảnh "${filename}" không tìm thấy!</span>`; }
-        } catch (error) { console.error("Error retrieving image preview:", error); previewContainer.innerHTML = `<span class="preview-error">⚠️ Lỗi tải ảnh "${filename}"</span>`; }
+                currentPreviewContainer.appendChild(img);
+            } else {
+                 currentPreviewContainer.innerHTML = `<span class="preview-error">⚠️ Ảnh "${filename}" không tìm thấy!</span>`;
+            }
+        } catch (error) {
+             console.error("Error retrieving image preview:", error);
+             const currentPreviewContainer = document.getElementById(`preview-${fieldId}`);
+             if (currentPreviewContainer) currentPreviewContainer.innerHTML = `<span class="preview-error">⚠️ Lỗi tải ảnh "${filename}"</span>`;
+        }
     }
+
+    // Tìm thẻ sound đầu tiên
     const soundMatch = content.match(/\[sound:(.*?)\]/i);
     if (soundMatch) {
         const filename = soundMatch[1];
@@ -215,20 +255,81 @@ async function updateMediaPreview(textarea) { /* ... giữ nguyên ... */
         button.className = 'btn-secondary preview-audio-button';
         button.textContent = '🔊 Nghe';
         button.title = filename;
+        let isPlaying = false; // Trạng thái của nút này
+        let audioObject = null; // Lưu trữ đối tượng audio
+
         button.onclick = async (event) => {
             event.stopPropagation();
+
+            if (isPlaying && audioObject) { // Nếu đang phát -> dừng
+                audioObject.pause();
+                audioObject.currentTime = 0;
+                button.textContent = '🔊 Nghe';
+                isPlaying = false;
+                if (currentAudio === audioObject) currentAudio = null; // Hủy nếu là audio hiện tại
+                audioObject = null;
+                return;
+            }
+
+            // Dừng audio khác đang phát (nếu có)
+             if (currentAudio) {
+                 currentAudio.pause();
+                 currentAudio.currentTime = 0;
+                 // Tìm nút cũ và reset text/state
+                 const oldButton = document.querySelector(`.preview-audio-button[data-playing="true"]`);
+                 if (oldButton) {
+                     oldButton.textContent = '🔊 Nghe';
+                     oldButton.disabled = false;
+                     delete oldButton.dataset.playing;
+                 }
+                 currentAudio = null;
+            }
+
+
             button.disabled = true; button.textContent = '🔊 Đang tải...';
             try {
                 const base64Data = await invoke('retrieveMediaFile', { filename: filename });
+                 // Kiểm tra xem nút còn tồn tại không
+                if (!button.closest('.field-group') || button.closest('.field-group').dataset.viewMode !== 'rendered') return;
+
                 if (base64Data) {
-                    if (currentAudio) { currentAudio.pause(); currentAudio.src = ''; }
-                    currentAudio = new Audio(`data:audio/mpeg;base64,${base64Data}`);
-                    currentAudio.play();
-                    button.textContent = '🔊 Đang phát...';
-                    currentAudio.onended = () => { button.textContent = '🔊 Nghe'; button.disabled = false; currentAudio = null; };
-                    currentAudio.onerror = () => { showStatus(`Lỗi phát audio "${filename}"`, 'error'); button.textContent = '🔊 Lỗi'; currentAudio = null; }
-                } else { showStatus(`Audio "${filename}" không tìm thấy!`, 'error'); button.textContent = '🔊 Không thấy'; }
-            } catch (error) { console.error("Error retrieving/playing audio:", error); showStatus(`Lỗi tải audio "${filename}"`, 'error'); button.textContent = '🔊 Lỗi tải'; button.disabled = false; }
+                    audioObject = new Audio(`data:audio/mpeg;base64,${base64Data}`); // Giả định mp3
+                    currentAudio = audioObject; // Lưu lại audio đang phát
+                    button.dataset.playing = "true"; // Đánh dấu nút đang phát
+                    audioObject.play();
+                    button.textContent = '🔊 Dừng'; // Đổi thành nút Dừng
+                    button.disabled = false; // Cho phép nhấn Dừng
+                    isPlaying = true;
+
+                    audioObject.onended = () => {
+                        button.textContent = '🔊 Nghe';
+                        button.disabled = false;
+                        isPlaying = false;
+                        if (currentAudio === audioObject) currentAudio = null;
+                        delete button.dataset.playing;
+                        audioObject = null;
+                    };
+                    audioObject.onerror = () => {
+                         showStatus(`Lỗi phát audio "${filename}"`, 'error');
+                         button.textContent = '🔊 Lỗi';
+                         button.disabled = false;
+                         isPlaying = false;
+                         if (currentAudio === audioObject) currentAudio = null;
+                         delete button.dataset.playing;
+                         audioObject = null;
+                    }
+                } else {
+                    showStatus(`Audio "${filename}" không tìm thấy!`, 'error');
+                     button.textContent = '🔊 Không thấy';
+                     // Không disable nút này
+                }
+            } catch (error) {
+                 console.error("Error retrieving/playing audio:", error);
+                 showStatus(`Lỗi tải audio "${filename}"`, 'error');
+                 button.textContent = '🔊 Lỗi tải';
+                 button.disabled = false;
+                 // isPlaying vẫn là false
+            }
         };
         previewContainer.appendChild(button);
     }
@@ -236,21 +337,16 @@ async function updateMediaPreview(textarea) { /* ... giữ nguyên ... */
 
 
 // --- Hàm hiển thị Modal ảnh (không đổi) ---
-function showImageModal(src, caption) { /* ... giữ nguyên ... */
-    const modal = document.getElementById("image-preview-modal"); const modalImg = document.getElementById("modal-image"); const captionText = document.getElementById("modal-caption"); const closeBtn = modal.querySelector(".modal-close-btn"); modal.style.display = "block"; modalImg.src = src; captionText.innerHTML = caption; const closeModal = () => { modal.style.display = "none"; modalImg.src = ""; } closeBtn.onclick = closeModal; modal.onclick = (event) => { if (event.target === modal) closeModal(); }
-}
+function showImageModal(src, caption) { /* ... giữ nguyên ... */ }
 
 // --- Hàm toggleFieldCollapse (không đổi) ---
-async function toggleFieldCollapse(event) { /* ... giữ nguyên ... */
-    if (event.target.classList.contains('preview-audio-button') || event.target.classList.contains('preview-image') || event.target.classList.contains('btn-toggle-view') /*[MỚI] Ngăn collapse khi click Show Code*/) { return; }
-    const fieldHeader = event.currentTarget; const fieldGroup = fieldHeader.closest('.field-group'); if (!fieldGroup) return; const fieldName = fieldGroup.dataset.fieldName; const inputArea = fieldGroup.querySelector('.field-input-area'); const toggleIcon = fieldHeader.querySelector('.collapse-toggle'); const label = fieldHeader.querySelector('label'); if (!inputArea || !fieldName || !toggleIcon || !label) { console.error("Collapse elements not found!"); return; } const isCurrentlyCollapsed = fieldGroup.classList.contains('collapsed'); const newState = !isCurrentlyCollapsed; fieldGroup.classList.toggle('collapsed', newState); if (newState) { inputArea.style.display = 'none'; label.style.opacity = '0.65'; toggleIcon.textContent = '▶'; } else { inputArea.style.display = ''; label.style.opacity = '1'; toggleIcon.textContent = '🔽'; const textarea = inputArea.querySelector('.field-input'); if (textarea) autoExpandTextarea({ target: textarea }); } const storageKey = `collapsedFields_${currentModelName}`; try { const currentState = await chrome.storage.local.get(storageKey); const updatedState = currentState[storageKey] || {}; updatedState[fieldName] = newState; await chrome.storage.local.set({ [storageKey]: updatedState }); } catch (error) { console.error('Error saving collapse state:', error); }
-}
+async function toggleFieldCollapse(event) { /* ... giữ nguyên ... */ }
 
 // --- Các hàm tiện ích (autoExpand, openOptions, generateRandomId, showStatus) không đổi ---
-function autoExpandTextarea(event) { /* ... giữ nguyên ... */ const textarea = event.target; textarea.style.height = 'auto'; textarea.style.height = (textarea.scrollHeight + 2) + 'px'; }
-function openOptionsPage() { /* ... giữ nguyên ... */ chrome.runtime.openOptionsPage(); }
-function generateRandomId(length = 14) { /* ... giữ nguyên ... */ let r = ''; const c = '0123456789'; for (let i = 0; i < length; i++) r += c.charAt(Math.floor(Math.random() * 10)); return r; }
-function showStatus(message, type = 'info') { /* ... giữ nguyên ... */ const s = document.getElementById('status-message'); s.textContent = message; s.className = `status-message ${type}`; if (statusTimeout) clearTimeout(statusTimeout); if (type === 'success') { statusTimeout = setTimeout(() => { if (s.textContent === message) { s.textContent = ''; s.className = 'status-message'; } statusTimeout = null; }, 4000); } else { statusTimeout = null; } }
+function autoExpandTextarea(event) { /* ... giữ nguyên ... */ }
+function openOptionsPage() { /* ... giữ nguyên ... */ }
+function generateRandomId(length = 14) { /* ... giữ nguyên ... */ }
+function showStatus(message, type = 'info') { /* ... giữ nguyên ... */ }
 
 // --- Hàm setupAutocomplete (không đổi) ---
 function setupAutocomplete(inputId, containerId, sourceArray, onSelectCallback = null) { /* ... giữ nguyên ... */ }
@@ -265,9 +361,7 @@ async function applyPreset() { /* ... giữ nguyên ... */ }
 document.addEventListener('DOMContentLoaded', async function() { /* ... giữ nguyên ... */ });
 
 // --- Hàm thêm note (addNoteToAnki) không đổi ---
-async function addNoteToAnki() { /* ... giữ nguyên ... */
-     try { showStatus('Đang thêm...', 'info'); const deckName = document.getElementById('deck-search').value.trim(); const modelName = document.getElementById('model-search').value.trim(); const tagsInput = document.getElementById('tags-input').value.trim(); if (!deckName || !allDecks.includes(deckName)) { showStatus('Tên Deck không hợp lệ.', 'error'); return; } if (!modelName || !allModels.includes(modelName)) { showStatus('Tên Note Type không hợp lệ.', 'error'); return; } const fields = {}; let hasContent = false; const fieldGroups = document.querySelectorAll('#fields-container .field-group:not(.field-hidden-by-setting)'); if (fieldGroups.length === 0 && currentFieldNames.length > 0) { throw new Error("Lỗi hiển thị fields."); } fieldGroups.forEach(group => { const fieldName = group.dataset.fieldName; const input = group.querySelector('.field-input'); if (input && fieldName) { const value = input.value; fields[fieldName] = value; if (value.trim()) hasContent = true; } }); const randomIdFieldKey = `randomIdField_${modelName}`; let settings = await chrome.storage.local.get(randomIdFieldKey); const randomIdField = settings[randomIdFieldKey]; if (randomIdField && fields.hasOwnProperty(randomIdField) && fields[randomIdField].trim() === '') { fields[randomIdField] = generateRandomId(); hasContent = true; } if (!hasContent) { showStatus('Vui lòng nhập nội dung.', 'error'); return; } const tagsArray = tagsInput.split(/[\s,]+/).filter(tag => tag.trim() !== '').map(tag => tag.trim()); const params = { note: { deckName, modelName, fields, tags: tagsArray } }; const result = await invoke('addNote', params); if (result === null) throw new Error("AnkiConnect returned null (trùng lặp?)."); showStatus('Thêm thành công! Note ID: ' + result, 'success'); await chrome.storage.local.set({ lastUsedDeck: deckName, lastUsedModel: modelName }); const stickyFieldsKey = `stickyFields_${modelName}`; settings = await chrome.storage.local.get(stickyFieldsKey); const stickyFields = settings[stickyFieldsKey] || {}; document.querySelectorAll('.field-input').forEach(input => { const fieldName = input.id.replace('field-', ''); if (!stickyFields[fieldName]) { input.value = ''; autoExpandTextarea({ target: input }); updateRenderedView(input); /*[MỚI]*/ updateMediaPreview(input); /*[MỚI]*/ } }); } catch (error) { console.error('Error adding note:', error); showStatus('Lỗi thêm note: ' + (error.message || 'Không xác định'), 'error'); }
-}
+async function addNoteToAnki() { /* ... giữ nguyên ... */ }
 
 
 // --- [CẬP NHẬT] Listener nhận message từ background ---
@@ -285,20 +379,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
              console.log(`Filling field "${field}" with content:`, finalContentToInsert);
 
+             // Nối vào nội dung cũ
              targetTextarea.value += (targetTextarea.value ? '\n' : '') + finalContentToInsert;
-             // [CẬP NHẬT] Trigger input event để cập nhật cả rendered view và preview
+
+             // Trigger input event để cập nhật cả rendered view và preview
              targetTextarea.dispatchEvent(new Event('input', { bubbles: true }));
 
              const fieldGroup = targetTextarea.closest('.field-group');
              if (fieldGroup) {
-                 // [MỚI] Chuyển sang chế độ Rendered View nếu đang ở Code View
+                 // Chuyển sang chế độ Rendered View nếu đang ở Code View
                  if (fieldGroup.dataset.viewMode === 'code') {
                      toggleFieldView(fieldGroup);
+                 } else {
+                     // Nếu đã ở Rendered view, cần gọi lại updateMediaPreview thủ công
+                     // vì dispatchEvent('input') không đủ trigger update nếu không có thay đổi text
+                     updateMediaPreview(targetTextarea); // [SỬA LỖI] Gọi lại preview
                  }
                  // Mở field nếu đang collapse
                  if (fieldGroup.classList.contains('collapsed')) {
                      const header = fieldGroup.querySelector('.field-header');
-                     if(header) header.click(); // Sử dụng hàm toggleFieldCollapse qua click
+                     if(header) header.click();
                  }
              }
 
