@@ -1,3 +1,4 @@
+fileName: lehoangphuc747/ankivn-muahaha-1/ANKIVN-MUAHAHA-1-430e9be1add885431deaab84a6cbbf31f06d06ad/popup.html
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -5,19 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AnkiVN - Muahaha</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- Thêm Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
-<body data-editor-mode="normal"> <!-- Thêm data attribute để quản lý mode toàn cục -->
-  <div class="container">
+<body data-editor-mode="normal"> <div class="container">
     <div class="header-container">
         <h1>AnkiVN - Muahaha</h1>
         <a href="#" id="open-settings-link" title="Mở Cài đặt">⚙️</a>
     </div>
 
-    <!-- Phần header cố định -->
-    <div id="sticky-header-content">
-      <!-- Preset Group (Giữ nguyên) -->
+    <div id="non-sticky-header-content">
       <div class="form-group inline-group preset-group">
           <label for="preset-select" class="inline-label">Cấu hình:</label>
           <div class="autocomplete-container inline-input-container">
@@ -29,7 +26,6 @@
           <button id="delete-preset-btn" class="btn-secondary btn-icon btn-icon-danger" title="Xóa cấu hình đã chọn">🗑️</button>
       </div>
 
-      <!-- Deck Selection -->
       <div class="form-group inline-group">
         <label for="deck-search" class="inline-label">Deck:</label>
         <div class="autocomplete-container inline-input-container">
@@ -37,7 +33,6 @@
           <div id="deck-suggestions" class="suggestions-container"></div>
         </div>
       </div>
-      <!-- Note Type Selection -->
       <div class="form-group inline-group">
         <label for="model-search" class="inline-label">Note:</label>
         <div class="autocomplete-container inline-input-container">
@@ -46,13 +41,11 @@
         </div>
       </div>
 
-      <!-- Editor Mode Toggle -->
       <div id="editor-mode-toggle" class="editor-mode-toggle">
         <button id="mode-normal-btn" class="btn-secondary active" data-mode="normal">✍️ Normal</button>
         <button id="mode-source-btn" class="btn-secondary" data-mode="source">&lt;/&gt; Source</button>
       </div>
-
-      <!-- Format Toolbar -->
+    </div> <div id="sticky-toolbar-wrapper">
       <div id="format-toolbar">
         <button id="format-bold" title="In đậm (Ctrl+B)"><i class="fas fa-bold"></i></button>
         <button id="format-italic" title="In nghiêng (Ctrl+I)"><i class="fas fa-italic"></i></button>
@@ -67,15 +60,9 @@
         <span class="toolbar-separator">|</span>
         <button id="format-cloze" title="Thêm Cloze (Ctrl+Shift+C)">{ ... }</button>
       </div>
-    </div> <!-- End sticky header content -->
+    </div> <div id="fields-container" class="fields-container">
+      </div>
 
-
-    <!-- Fields Container -->
-    <div id="fields-container" class="fields-container">
-      <!-- Các field sẽ được tạo bởi JavaScript -->
-    </div>
-
-    <!-- Tags Input -->
     <div class="form-group">
       <label for="tags-input">Tags:</label>
       <input type="text" id="tags-input" class="form-control" list="tags-datalist" placeholder="Nhập tags, phân cách bằng dấu cách">
@@ -83,15 +70,12 @@
       </datalist>
     </div>
 
-    <!-- Add Button -->
     <div class="form-group">
       <button id="add-note-btn" class="btn-primary">Thêm vào Anki</button>
     </div>
 
-    <!-- Status Message -->
     <div id="status-message" class="status-message"></div>
 
-    <!-- Image Preview Modal (Giữ nguyên) -->
     <div id="image-preview-modal" class="modal">
       <span class="modal-close-btn">&times;</span>
       <img class="modal-content" id="modal-image">
