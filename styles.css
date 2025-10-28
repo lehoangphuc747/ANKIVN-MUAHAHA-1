@@ -1,6 +1,6 @@
 /* styles.css */
 :root {
-  /* Color Variables */
+  /* ... (các biến màu cũ không đổi) ... */
   --primary-color: #3498db;
   --primary-color-dark: #2980b9;
   --primary-color-darker: #1f618d;
@@ -30,6 +30,11 @@
   --button-secondary-border: #dee2e6;
   --button-secondary-hover-bg: #e9ecef;
   --button-secondary-hover-border: #ced4da;
+  
+  /* [MỚI] Màu cho Sticky/Ghim */
+  --sticky-bg-color: #fffbeb;
+  --sticky-border-color: #fde68a;
+  --sticky-text-color: #b45309;
 }
 
 body {
@@ -45,50 +50,69 @@ body {
   padding: 16px;
 }
 
-/* --- [THÊM MỚI] Header Container --- */
 .header-container {
     display: flex;
-    justify-content: space-between; /* Đẩy title và icon ra 2 bên */
-    align-items: center; /* Căn giữa theo chiều dọc */
-    margin-bottom: 1.2rem; /* Giữ khoảng cách với phần dưới */
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
     border-bottom: 1px solid var(--border-color-light);
     padding-bottom: 0.8rem;
 }
-
-/* Style lại H1 trong header */
 .header-container h1 {
-    margin: 0; /* Xóa margin mặc định */
-    padding: 0; /* Xóa padding mặc định */
-    border-bottom: none; /* Xóa border cũ */
+    margin: 0;
+    padding: 0;
+    border-bottom: none;
     font-size: 1.1rem;
     font-weight: 600;
     color: #2c3e50;
-    text-align: left; /* Căn trái */
-    flex-grow: 1; /* Cho title chiếm phần lớn không gian */
+    text-align: left;
+    flex-grow: 1;
 }
-
-/* Style lại link settings */
 .header-container #open-settings-link {
-    font-size: 1.3rem; /* Kích thước icon bánh răng */
+    font-size: 1.3rem;
     color: var(--text-color-light);
     text-decoration: none;
-    padding: 5px; /* Tăng vùng click */
-    border-radius: 50%; /* Bo tròn nếu muốn */
+    padding: 5px;
+    border-radius: 50%;
     transition: background-color 0.2s ease, color 0.2s ease;
-    flex-shrink: 0; /* Không co lại */
-    margin-left: 10px; /* Khoảng cách với title */
+    flex-shrink: 0;
+    margin-left: 10px;
 }
 .header-container #open-settings-link:hover {
-    background-color: #eee; /* Nền nhẹ khi hover */
+    background-color: #eee;
     color: var(--primary-color);
 }
-/* --- [HẾT THÊM MỚI] --- */
+
+/* [MỚI] Style cho khu vực Preset */
+.preset-group {
+    margin-bottom: 0.8rem;
+    gap: 6px; /* Khoảng cách giữa các item */
+}
+.preset-group .inline-input-container {
+    flex-grow: 1; /* Cho select chiếm nhiều không gian */
+}
+#preset-select {
+    padding-right: 25px; /* Thêm padding cho select */
+}
+.btn-icon {
+    flex-shrink: 0; /* Không co nút */
+    padding: 0.4rem 0.6rem; /* Nút nhỏ hơn */
+    font-size: 1rem;
+    line-height: 1;
+}
+.btn-icon-danger {
+    color: var(--error-text);
+    border-color: var(--error-border);
+}
+.btn-icon-danger:hover {
+     background-color: var(--error-bg);
+}
+/* [HẾT MỚI] */
 
 
-/* --- Các style khác giữ nguyên --- */
 .form-group { margin-bottom: 1rem; }
 label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-color-light); margin-bottom: 0.4rem; }
-.inline-group { display: flex; align-items: center; margin-bottom: 0.8rem;}
+.inline-group { display: flex; align-items: center; }
 .inline-label { flex: 0 0 auto; margin-right: 8px; margin-bottom: 0; font-weight: 500; font-size: 0.95rem; color: var(--text-color-light);}
 .inline-input-container { flex: 1 1 auto; position: relative; }
 .form-control { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; box-sizing: border-box; transition: border-color 0.2s ease, box-shadow 0.2s ease; background-color: var(--bg-color-alt); line-height: 1.4; color: var(--text-color); }
@@ -96,7 +120,7 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15); }
 .form-control.field-input { resize: none; overflow-y: hidden; min-height: calc(1.5em * 2 + 1.2rem + 2px); height: calc(1.5em * 2 + 1.2rem + 2px); margin-top: 0.4rem; line-height: 1.5; }
 .autocomplete-container { position: relative; }
-.suggestions-container { display: none; position: absolute; /* --- SỬA DÒNG NÀY --- */ background-color: #ffffff; /* Solid White - Đảm bảo không trong suốt */ /* --- HẾT SỬA --- */ border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 6px 6px; width: 100%; box-sizing: border-box; max-height: 160px; overflow-y: auto; z-index: 1000; box-shadow: 0 5px 10px rgba(0,0,0,0.08); }
+.suggestions-container { display: none; position: absolute; background-color: #ffffff; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 6px 6px; width: 100%; box-sizing: border-box; max-height: 160px; overflow-y: auto; z-index: 1000; box-shadow: 0 5px 10px rgba(0,0,0,0.08); }
 .suggestion-item { padding: 0.6rem 0.8rem; font-size: 0.9rem; cursor: pointer; border-bottom: 1px solid var(--border-color-light); }
 .suggestion-item:last-child { border-bottom: none; }
 .suggestion-item.active { background-color: #eee; }
@@ -118,20 +142,17 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .btn-secondary { padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 6px; cursor: pointer; background-color: var(--button-secondary-bg); color: var(--button-secondary-text); border: 1px solid var(--button-secondary-border); border-radius: 5px; transition: all 0.15s ease; box-shadow: 0 1px 1px rgba(0,0,0,0.03); }
 .btn-secondary:hover { background-color: var(--button-secondary-hover-bg); border-color: var(--button-secondary-hover-border); color: var(--text-color); }
 .btn-secondary:active { background-color: #eee; transform: translateY(1px); box-shadow: inset 0 1px 1px rgba(0,0,0,0.05); }
-.settings-fields-controls button { padding: 0.4rem 0.8rem; font-size: 0.85rem; margin-left: 6px; cursor: pointer; background-color: var(--button-secondary-bg); color: var(--button-secondary-text); border: 1px solid var(--button-secondary-border); border-radius: 5px; transition: all 0.15s ease; box-shadow: 0 1px 1px rgba(0,0,0,0.03); }
-.settings-fields-controls button:hover { background-color: var(--button-secondary-hover-bg); border-color: var(--button-secondary-hover-border); color: var(--text-color); }
-.settings-fields-controls button:active { background-color: #eee; transform: translateY(1px); box-shadow: inset 0 1px 1px rgba(0,0,0,0.05); }
-.status-message { margin-top: 1rem; padding: 0.7rem 0.8rem; border-radius: 6px; font-size: 0.9rem; text-align: center; font-weight: 500; border: 1px solid transparent; }
-.status-message.info { background-color: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
-.status-message.success { background-color: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
-.status-message.error { background-color: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
+
+/* --- Styles cho trang Cài đặt --- */
 .settings-container { width: auto; min-width: 450px; }
 .note-type-selector { margin-bottom: 20px; }
 .settings-fields-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color-light); }
 .settings-fields-controls span { font-weight: 500; font-size: 0.95rem; color: var(--text-color-light); }
+.settings-fields-controls button { /* Kế thừa từ .btn-secondary */ }
 .settings-fields-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; background-color: var(--bg-color-alt); }
 .field-checkbox-item { display: flex; align-items: center; padding: 10px 12px; border-radius: 5px; cursor: pointer; transition: background-color 0.15s ease, border-color 0.15s ease; background-color: #fdfdfd; border: 1px solid var(--border-color-light); overflow: hidden; }
 .field-checkbox-item:hover { background-color: var(--hover-bg-color); border-color: var(--hover-border-color); }
+/* Checked cho "Ẩn" */
 .field-checkbox-item.checked { background-color: var(--checked-bg-color); border-color: var(--checked-border-color); }
 .field-checkbox-item.checked label { font-weight: 500; color: var(--checked-text-color); text-decoration: line-through; }
 .field-checkbox-item.checked input[type="checkbox"] { accent-color: var(--checked-text-color); }
@@ -140,5 +161,31 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
 .settings-fields-list::-webkit-scrollbar { width: 6px; } .settings-fields-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; } .settings-fields-list::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; } .settings-fields-list::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 .random-id-section { margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--border-color-light); }
 .random-id-section label { margin-bottom: 8px; }
-/* Link mở settings đã được di chuyển vào header-container */
-/* @media (max-width: 400px) { body { width: auto; min-width: 300px; } .container, .settings-container { padding: 12px; } } */ /* Tạm thời bỏ media query này vì sidebar thường đủ rộng */
+
+/* [MỚI] Style cho "Ghim" */
+.settings-fields-controls.sticky-controls {
+    margin-top: 25px; /* Khoảng cách với phần "Ẩn" */
+    border-top: 1px solid var(--border-color);
+    padding-top: 15px;
+}
+.settings-fields-controls.sticky-controls span {
+    color: var(--sticky-text-color);
+}
+.field-checkbox-item.sticky-item.checked {
+    background-color: var(--sticky-bg-color);
+    border-color: var(--sticky-border-color);
+}
+.field-checkbox-item.sticky-item.checked label {
+    color: var(--sticky-text-color);
+    text-decoration: none; /* Không gạch ngang */
+    font-weight: 500;
+}
+.field-checkbox-item.sticky-item.checked input[type="checkbox"] {
+    accent-color: var(--sticky-text-color);
+}
+/* [HẾT MỚI] */
+
+.status-message { margin-top: 1rem; padding: 0.7rem 0.8rem; border-radius: 6px; font-size: 0.9rem; text-align: center; font-weight: 500; border: 1px solid transparent; }
+.status-message.info { background-color: var(--info-bg); color: var(--info-text); border-color: var(--info-border); }
+.status-message.success { background-color: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
+.status-message.error { background-color: var(--error-bg); color: var(--error-text); border-color: var(--error-border); }
