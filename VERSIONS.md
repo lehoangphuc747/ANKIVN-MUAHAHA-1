@@ -232,3 +232,7 @@
     - Context menu chỉ hiển thị những fields không bị ẩn trong cài đặt.
     - Cập nhật hàm `updateContextMenu` để lọc bỏ các fields bị ẩn dựa trên `modelName`.
     - Thêm thông báo trong menu khi tất cả fields đều bị ẩn.
+
+
+
+
