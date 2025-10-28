@@ -424,3 +424,52 @@ Thay đổi icon của nút (🔼 / 🔽).
 Quan trọng: Lưu trạng thái (ẩn/hiện) vào chrome.storage.local để sidebar ghi nhớ lựa chọn của bạn cho lần mở tiếp theo.
 
 Khi DOMContentLoaded chạy, nó cũng cần đọc trạng thái đã lưu từ storage để áp dụng ngay.
+
+
+
+## 🆕 v1.43.0 – 2025-10-28
+
+### ✨ Cải tiến UI & Logic: Loại bỏ chế độ Normal / Source
+
+#### **popup.html**
+
+* ❌ Xóa `div#editor-mode-toggle` (các nút “Normal” / “Source”).
+* 🔄 Di chuyển `div#sticky-toolbar-wrapper` (chứa `#format-toolbar`) ra **ngoài** `div#collapsible-header`, nằm **ngay sau** nó.
+
+#### **popup.js**
+
+* ❌ Xóa biến global `globalEditorMode` và các hàm liên quan:
+  `setGlobalEditorMode`, `syncTextareaToDiv`, `syncDivToTextarea`.
+* 🧱 `createFieldsForModel`:
+
+  * Chỉ tạo `div.field-input-div` (contenteditable).
+  * Xóa `textarea`, `data-editor-mode`.
+  * Gán `input`, `focus`, `blur` listener chỉ cho `div`.
+* 🪄 `handleInputEvent`: đơn giản hóa – chỉ cập nhật preview/render từ `div.innerHTML`.
+* 💡 `handleFocusEvent`, `handleBlurEvent`: chỉ xử lý khi `activeElement` là `div`.
+* 🧰 `applyFormat`, `addCloze`:
+
+  * Mặc định `activeElement` là `div`.
+  * Xóa kiểm tra `globalEditorMode`.
+* 📤 `addNoteToAnki`:
+
+  * Luôn đọc nội dung từ `div.innerHTML`.
+  * Khi xóa field, chỉ xóa `div.innerHTML`.
+* 📩 `onMessage` (Context Menu):
+
+  * Luôn chèn nội dung vào `div.field-input-div` qua `execCommand('insertHTML')`.
+* ⚙️ `DOMContentLoaded`:
+
+  * Xóa listener gán cho các nút mode.
+
+#### **styles.css**
+
+* ❌ Xóa tất cả style liên quan `.editor-mode-toggle`.
+* ❌ Xóa style ẩn/hiện `.field-input-div` / `.field-input-textarea` theo `data-editor-mode`.
+* 🧩 Toolbar luôn kích hoạt – bỏ style disable `body[data-editor-mode="source"] ...`.
+* 🖋️ Đảm bảo `div.field-input-div` luôn `display: block;` (trừ khi `data-view-mode="rendered"`).
+* 🪶 Thêm style viền & bo góc cho `div.field-input-div` tương tự `.form-control` (nếu cần).
+
+
+
+
