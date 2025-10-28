@@ -8,7 +8,7 @@
   <!-- Link Font Awesome (nếu bạn chưa có) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
-<body> <!-- Removed data-editor-mode -->
+<body>
   <div class="container">
 
     <!-- Header luôn hiển thị -->
@@ -49,13 +49,11 @@
             <div id="model-suggestions" class="suggestions-container"></div>
           </div>
         </div>
-        <!-- Removed editor-mode-toggle -->
       </div>
-      <!-- Removed sticky-toolbar-wrapper from here -->
     </div>
     <!-- Hết phần thu gọn -->
 
-    <!-- Toolbar (sticky) - ĐÃ DI CHUYỂN RA NGOÀI -->
+    <!-- Toolbar (sticky) -->
     <div id="sticky-toolbar-wrapper">
       <div id="format-toolbar">
         <button id="format-bold" title="In đậm (Ctrl+B)"><i class="fas fa-bold"></i></button>
@@ -93,7 +91,6 @@
       <div id="modal-caption"></div>
     </div>
   </div>
-  <script src="popup.js"></script>
+  <script type="module" src="../src/popup/main.js"></script>
 </body>
 </html>
-

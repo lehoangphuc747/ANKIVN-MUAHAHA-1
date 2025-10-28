@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AnkiVN - Muahaha",
-  "version": "1.0",
+  "version": "2.0.0",
   "description": "Thêm note vào Anki nhanh chóng.",
   "action": {
     "default_title": "Mở AnkiVN Sidebar"
@@ -15,10 +15,11 @@
     "contextMenus" 
   ],
   "side_panel": {
-    "default_path": "popup.html"
+    "default_path": "ui/popup.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background/main.js",
+    "type": "module"
   },
-  "options_page": "settings.html"
+  "options_page": "ui/settings.html"
 }
