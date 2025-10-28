@@ -415,6 +415,13 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
 }
 
+/* Style for drag-over state */
+.field-input-div.drag-over {
+    border-color: var(--primary-color);
+    background-color: var(--hover-bg-color);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15), inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
 /* Style cho rendered view */
 .rendered-field-view {
     min-height: calc(1.5em * 2 + 1.2rem + 2px); /* Giống textarea rows=2 */

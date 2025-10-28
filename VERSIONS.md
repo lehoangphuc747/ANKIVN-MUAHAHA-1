@@ -1,5 +1,14 @@
 # Version History
 
+## ✨ v2.2.0 – 2025-11-03
+
+### 🚀 Feature: **Drag & Drop Media from Web**
+
+- Users can now drag images directly from any website and drop them into a field in the sidebar.
+- **`src/ui/fields.js`**: Added a comprehensive `drop` event handler that intelligently processes different data types (`files`, `text/html`, `text/uri-list`).
+- **`src/features/media-handler.js`**: Created a new module to centralize the logic for processing media from both local files (`handleMediaFile`) and web URLs (`handleMediaUrl`). This involves calling Anki-Connect's `storeMediaFile` action.
+- **`ui/styles.css`**: Added a `.drag-over` style to provide visual feedback when dragging an item over a valid field.
+
 ## 🐛 v2.1.3 – 2025-11-02
 
 ### Bug Fix: **Sticky Toolbar Position**

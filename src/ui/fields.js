@@ -2,6 +2,7 @@
 import { invoke } from '../api/anki-connect.js';
 import { updateMediaPreview } from '../features/media-preview.js';
 import { setActiveElement, modelFieldsCache } from '../popup/main.js';
+import { handleMediaFile, handleMediaUrl } from '../features/media-handler.js';
 
 export async function createFieldsForModel(modelName) {
   const fieldsContainer = document.getElementById("fields-container");
@@ -63,6 +64,54 @@ export async function createFieldsForModel(modelName) {
       fieldDiv.addEventListener('input', handleInputEvent);
       fieldDiv.addEventListener('focus', (e) => setActiveElement(e.target));
       fieldDiv.addEventListener('blur', () => setActiveElement(null));
+
+      // --- DRAG & DROP LOGIC ---
+      fieldDiv.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fieldDiv.classList.add('drag-over');
+      });
+
+      fieldDiv.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fieldDiv.classList.remove('drag-over');
+      });
+
+      fieldDiv.addEventListener('drop', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fieldDiv.classList.remove('drag-over');
+
+        const dt = e.dataTransfer;
+
+        // 1. Handle local files first
+        if (dt.files && dt.files.length > 0) {
+          handleMediaFile(dt.files[0], fieldDiv);
+          return;
+        }
+
+        // 2. Handle images dragged from web pages (HTML content)
+        if (dt.types.includes('text/html')) {
+          const html = dt.getData('text/html');
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const imgElement = doc.querySelector('img');
+          if (imgElement && imgElement.src) {
+            await handleMediaUrl(imgElement.src, fieldDiv);
+            return;
+          }
+        }
+
+        // 3. Fallback to URI list (for image URLs dragged from address bar, etc.)
+        if (dt.types.includes('text/uri-list')) {
+            const url = dt.getData('text/uri-list');
+            if (url && /\.(jpg|jpeg|png|gif|webp)$/i.test(url.split('?')[0])) {
+                await handleMediaUrl(url, fieldDiv);
+                return;
+            }
+        }
+      });
 
       const mediaPreviewContainer = document.createElement('div');
       mediaPreviewContainer.className = 'media-preview-container';
