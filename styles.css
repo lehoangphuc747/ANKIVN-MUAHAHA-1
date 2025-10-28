@@ -183,10 +183,10 @@ label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text-c
     border: 1px solid var(--toolbar-border);
     border-radius: 6px;
     padding: 5px 8px;
-    /* margin-top: 10px; -> Đã có padding ở wrapper */
+    /* margin-top: 10px; */ /* <<< XÓA DÒNG NÀY */
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 4px; /* Khoảng cách giữa các nút */
     flex-wrap: wrap; /* Cho phép xuống dòng nếu không đủ chỗ */
 }
 #format-toolbar button {
