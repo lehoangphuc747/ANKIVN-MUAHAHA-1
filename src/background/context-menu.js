@@ -78,7 +78,39 @@ export async function handleContextMenuClick(info, tab) {
 
         if (contentType === 'image' || contentType === 'audio') {
             if (!contentUrl) return;
-            let fileExtension = contentUrl.split('.').pop().split(/#|\?/)[0] || (contentType === 'image' ? 'webp' : 'mp3');
+
+            let fileExtension;
+            const defaultExt = contentType === 'image' ? 'webp' : 'mp3';
+            const invalidCharsRegex = /[?#&=%]/;
+
+            // Step 1 & 2: Try to get extension from URL path and validate
+            const pathBeforeQuery = contentUrl.split('?')[0].split('#')[0];
+            const lastSegment = pathBeforeQuery.split('/').pop();
+            if (lastSegment.includes('.')) {
+                const potentialExt = lastSegment.split('.').pop().toLowerCase();
+                if (potentialExt.length > 1 && potentialExt.length < 5 && !invalidCharsRegex.test(potentialExt)) {
+                    fileExtension = potentialExt;
+                }
+            }
+
+            // Step 3: If no valid extension found, check query parameters for images
+            if (!fileExtension && contentType === 'image') {
+                try {
+                    const urlParams = new URL(contentUrl).searchParams;
+                    const formatParam = urlParams.get('fm'); // Common in Unsplash, etc.
+                    if (formatParam && formatParam.length > 1 && formatParam.length < 5 && !invalidCharsRegex.test(formatParam)) {
+                        fileExtension = formatParam.toLowerCase();
+                    }
+                } catch (e) {
+                    console.warn("Could not parse URL for query params:", e);
+                }
+            }
+            
+            // Step 4: If still no extension, use the default
+            if (!fileExtension) {
+                fileExtension = defaultExt;
+            }
+
             let filename = `ankivn_${contentType}_${Date.now()}.${fileExtension}`;
             const storedFilename = await invoke('storeMediaFile', { url: contentUrl, filename: filename });
             if (!storedFilename) throw new Error("storeMediaFile did not return a filename.");
