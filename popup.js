@@ -570,8 +570,13 @@ function setupAutocomplete(container, input, suggestions, onSelectCallback = nul
   });
 
   // (v1.28.0) Ngăn input mất focus khi click vào scrollbar
+  // (v1.45.0) Sửa lỗi: Chỉ preventDefault khi click vào scrollbar, không phải item
   suggestionsContainer.addEventListener('mousedown', (e) => {
-    e.preventDefault();
+    // e.target là element được click. Nếu là item, không preventDefault.
+    // Nếu click vào scrollbar, e.target sẽ là chính suggestionsContainer.
+    if (e.target === suggestionsContainer) {
+      e.preventDefault();
+    }
   });
 
   // (v1.10.0) Đóng khi click ra ngoài
