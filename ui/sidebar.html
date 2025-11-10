@@ -16,7 +16,7 @@
         <h1>AnkiVN - Muahaha</h1>
         <div>
           <!-- Nút Ẩn/Hiện -->
-          <a href="#" id="toggle-header-btn" title="Ẩn">🔼</a>
+          <a href="#" id="toggle-header-btn" title="Ẩn">▶</a>
           <!-- Nút Cài đặt -->
           <a href="#" id="open-settings-link" title="Mở Cài đặt">⚙️</a>
         </div>
@@ -49,6 +49,13 @@
             <div id="model-suggestions" class="suggestions-container"></div>
           </div>
         </div>
+        <div class="form-group inline-group">
+          <label for="note-search" class="inline-label">Tải Note:</label>
+          <div class="autocomplete-container inline-input-container">
+            <input type="text" id="note-search" class="form-control" placeholder="Tìm Note để tải...">
+            <div id="note-suggestions" class="suggestions-container"></div>
+          </div>
+        </div>
       </div>
     </div>
     <!-- Hết phần thu gọn -->
@@ -64,7 +71,7 @@
         
         <div class="color-picker-wrapper">
           <button id="format-forecolor" class="color-btn" title="Màu chữ">
-            <i class="fas fa-palette"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" id="mdi-color-helper" viewBox="0 0 24 24"><path d="M0,24H24V20H0V24Z"></path></svg>
             <span class="color-swatch" id="forecolor-swatch" style="background-color: #000000;"></span>
           </button>
           <div class="color-picker-dropdown" id="forecolor-dropdown">
@@ -83,7 +90,7 @@
         
         <div class="color-picker-wrapper">
           <button id="format-backcolor" class="color-btn" title="Màu nền">
-            <i class="fas fa-fill-drip"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" id="mdi-format-color-highlight" viewBox="0 0 24 24"><path d="M4,17L6.75,14.25L6.72,14.23C6.14,13.64 6.14,12.69 6.72,12.11L11.46,7.37L15.7,11.61L10.96,16.35C10.39,16.93 9.46,16.93 8.87,16.37L8.24,17H4M15.91,2.91C16.5,2.33 17.45,2.33 18.03,2.91L20.16,5.03C20.74,5.62 20.74,6.57 20.16,7.16L16.86,10.45L12.62,6.21L15.91,2.91Z"></path></svg>
             <span class="color-swatch" id="backcolor-swatch" style="background-color: #ffffff; border: 1px solid #ddd;"></span>
           </button>
           <div class="color-picker-dropdown" id="backcolor-dropdown">
