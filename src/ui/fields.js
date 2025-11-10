@@ -49,7 +49,7 @@ export async function createFieldsForModel(modelName) {
       fieldHeader.className = "field-header";
       fieldHeader.addEventListener("click", (e) => toggleFieldCollapse(e.currentTarget));
       fieldHeader.innerHTML = `
-        <span class="collapse-toggle">${isCollapsed ? "▶" : "🔽"}</span>
+        <span class="collapse-toggle">${isCollapsed ? "▶" : "▼"}</span>
         <label class="field-label" style="opacity: ${isCollapsed ? 0.7 : 1}">${fieldName}</label>
       `;
 
@@ -149,7 +149,7 @@ export function toggleFieldCollapse(fieldHeader) {
   const isCollapsed = fieldGroup.classList.toggle("collapsed");
   const { model, field } = fieldGroup.dataset;
   
-  fieldHeader.querySelector(".collapse-toggle").textContent = isCollapsed ? "▶" : "🔽";
+  fieldHeader.querySelector(".collapse-toggle").textContent = isCollapsed ? "▶" : "▼";
   fieldHeader.querySelector(".field-label").style.opacity = isCollapsed ? "0.7" : "1";
 
   if (model && field) {

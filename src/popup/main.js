@@ -135,69 +135,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- Gán sự kiện TRƯỚC khi load dữ liệu để đảm bảo các nút luôn hoạt động ---
   if (openSettingsLink) {
-    openSettingsLink.addEventListener("click", (e) => {
+    openSettingsLink.addEventListener("click", async (e) => {
       e.preventDefault();
-      // Toggle between main view and settings view
-      const mainContentView = document.getElementById("main-content-view");
-      const settingsView = document.getElementById("settings-view");
-      const settingsIframe = document.getElementById("settings-iframe");
-      const collapsibleHeader = document.getElementById("collapsible-header");
-      const toolbarWrapper = document.getElementById("sticky-toolbar-wrapper");
-      const headerTitle = document.querySelector(".header-container h1");
-      
-      if (mainContentView && settingsView) {
-        const isSettingsVisible = settingsView.style.display !== "none";
-        
-        if (isSettingsVisible) {
-          // Switch back to main view
-          console.log('[AnkiVN] Switching back to main view');
-          settingsView.style.display = "none";
-          mainContentView.style.display = "block";
-          openSettingsLink.title = "Mở Cài đặt";
-          
-          // Restore header title
-          if (headerTitle) {
-            headerTitle.textContent = "AnkiVN - Muahaha";
-          }
-          
-          // Restore collapsible header
-          if (collapsibleHeader) {
-            collapsibleHeader.style.display = "";
-          }
-          
-          // Restore toolbar
-          if (toolbarWrapper) {
-            toolbarWrapper.style.display = "";
-          }
-        } else {
-          // Switch to settings view
-          console.log('[AnkiVN] Switching to settings view');
-          mainContentView.style.display = "none";
-          settingsView.style.display = "block";
-          openSettingsLink.title = "Quay lại";
-          
-          // Update header title
-          if (headerTitle) {
-            headerTitle.textContent = "Cài đặt AnkiVN";
-          }
-          
-          // Hide collapsible header in settings view
-          if (collapsibleHeader) {
-            collapsibleHeader.style.display = "none";
-          }
-          
-          // Hide toolbar in settings view
-          if (toolbarWrapper) {
-            toolbarWrapper.style.display = "none";
-          }
-          
-          // Reload iframe to ensure settings are fresh
-          if (settingsIframe) {
-            settingsIframe.src = settingsIframe.src;
-          }
-        }
-      } else {
-        console.error('[AnkiVN] Cannot toggle views: mainContentView or settingsView not found');
+      // Mở settings.html trong tab mới
+      console.log('[AnkiVN] Opening settings page in new tab');
+      try {
+        await chrome.runtime.openOptionsPage();
+      } catch (error) {
+        console.error('[AnkiVN] Failed to open options page:', error);
+        // Fallback: mở bằng window.open nếu chrome.runtime.openOptionsPage không hoạt động
+        const settingsUrl = chrome.runtime.getURL('ui/settings.html');
+        window.open(settingsUrl, '_blank');
       }
     });
   }
@@ -1072,7 +1020,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           if (url && title) {
             const escapedUrl = escapeHTML(url);
             const escapedTitle = escapeHTML(title);
-            sourceInfo = `<br><small style="color: #888; font-style: italic;">Nguồn: <a href="${escapedUrl}" target="_blank">${escapedTitle}</a></small>`;
+            sourceInfo = `<small style="color: #888; font-style: italic;">Nguồn: <a href="${escapedUrl}" target="_blank">${escapedTitle}</a></small>`;
           }
           
           // Determine if source should be added to same field or different field
@@ -1503,7 +1451,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           if (url && title) {
             const escapedUrl = escapeHTML(url);
             const escapedTitle = escapeHTML(title);
-            sourceInfo = `<br><small style="color: #888; font-style: italic;">Nguồn: <a href="${escapedUrl}" target="_blank">${escapedTitle}</a></small>`;
+            sourceInfo = `<small style="color: #888; font-style: italic;">Nguồn: <a href="${escapedUrl}" target="_blank">${escapedTitle}</a></small>`;
           }
           
           // Get sourceField from settings
