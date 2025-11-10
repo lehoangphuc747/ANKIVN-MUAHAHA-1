@@ -1,7 +1,7 @@
 // src/ui/fields.js
 import { invoke } from '../api/anki-connect.js';
 import { updateMediaPreview } from '../features/media-preview.js';
-import { setActiveElement, modelFieldsCache } from '../popup/main.js';
+import { setActiveElement, modelFieldsCache } from '../sidebar/main.js';
 import { handleMediaFile, handleMediaUrl } from '../features/media-handler.js';
 
 export async function createFieldsForModel(modelName) {

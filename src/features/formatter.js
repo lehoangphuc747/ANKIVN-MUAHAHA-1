@@ -1,5 +1,5 @@
 // src/features/formatter.js
-import { activeElement, currentClozeIndex, incrementClozeIndex, restoreSelection } from '../popup/main.js';
+import { activeElement, currentClozeIndex, incrementClozeIndex, restoreSelection } from '../sidebar/main.js';
 import { showStatus } from '../ui/status.js';
 
 export function applyFormat(command, value = null) {

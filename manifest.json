@@ -23,7 +23,7 @@
     }
   ],
   "side_panel": {
-    "default_path": "ui/popup.html"
+    "default_path": "ui/sidebar.html"
   },
   "background": {
     "service_worker": "src/background/main.js",

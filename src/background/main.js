@@ -31,7 +31,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       url: message.url,
       title: message.title
     });
-    // Forward to popup if it's open, or store for when popup opens
+    // Forward to sidebar if it's open, or store for when sidebar opens
     handleAltSelection(message.text, message.url, message.title);
   } else if (message.action === "clearBadge") {
     chrome.action.setBadgeText({ text: '' });
@@ -160,8 +160,8 @@ async function handleAltSelection(text, url, title) {
     chrome.action.setBadgeBackgroundColor({ color: '#3498db' });
     console.log('[AnkiVN Background] Badge set');
     
-    // Try to send message to popup if it's already open
-    console.log('[AnkiVN Background] Attempting to send message to popup');
+    // Try to send message to sidebar if it's already open
+    console.log('[AnkiVN Background] Attempting to send message to sidebar');
     chrome.runtime.sendMessage({
       action: 'fillFieldFromAltSelection',
       field: defaultField,
@@ -172,10 +172,10 @@ async function handleAltSelection(text, url, title) {
       url: url,
       title: title
     }).then(() => {
-      console.log('[AnkiVN Background] Message sent to popup successfully');
+      console.log('[AnkiVN Background] Message sent to sidebar successfully');
     }).catch(err => {
-      // Popup is not open, that's fine - it will be handled when popup opens
-      console.log('[AnkiVN Background] Popup not open, message will be handled when popup opens:', err.message);
+      // Sidebar is not open, that's fine - it will be handled when sidebar opens
+      console.log('[AnkiVN Background] Sidebar not open, message will be handled when sidebar opens:', err.message);
     });
   } catch (error) {
     console.error('[AnkiVN Background] Error handling Alt selection:', error);
