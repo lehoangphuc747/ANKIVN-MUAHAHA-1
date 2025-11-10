@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thống kê AnkiVN</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body class="stats-page-body">
+    <div class="stats-container">
+        <h1><i class="fas fa-chart-bar"></i> Thống kê Anki</h1>
+
+        <div class="stats-summary-box">
+            <div class="summary-item">
+                <span class="summary-label">Đã ôn hôm nay</span>
+                <span id="stats-reviewed-today" class="summary-value loading">...</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Tổng số Notes</span>
+                <span id="stats-total-notes" class="summary-value loading">...</span>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <h2>Báo cáo Toàn bộ Bộ sưu tập</h2>
+            <div id="stats-collection-html" class="stats-collection-container">
+                <p>Đang tải báo cáo thống kê từ Anki...</p>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="../src/stats/main.js"></script>
+</body>
+</html>
+

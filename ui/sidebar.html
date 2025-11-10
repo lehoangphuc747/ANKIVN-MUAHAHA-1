@@ -13,12 +13,18 @@
 
     <!-- Header luôn hiển thị -->
     <div class="header-container">
-        <h1>AnkiVN - Muahaha</h1>
+        <h1 id="main-header-title">AnkiVN - Muahaha</h1>
         <div>
           <!-- Nút Ẩn/Hiện -->
           <a href="#" id="toggle-header-btn" title="Ẩn">▶</a>
+          <!-- Nút Thống kê -->
+          <a href="#" id="open-stats-link" title="Mở Thống kê">
+            <i class="fas fa-chart-bar"></i>
+          </a>
           <!-- Nút Cài đặt -->
-          <a href="#" id="open-settings-link" title="Mở Cài đặt">⚙️</a>
+          <a href="#" id="open-settings-link" title="Mở Cài đặt">
+            <i class="fas fa-cog"></i>
+          </a>
         </div>
     </div>
 
@@ -142,6 +148,14 @@
         <img class="modal-content" id="modal-image">
         <div id="modal-caption"></div>
       </div>
+    </div>
+    
+    <div id="stats-view" style="display: none;">
+      <iframe id="stats-iframe" src="stats.html" frameborder="0"></iframe>
+    </div>
+    
+    <div id="settings-view" style="display: none;">
+      <iframe id="settings-iframe" src="settings.html" frameborder="0"></iframe>
     </div>
   </div>
   <script type="module" src="../src/sidebar/main.js"></script>

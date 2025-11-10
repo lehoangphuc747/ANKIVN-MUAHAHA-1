@@ -20,6 +20,80 @@ export let savedSelection = null; // Store selection when interacting with dropd
 export let sourceViewState = new Map(); // Track source view state per field: Map<fieldElement, {isSourceView: boolean, sourceTextarea: HTMLElement}>
 export let currentNoteId = null; // Lưu noteId hiện tại đang edit
 
+// --- View Management ---
+const mainHeaderTitle = document.getElementById('main-header-title');
+const mainContentView = document.getElementById('main-content-view');
+const settingsView = document.getElementById('settings-view');
+const settingsIframe = document.getElementById('settings-iframe');
+const statsView = document.getElementById('stats-view');
+const statsIframe = document.getElementById('stats-iframe');
+const openSettingsLink = document.getElementById("open-settings-link");
+const openStatsLink = document.getElementById("open-stats-link");
+const collapsibleHeader = document.getElementById('collapsible-header');
+const stickyToolbar = document.getElementById('sticky-toolbar-wrapper');
+
+let currentView = 'main'; // 'main', 'settings', 'stats'
+
+/**
+ * Hàm quản lý chuyển đổi view
+ * @param {'main' | 'settings' | 'stats'} viewName 
+ */
+function toggleView(viewName) {
+  if (!mainContentView || !settingsView || !statsView || !openSettingsLink || !openStatsLink) {
+    console.error('[AnkiVN] Missing view elements for toggleView');
+    return;
+  }
+
+  // Ẩn tất cả các view chính
+  mainContentView.style.display = 'none';
+  settingsView.style.display = 'none';
+  statsView.style.display = 'none';
+
+  // Ẩn/hiện các phần header phụ thuộc
+  const isMainView = viewName === 'main';
+  if (collapsibleHeader) collapsibleHeader.style.display = isMainView ? '' : 'none';
+  if (stickyToolbar) stickyToolbar.style.display = isMainView ? '' : 'none';
+  
+  // Cập nhật icon active
+  openSettingsLink.classList.remove('active');
+  openStatsLink.classList.remove('active');
+
+  if (viewName === 'settings') {
+    // Chuyển sang view Settings
+    settingsView.style.display = 'block';
+    mainHeaderTitle.textContent = 'Cài đặt AnkiVN';
+    openSettingsLink.title = 'Quay lại';
+    openSettingsLink.innerHTML = '<i class="fas fa-arrow-left"></i>'; // Icon Back
+    openStatsLink.innerHTML = '<i class="fas fa-chart-bar"></i>'; // Reset icon stats
+    openStatsLink.title = 'Mở Thống kê';
+    openSettingsLink.classList.add('active');
+    // Reload iframe để đảm bảo settings mới nhất
+    if (settingsIframe) settingsIframe.src = 'settings.html';
+    currentView = 'settings';
+  } else if (viewName === 'stats') {
+    // Chuyển sang view Stats
+    statsView.style.display = 'block';
+    mainHeaderTitle.textContent = 'Thống kê Anki';
+    openStatsLink.title = 'Quay lại';
+    openStatsLink.innerHTML = '<i class="fas fa-arrow-left"></i>'; // Icon Back
+    openSettingsLink.innerHTML = '<i class="fas fa-cog"></i>'; // Reset icon settings
+    openSettingsLink.title = 'Mở Cài đặt';
+    openStatsLink.classList.add('active');
+    // Reload iframe để đảm bảo stats mới nhất
+    if (statsIframe) statsIframe.src = 'stats.html';
+    currentView = 'stats';
+  } else {
+    // Chuyển về view Main
+    mainContentView.style.display = 'block';
+    mainHeaderTitle.textContent = 'AnkiVN - Muahaha';
+    openSettingsLink.title = 'Mở Cài đặt';
+    openSettingsLink.innerHTML = '<i class="fas fa-cog"></i>';
+    openStatsLink.title = 'Mở Thống kê';
+    openStatsLink.innerHTML = '<i class="fas fa-chart-bar"></i>';
+    currentView = 'main';
+  }
+}
+
 export function setActiveElement(el) { 
   activeElement = el;
   console.log('[setActiveElement] Set to:', el ? `${el.tagName}.${el.className}` : null);
@@ -85,16 +159,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const noteSearchInput = document.getElementById("note-search");
   const tagsInput = document.getElementById("tags-input");
   const addNoteBtn = document.getElementById("add-note-btn");
-  const openSettingsLink = document.getElementById("open-settings-link");
   const toggleHeaderBtn = document.getElementById('toggle-header-btn');
 
   // Check if essential elements exist
-  if (!deckInput || !modelInput || !addNoteBtn || !openSettingsLink || !toggleHeaderBtn) {
+  if (!deckInput || !modelInput || !addNoteBtn || !openSettingsLink || !toggleHeaderBtn || !openStatsLink) {
     console.error('[AnkiVN] Missing essential DOM elements:', {
       deckInput: !!deckInput,
       modelInput: !!modelInput,
       addNoteBtn: !!addNoteBtn,
       openSettingsLink: !!openSettingsLink,
+      openStatsLink: !!openStatsLink,
       toggleHeaderBtn: !!toggleHeaderBtn
     });
     showStatus('Lỗi: Không tìm thấy các phần tử cần thiết trong DOM', true);
@@ -140,17 +214,25 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // --- Gán sự kiện TRƯỚC khi load dữ liệu để đảm bảo các nút luôn hoạt động ---
   if (openSettingsLink) {
-    openSettingsLink.addEventListener("click", async (e) => {
+    openSettingsLink.addEventListener("click", (e) => {
       e.preventDefault();
-      // Mở settings.html trong tab mới
-      console.log('[AnkiVN] Opening settings page in new tab');
-      try {
-        await chrome.runtime.openOptionsPage();
-      } catch (error) {
-        console.error('[AnkiVN] Failed to open options page:', error);
-        // Fallback: mở bằng window.open nếu chrome.runtime.openOptionsPage không hoạt động
-        const settingsUrl = chrome.runtime.getURL('ui/settings.html');
-        window.open(settingsUrl, '_blank');
+      // Logic toggle view mới
+      if (currentView === 'settings') {
+        toggleView('main');
+      } else {
+        toggleView('settings');
+      }
+    });
+  }
+
+  // Gán sự kiện cho nút Stats
+  if (openStatsLink) {
+    openStatsLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      if (currentView === 'stats') {
+        toggleView('main');
+      } else {
+        toggleView('stats');
       }
     });
   }

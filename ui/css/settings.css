@@ -456,14 +456,16 @@
 }
 
 /* Settings view styling */
-#settings-view {
+#settings-view,
+#stats-view {
   width: 100%;
   height: calc(100vh - 60px);
   overflow: hidden;
   position: relative;
 }
 
-#settings-iframe {
+#settings-iframe,
+#stats-iframe {
   width: 100%;
   height: 100%;
   border: none;

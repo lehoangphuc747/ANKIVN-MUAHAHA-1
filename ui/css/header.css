@@ -23,6 +23,7 @@
 }
 /* Style chung cho các nút icon trên header */
 .header-container a#open-settings-link,
+.header-container a#open-stats-link,
 .header-container a#toggle-header-btn {
     font-size: 1.1rem;
     color: var(--text-color-light);
@@ -41,14 +42,23 @@
     min-height: 28px;
 }
 .header-container a#open-settings-link:hover,
+.header-container a#open-stats-link:hover,
 .header-container a#toggle-header-btn:hover {
     background-color: var(--hover-bg-color);
     color: var(--primary-color);
     transform: scale(1.05);
 }
 .header-container a#open-settings-link:active,
+.header-container a#open-stats-link:active,
 .header-container a#toggle-header-btn:active {
     transform: scale(0.95);
+}
+
+/* Trạng thái active cho nút khi view được mở */
+.header-container a#open-settings-link.active,
+.header-container a#open-stats-link.active {
+    color: var(--primary-color);
+    background-color: var(--hover-bg-color);
 }
 /* Style cho nút toggle khi xoay */
 .header-container a#toggle-header-btn {
