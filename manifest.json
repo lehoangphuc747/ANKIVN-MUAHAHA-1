@@ -12,7 +12,15 @@
   "permissions": [
     "storage",
     "sidePanel",
-    "contextMenus" 
+    "contextMenus",
+    "activeTab"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/alt-selection.js"],
+      "run_at": "document_idle"
+    }
   ],
   "side_panel": {
     "default_path": "ui/popup.html"

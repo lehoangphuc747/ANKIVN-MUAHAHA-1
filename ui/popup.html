@@ -56,47 +56,90 @@
     <!-- Toolbar (sticky) -->
     <div id="sticky-toolbar-wrapper">
       <div id="format-toolbar">
-        <button id="format-bold" title="In đậm (Ctrl+B)"><i class="fas fa-bold"></i></button>
-        <button id="format-italic" title="In nghiêng (Ctrl+I)"><i class="fas fa-italic"></i></button>
-        <button id="format-underline" title="Gạch chân (Ctrl+U)"><i class="fas fa-underline"></i></button>
-        <span class="toolbar-separator">|</span>
-        <button id="format-forecolor" title="Màu chữ"><i class="fas fa-palette"></i></button>
-        <input type="color" id="forecolor-picker" value="#000000" title="Chọn màu chữ">
-        <input type="text" id="forecolor-hex-input" class="hex-color-input" placeholder="#000000" title="Nhập mã màu chữ HEX">
-        <button id="apply-forecolor-btn" title="Áp dụng màu chữ"><i class="fas fa-check"></i></button>
-        <span class="toolbar-separator">|</span>
-        <button id="format-backcolor" title="Màu nền"><i class="fas fa-fill-drip"></i></button>
-        <input type="color" id="backcolor-picker" value="#ffffff" title="Chọn màu nền">
-        <input type="text" id="backcolor-hex-input" class="hex-color-input" placeholder="#FFFFFF" title="Nhập mã màu nền HEX">
-        <button id="apply-backcolor-btn" title="Áp dụng màu nền"><i class="fas fa-check"></i></button>
-        <span class="toolbar-separator">|</span>
-        <button id="format-remove" title="Xóa định dạng"><i class="fas fa-eraser"></i></button>
-        <span class="toolbar-separator">|</span>
-        <button id="format-cloze-1" class="cloze-button" title="Thêm Cloze 1 (Ctrl+Shift+1)">C1</button>
-        <button id="format-cloze-2" class="cloze-button" title="Thêm Cloze 2 (Ctrl+Shift+2)">C2</button>
-        <button id="format-cloze-3" class="cloze-button" title="Thêm Cloze 3 (Ctrl+Shift+3)">C3</button>
-        <button id="format-cloze-next" class="cloze-button" title="Thêm Cloze tiếp theo (Ctrl+Shift+C)">{c..}</button>
+        <div class="toolbar-group">
+          <button id="format-bold" title="In đậm (Ctrl+B)"><i class="fas fa-bold"></i></button>
+          <button id="format-italic" title="In nghiêng (Ctrl+I)"><i class="fas fa-italic"></i></button>
+          <button id="format-underline" title="Gạch chân (Ctrl+U)"><i class="fas fa-underline"></i></button>
+        </div>
+        
+        <div class="color-picker-wrapper">
+          <button id="format-forecolor" class="color-btn" title="Màu chữ">
+            <i class="fas fa-palette"></i>
+            <span class="color-swatch" id="forecolor-swatch" style="background-color: #000000;"></span>
+          </button>
+          <div class="color-picker-dropdown" id="forecolor-dropdown">
+            <div class="color-picker-header">Màu chữ</div>
+            <div class="saved-colors-section">
+              <div class="saved-colors-label">Màu đã dùng:</div>
+              <div class="saved-colors-grid" id="saved-forecolors-grid"></div>
+            </div>
+            <div class="color-picker-content">
+              <input type="color" id="forecolor-picker" value="#000000" title="Chọn màu chữ">
+              <input type="text" id="forecolor-hex-input" class="hex-color-input" placeholder="#000000" title="Nhập mã màu HEX" maxlength="7">
+            </div>
+            <button id="apply-forecolor-btn" class="apply-color-btn">Áp dụng</button>
+          </div>
+        </div>
+        
+        <div class="color-picker-wrapper">
+          <button id="format-backcolor" class="color-btn" title="Màu nền">
+            <i class="fas fa-fill-drip"></i>
+            <span class="color-swatch" id="backcolor-swatch" style="background-color: #ffffff; border: 1px solid #ddd;"></span>
+          </button>
+          <div class="color-picker-dropdown" id="backcolor-dropdown">
+            <div class="color-picker-header">Màu nền</div>
+            <div class="saved-colors-section">
+              <div class="saved-colors-label">Màu đã dùng:</div>
+              <div class="saved-colors-grid" id="saved-backcolors-grid"></div>
+            </div>
+            <div class="color-picker-content">
+              <input type="color" id="backcolor-picker" value="#ffffff" title="Chọn màu nền">
+              <input type="text" id="backcolor-hex-input" class="hex-color-input" placeholder="#FFFFFF" title="Nhập mã màu HEX" maxlength="7">
+            </div>
+            <button id="apply-backcolor-btn" class="apply-color-btn">Áp dụng</button>
+          </div>
+        </div>
+        
+        <div class="toolbar-group">
+          <button id="format-remove" title="Xóa định dạng"><i class="fas fa-eraser"></i></button>
+        </div>
+        
+        <div class="toolbar-group cloze-group">
+          <button id="format-cloze-next" class="cloze-button" title="Thêm Cloze tiếp theo (Ctrl+Shift+C)">C123</button>
+        </div>
+        
+        <div class="toolbar-group">
+          <button id="toggle-source-view" title="Xem/Chỉnh sửa Source Code"><i class="fas fa-code"></i></button>
+        </div>
       </div>
     </div>
 
 
-    <div id="fields-container" class="fields-container">
-      <!-- Fields sẽ được tạo ở đây -->
+    <!-- Main content view -->
+    <div id="main-content-view">
+      <div id="fields-container" class="fields-container">
+        <!-- Fields sẽ được tạo ở đây -->
+      </div>
+      <div class="form-group">
+        <label for="tags-input">Tags:</label>
+        <input type="text" id="tags-input" class="form-control" list="tags-datalist" placeholder="Nhập tags, phân cách bằng dấu cách">
+        <datalist id="tags-datalist">
+        </datalist>
+      </div>
+      <div class="form-group floating-button-container">
+        <button id="add-note-btn" class="btn-primary">Thêm</button>
+      </div>
+      <div id="status-message" class="status-message"></div>
+      <div id="image-preview-modal" class="modal">
+        <span class="modal-close-btn">&times;</span>
+        <img class="modal-content" id="modal-image">
+        <div id="modal-caption"></div>
+      </div>
     </div>
-    <div class="form-group">
-      <label for="tags-input">Tags:</label>
-      <input type="text" id="tags-input" class="form-control" list="tags-datalist" placeholder="Nhập tags, phân cách bằng dấu cách">
-      <datalist id="tags-datalist">
-      </datalist>
-    </div>
-    <div class="form-group floating-button-container">
-      <button id="add-note-btn" class="btn-primary">Thêm vào Anki</button>
-    </div>
-    <div id="status-message" class="status-message"></div>
-    <div id="image-preview-modal" class="modal">
-      <span class="modal-close-btn">&times;</span>
-      <img class="modal-content" id="modal-image">
-      <div id="modal-caption"></div>
+    
+    <!-- Settings view (hidden by default) -->
+    <div id="settings-view" style="display: none;">
+      <iframe id="settings-iframe" src="settings.html" style="width: 100%; height: calc(100vh - 60px); border: none;"></iframe>
     </div>
   </div>
   <script type="module" src="../src/popup/main.js"></script>

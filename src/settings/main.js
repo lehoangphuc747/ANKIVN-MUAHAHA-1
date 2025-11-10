@@ -135,9 +135,38 @@ function populateFieldOrderList(fieldNames) {
 }
 
 function populateContextMenuDefaults(fieldNames, defaults) {
+    console.log('[AnkiVN Settings] populateContextMenuDefaults:', {
+        fieldNames: fieldNames,
+        defaults: defaults,
+        defaultsKeys: Object.keys(defaults || {})
+    });
+    
     document.querySelectorAll('.context-default-select').forEach(select => {
         const contextType = select.dataset.contextType;
-        select.innerHTML = '<option value="">-- Gửi tới Field con --</option>';
+        
+        // Handle altSelectionSource separately (has special "SAME" option)
+        if (contextType === 'altSelectionSource') {
+            select.innerHTML = '<option value="">-- Không thêm nguồn --</option><option value="SAME">-- Cùng field với text --</option>';
+            fieldNames.forEach(fieldName => {
+                const option = document.createElement('option');
+                option.value = fieldName;
+                option.textContent = fieldName;
+                select.appendChild(option);
+            });
+            if (defaults[contextType]) {
+                select.value = defaults[contextType];
+                console.log('[AnkiVN Settings] Set default for', contextType, 'to', defaults[contextType]);
+            } else {
+                console.log('[AnkiVN Settings] No default found for', contextType);
+            }
+            return;
+        }
+        
+        // Use different placeholder text for altSelection
+        const placeholder = contextType === 'altSelection' 
+            ? '-- Chọn field --' 
+            : '-- Gửi tới Field con --';
+        select.innerHTML = `<option value="">${placeholder}</option>`;
         fieldNames.forEach(fieldName => {
             const option = document.createElement('option');
             option.value = fieldName;
@@ -146,6 +175,9 @@ function populateContextMenuDefaults(fieldNames, defaults) {
         });
         if (defaults[contextType]) {
             select.value = defaults[contextType];
+            console.log('[AnkiVN Settings] Set default for', contextType, 'to', defaults[contextType]);
+        } else {
+            console.log('[AnkiVN Settings] No default found for', contextType);
         }
     });
 }
@@ -185,10 +217,23 @@ async function saveSettings() {
         // Context Menu Defaults
         const contextMenuDefaults = {};
         document.querySelectorAll('.context-default-select').forEach(select => {
-            if (select.value) {
-                contextMenuDefaults[select.dataset.contextType] = select.value;
+            const contextType = select.dataset.contextType;
+            const selectedValue = select.value;
+            console.log('[AnkiVN Settings] Saving context default:', {
+                contextType: contextType,
+                value: selectedValue
+            });
+            if (selectedValue) {
+                contextMenuDefaults[contextType] = selectedValue;
             }
         });
+        
+        console.log('[AnkiVN Settings] Saving contextMenuDefaults:', {
+            modelName: modelName,
+            contextMenuDefaults: contextMenuDefaults,
+            key: `contextMenuDefaults_${modelName}`
+        });
+        
         settingsToSave[`contextMenuDefaults_${modelName}`] = contextMenuDefaults;
 
         await chrome.storage.local.set(settingsToSave);

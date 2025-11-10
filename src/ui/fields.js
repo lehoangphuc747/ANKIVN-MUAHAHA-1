@@ -62,8 +62,21 @@ export async function createFieldsForModel(modelName) {
       fieldDiv.dataset.field = fieldName;
       fieldDiv.setAttribute('data-placeholder', `Nhập ${fieldName}...`);
       fieldDiv.addEventListener('input', handleInputEvent);
-      fieldDiv.addEventListener('focus', (e) => setActiveElement(e.target));
-      fieldDiv.addEventListener('blur', () => setActiveElement(null));
+      fieldDiv.addEventListener('focus', (e) => {
+        setActiveElement(e.target);
+        // Clear keepActive flag when field gets focus again
+        delete e.target.dataset.keepActive;
+        // Update source view button state
+        if (typeof window.updateSourceViewButtonState === 'function') {
+          window.updateSourceViewButtonState();
+        }
+      });
+      fieldDiv.addEventListener('blur', (e) => {
+        // Don't clear activeElement if keepActive flag is set (dropdown is open)
+        if (!e.target.dataset.keepActive) {
+          setActiveElement(null);
+        }
+      });
 
       // --- DRAG & DROP LOGIC ---
       fieldDiv.addEventListener('dragover', (e) => {
