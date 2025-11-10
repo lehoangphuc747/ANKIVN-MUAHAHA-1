@@ -94,6 +94,13 @@
     border: 1.5px solid var(--border-color-light) !important;
 }
 
+.color-btn svg {
+    width: 16px;
+    height: 16px;
+    fill: currentColor;
+    display: block;
+}
+
 .color-btn:hover:not(:disabled) {
     background: linear-gradient(135deg, rgba(239, 246, 255, 0.95) 0%, rgba(219, 234, 254, 0.95) 100%) !important;
     border-color: var(--primary-color) !important;
@@ -106,24 +113,9 @@
     box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3), 0 2px 8px rgba(52, 152, 219, 0.25) !important;
 }
 
-/* Color Swatch */
+/* Color Swatch - Hidden */
 .color-swatch {
-    position: absolute;
-    bottom: 3px;
-    right: 3px;
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
-    border: 1.5px solid rgba(255, 255, 255, 0.95);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
-    pointer-events: none;
-    transition: all 0.2s ease;
-    z-index: 1;
-}
-
-.color-btn:hover .color-swatch {
-    transform: scale(1.15);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+    display: none;
 }
 
 /* Color Picker Dropdown */

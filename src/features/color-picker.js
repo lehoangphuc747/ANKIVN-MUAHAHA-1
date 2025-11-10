@@ -4,6 +4,10 @@ import { showStatus } from '../ui/status.js';
 import { SAVED_FORECOLORS_KEY, SAVED_BACKCOLORS_KEY } from '../utils/storage.js';
 import { activeElement, setActiveElement, saveSelection, restoreSelection, savedSelection } from '../sidebar/main.js';
 
+// Lưu field reference để tránh mất khi DOM thay đổi
+let savedFieldForForeColor = null;
+let savedFieldForBackColor = null;
+
 // Color utility functions
 function hexToRgb(hex) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -143,17 +147,127 @@ async function applyColor(color, type) {
   }
   
   let currentActiveElement = activeElement;
+  
+  // Nếu không có activeElement, thử tìm field theo thứ tự ưu tiên:
+  // 1. Field đã lưu trong biến module-level (ưu tiên cao nhất)
+  // 2. Field với flag keep-active
+  // 3. Field chứa savedSelection range
+  // 4. Field đang được focus trong document
+  // 5. Field đầu tiên có thể edit được (fallback cuối cùng)
   if (!currentActiveElement) {
-    const fieldWithFlag = document.querySelector('.field-input-div[data-keep-active="true"]');
-    if (fieldWithFlag) {
-      console.log(`[Apply ${type}] Restoring activeElement from flag`);
-      setActiveElement(fieldWithFlag);
-      currentActiveElement = fieldWithFlag;
+    console.log(`[Apply ${type}] No activeElement, trying to find field...`);
+    
+    // Thử 1: Field đã lưu trong biến module-level (ưu tiên cao nhất vì không bị mất khi DOM thay đổi)
+    const savedField = type === 'foreColor' ? savedFieldForForeColor : savedFieldForBackColor;
+    console.log(`[Apply ${type}] Check 1 - Saved field:`, savedField ? 'exists' : 'null');
+    if (savedField && document.body.contains(savedField)) {
+      if (savedField.isContentEditable) {
+        console.log(`[Apply ${type}] ✓ Restoring activeElement from saved module variable`);
+        setActiveElement(savedField);
+        currentActiveElement = savedField;
+      } else {
+        console.log(`[Apply ${type}] ✗ Saved field exists but not contentEditable`);
+      }
+    } else if (savedField) {
+      console.log(`[Apply ${type}] ✗ Saved field no longer in DOM`);
+      // Clear saved field nếu không còn hợp lệ
+      if (type === 'foreColor') {
+        savedFieldForForeColor = null;
+      } else {
+        savedFieldForBackColor = null;
+      }
+    }
+    
+    // Thử 2: Field với flag keep-active
+    if (!currentActiveElement) {
+      const fieldWithFlag = document.querySelector('.field-input-div[data-keep-active="true"]');
+      console.log(`[Apply ${type}] Check 2 - Field with flag:`, fieldWithFlag ? 'exists' : 'null');
+      if (fieldWithFlag && fieldWithFlag.isContentEditable) {
+        console.log(`[Apply ${type}] ✓ Restoring activeElement from flag`);
+        setActiveElement(fieldWithFlag);
+        currentActiveElement = fieldWithFlag;
+      }
+    }
+    
+    // Thử 3: Field chứa savedSelection range
+    if (!currentActiveElement && savedSelection) {
+      console.log(`[Apply ${type}] Check 3 - savedSelection exists`);
+      try {
+        const container = savedSelection.commonAncestorContainer;
+        let fieldElement = null;
+        
+        if (container.nodeType === Node.TEXT_NODE) {
+          fieldElement = container.parentElement?.closest('.field-input-div');
+        } else {
+          fieldElement = container.closest('.field-input-div');
+        }
+        
+        console.log(`[Apply ${type}] Check 3 - Field from savedSelection:`, fieldElement ? 'exists' : 'null');
+        if (fieldElement && fieldElement.isContentEditable) {
+          console.log(`[Apply ${type}] ✓ Found field from savedSelection`);
+          setActiveElement(fieldElement);
+          currentActiveElement = fieldElement;
+        }
+      } catch (e) {
+        console.warn(`[Apply ${type}] ✗ Error finding field from savedSelection:`, e);
+      }
+    } else if (!currentActiveElement) {
+      console.log(`[Apply ${type}] Check 3 - No savedSelection`);
+    }
+    
+    // Thử 4: Field đang được focus
+    if (!currentActiveElement) {
+      const focusedElement = document.activeElement;
+      console.log(`[Apply ${type}] Check 4 - document.activeElement:`, focusedElement?.tagName, focusedElement?.className);
+      if (focusedElement && 
+          focusedElement.classList.contains('field-input-div') && 
+          focusedElement.isContentEditable) {
+        console.log(`[Apply ${type}] ✓ Using currently focused element`);
+        setActiveElement(focusedElement);
+        currentActiveElement = focusedElement;
+      }
+    }
+    
+    // Thử 5: Field đầu tiên có thể edit được (fallback cuối cùng)
+    if (!currentActiveElement) {
+      // Thử nhiều cách query selector
+      let firstField = document.querySelector('.field-input-div[contenteditable="true"]');
+      if (!firstField) {
+        // Thử query tất cả field-input-div và filter
+        const allFields = Array.from(document.querySelectorAll('.field-input-div'));
+        console.log(`[Apply ${type}] Check 5 - Total fields found:`, allFields.length);
+        firstField = allFields.find(field => field.isContentEditable);
+        console.log(`[Apply ${type}] Check 5 - First editable field:`, firstField ? 'exists' : 'null');
+      }
+      
+      if (firstField && firstField.isContentEditable) {
+        console.log(`[Apply ${type}] ✓ Using first available field as fallback`);
+        setActiveElement(firstField);
+        currentActiveElement = firstField;
+      } else {
+        console.error(`[Apply ${type}] ✗ No editable fields found in DOM`);
+        const allFields = Array.from(document.querySelectorAll('.field-input-div'));
+        console.error(`[Apply ${type}] Debug - All fields:`, allFields.map(f => ({
+          tagName: f.tagName,
+          className: f.className,
+          isContentEditable: f.isContentEditable,
+          contentEditable: f.contentEditable,
+          hasKeepActive: f.dataset.keepActive === 'true'
+        })));
+      }
     }
   }
   
-  if (!currentActiveElement) {
-    console.error(`[Apply ${type}] No activeElement found`);
+  if (!currentActiveElement || !currentActiveElement.isContentEditable) {
+    console.error(`[Apply ${type}] No valid activeElement found after all attempts`);
+    console.error(`[Apply ${type}] Debug info:`, {
+      activeElement: !!activeElement,
+      savedFieldForForeColor: !!savedFieldForForeColor,
+      savedFieldForBackColor: !!savedFieldForBackColor,
+      savedSelection: !!savedSelection,
+      documentActiveElement: document.activeElement?.tagName,
+      totalFields: document.querySelectorAll('.field-input-div').length
+    });
     showStatus("Vui lòng chọn một field trước", true);
     closeAllColorDropdowns();
     return;
@@ -178,6 +292,13 @@ async function applyColor(color, type) {
   
   await saveColor(color, type);
   closeAllColorDropdowns();
+  
+  // Clear saved field reference sau khi apply thành công
+  if (type === 'foreColor') {
+    savedFieldForForeColor = null;
+  } else {
+    savedFieldForBackColor = null;
+  }
   
   if (currentActiveElement) {
     delete currentActiveElement.dataset.keepActive;
@@ -213,11 +334,44 @@ export function setupColorPickers() {
   foreColorBtn.addEventListener('mousedown', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Lưu selection và field trước khi mở dropdown
     saveSelection();
-    if (activeElement) {
-      activeElement.dataset.keepActive = 'true';
+    let fieldToSave = activeElement;
+    
+    if (fieldToSave && fieldToSave.isContentEditable) {
+      fieldToSave.dataset.keepActive = 'true';
+      savedFieldForForeColor = fieldToSave; // Lưu reference vào biến module-level
       console.log('[Forecolor Button] Saved selection and set keepActive flag');
+    } else {
+      // Nếu không có activeElement, thử lưu field đang được focus
+      const focused = document.activeElement;
+      if (focused && focused.classList.contains('field-input-div') && focused.isContentEditable) {
+        setActiveElement(focused);
+        focused.dataset.keepActive = 'true';
+        savedFieldForForeColor = focused; // Lưu reference vào biến module-level
+        console.log('[Forecolor Button] Saved focused field as activeElement');
+      } else {
+        // Nếu vẫn không có, thử tìm field từ savedSelection
+        if (savedSelection) {
+          try {
+            const container = savedSelection.commonAncestorContainer;
+            const fieldFromSelection = container.nodeType === Node.TEXT_NODE
+              ? container.parentElement?.closest('.field-input-div')
+              : container.closest('.field-input-div');
+            if (fieldFromSelection && fieldFromSelection.isContentEditable) {
+              setActiveElement(fieldFromSelection);
+              fieldFromSelection.dataset.keepActive = 'true';
+              savedFieldForForeColor = fieldFromSelection;
+              console.log('[Forecolor Button] Saved field from savedSelection');
+            }
+          } catch (e) {
+            console.warn('[Forecolor Button] Error finding field from savedSelection:', e);
+          }
+        }
+      }
     }
+    
     const isActive = foreColorWrapper?.classList.contains('active');
     closeAllColorDropdowns();
     if (!isActive && foreColorWrapper) {
@@ -229,11 +383,44 @@ export function setupColorPickers() {
   backColorBtn.addEventListener('mousedown', (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Lưu selection và field trước khi mở dropdown
     saveSelection();
-    if (activeElement) {
-      activeElement.dataset.keepActive = 'true';
+    let fieldToSave = activeElement;
+    
+    if (fieldToSave && fieldToSave.isContentEditable) {
+      fieldToSave.dataset.keepActive = 'true';
+      savedFieldForBackColor = fieldToSave; // Lưu reference vào biến module-level
       console.log('[Backcolor Button] Saved selection and set keepActive flag');
+    } else {
+      // Nếu không có activeElement, thử lưu field đang được focus
+      const focused = document.activeElement;
+      if (focused && focused.classList.contains('field-input-div') && focused.isContentEditable) {
+        setActiveElement(focused);
+        focused.dataset.keepActive = 'true';
+        savedFieldForBackColor = focused; // Lưu reference vào biến module-level
+        console.log('[Backcolor Button] Saved focused field as activeElement');
+      } else {
+        // Nếu vẫn không có, thử tìm field từ savedSelection
+        if (savedSelection) {
+          try {
+            const container = savedSelection.commonAncestorContainer;
+            const fieldFromSelection = container.nodeType === Node.TEXT_NODE
+              ? container.parentElement?.closest('.field-input-div')
+              : container.closest('.field-input-div');
+            if (fieldFromSelection && fieldFromSelection.isContentEditable) {
+              setActiveElement(fieldFromSelection);
+              fieldFromSelection.dataset.keepActive = 'true';
+              savedFieldForBackColor = fieldFromSelection;
+              console.log('[Backcolor Button] Saved field from savedSelection');
+            }
+          } catch (e) {
+            console.warn('[Backcolor Button] Error finding field from savedSelection:', e);
+          }
+        }
+      }
     }
+    
     const isActive = backColorWrapper?.classList.contains('active');
     closeAllColorDropdowns();
     if (!isActive && backColorWrapper) {
@@ -244,8 +431,16 @@ export function setupColorPickers() {
 
   // Close dropdown when clicking outside
   document.addEventListener('click', (e) => {
+    // Không đóng dropdown nếu click vào Apply button (để apply color trước)
+    if (e.target.closest('.apply-color-btn')) {
+      return;
+    }
+    
     if (!e.target.closest('.color-picker-wrapper')) {
       closeAllColorDropdowns();
+      // Clear saved fields khi đóng dropdown
+      savedFieldForForeColor = null;
+      savedFieldForBackColor = null;
       document.querySelectorAll('.field-input-div[data-keep-active]').forEach(el => {
         delete el.dataset.keepActive;
         if (document.activeElement !== el) {
@@ -301,6 +496,12 @@ export function setupColorPickers() {
   applyForeColorBtn?.addEventListener('mousedown', async (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Đảm bảo lưu selection trước khi apply
+    if (!savedSelection) {
+      saveSelection();
+    }
+    
     const color = foreColorHexInput?.value || foreColorPicker?.value;
     await applyColor(color, 'foreColor');
   });
@@ -308,6 +509,12 @@ export function setupColorPickers() {
   applyBackColorBtn?.addEventListener('mousedown', async (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Đảm bảo lưu selection trước khi apply
+    if (!savedSelection) {
+      saveSelection();
+    }
+    
     const color = backColorHexInput?.value || backColorPicker?.value;
     await applyColor(color, 'backColor');
   });
