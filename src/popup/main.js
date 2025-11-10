@@ -1732,7 +1732,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           }
         }
       });
-    }
+    });
     
     // Close if clicking on overlay background
     overlay.addEventListener('click', (e) => {
