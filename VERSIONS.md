@@ -1,5 +1,41 @@
 # Version History
 
+## 🎨 v2.9.0 – 2025-01-XX
+
+### 🎨 Feature: **Tìm kiếm & Tải Note để chỉnh sửa**
+
+- **`ui/sidebar.html`**: Thêm input tìm kiếm note
+  - Thêm field "Tải Note" với autocomplete trong header
+  - Hiển thị danh sách note tìm được khi gõ (giống autocomplete)
+
+- **`src/features/note-loader.js`**: Module mới cho tìm kiếm và tải note
+  - `setupNoteSearch()`: Setup autocomplete tìm kiếm note với debounce 300ms
+  - `loadNote()`: Tải note từ Anki-Connect và điền vào fields
+  - Hỗ trợ keyboard navigation (Arrow keys, Enter, Escape)
+  - Giới hạn hiển thị 20 note đầu tiên trong kết quả tìm kiếm
+  - Hiển thị preview của note (field đầu tiên có nội dung)
+
+- **`src/sidebar/main.js`**: Tích hợp tính năng tải và chỉnh sửa note
+  - Import và sử dụng `note-loader.js` module
+  - Thêm biến global `currentNoteId` để track note đang edit
+  - Hàm `loadNote()` wrapper để tích hợp với sidebar logic
+  - Hàm `updateAddButtonText()` để đổi nút "Thêm" thành "Lưu thay đổi"
+  - Logic `addNoteToAnki()` cập nhật:
+    - Nếu có `currentNoteId`: gọi `updateNoteFields` thay vì `addNote`
+    - Cập nhật tags (thêm/xóa tags thay đổi) khi edit note
+    - Reset `currentNoteId` và button text sau khi lưu
+  - Reset `currentNoteId` khi model thay đổi
+
+- **Tính năng**:
+  - Tìm kiếm note bằng cách gõ vào ô "Tải Note" (tối thiểu 2 ký tự)
+  - Click vào note trong danh sách để tải và điền vào fields
+  - Tự động set deck và model từ note
+  - Nút "Thêm" tự động đổi thành "Lưu thay đổi" khi đang edit
+  - Khi nhấn "Lưu thay đổi": cập nhật fields và tags của note
+  - Hỗ trợ kéo thả hình ảnh vào field (tính năng đã có sẵn)
+
+- **Result**: Người dùng có thể tìm kiếm, tải và chỉnh sửa note trực tiếp trong sidebar, không cần mở Anki Desktop
+
 ## 🐛 v2.8.8 – 2025-11-10
 
 ### 🐛 Bug Fix: **Syntax Error - Template Literal trong sourceInfo**
