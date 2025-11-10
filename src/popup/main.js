@@ -154,8 +154,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     addNoteBtn.addEventListener("click", () => addNoteToAnki());
   }
 
+  // Lắng nghe thay đổi feature toggles từ settings
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === 'local' && changes.featureToggles) {
+      applyFeatureToggles();
+    }
+  });
+
   // --- Tải dữ liệu ban đầu ---
   try {
+    // Load feature toggles trước
+    await applyFeatureToggles();
+
     const [deckNames, modelNames, tagNames] = await Promise.all([
       invoke("deckNames"),
       invoke("modelNames"),
@@ -178,12 +188,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       setupAutocomplete(modelContainer, modelInput, modelNames, (model) => createFieldsForModel(model));
     }
 
-    const tagDatalist = document.getElementById("tags-datalist");
-    if (tagDatalist) {
-      tagDatalist.innerHTML = "";
-      tagNames.forEach(tag => {
-        tagDatalist.innerHTML += `<option value="${tag}">`;
-      });
+    // Chỉ load tags nếu feature được bật
+    const featureToggles = await chrome.storage.local.get(['featureToggles']);
+    const isTagsEnabled = featureToggles.featureToggles?.tags !== false;
+    
+    if (isTagsEnabled) {
+      const tagDatalist = document.getElementById("tags-datalist");
+      if (tagDatalist) {
+        tagDatalist.innerHTML = "";
+        tagNames.forEach(tag => {
+          tagDatalist.innerHTML += `<option value="${tag}">`;
+        });
+      }
     }
 
     const lastUsed = await chrome.storage.local.get([LAST_USED_DECK_KEY, LAST_USED_MODEL_KEY]);
@@ -1699,10 +1715,35 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 });
 
+// Áp dụng feature toggles để ẩn/hiện các chức năng
+async function applyFeatureToggles() {
+  try {
+    const stored = await chrome.storage.local.get(['featureToggles']);
+    const featureToggles = stored.featureToggles || { tags: true }; // Mặc định bật Tags
+    
+    // Ẩn/hiện Tags
+    const tagsInput = document.getElementById('tags-input');
+    if (tagsInput) {
+      const tagsContainer = tagsInput.closest('.form-group');
+      if (tagsContainer) {
+        tagsContainer.style.display = featureToggles.tags !== false ? 'block' : 'none';
+      }
+    }
+  } catch (error) {
+    console.error('[AnkiVN] Error applying feature toggles:', error);
+  }
+}
+
 async function addNoteToAnki() {
   const deckName = document.getElementById("deck-search").value;
   const modelName = document.getElementById("model-search").value;
-  const tags = document.getElementById("tags-input").value.split(/[\s,]+/).filter(Boolean);
+  
+  // Lấy tags nếu feature được bật, nếu không thì để mảng rỗng
+  const featureToggles = await chrome.storage.local.get(['featureToggles']);
+  const isTagsEnabled = featureToggles.featureToggles?.tags !== false;
+  const tags = isTagsEnabled && document.getElementById("tags-input") 
+    ? document.getElementById("tags-input").value.split(/[\s,]+/).filter(Boolean)
+    : [];
 
   if (!deckName || !modelName) {
     showStatus("Vui lòng chọn Deck và Note Type", true);
@@ -1761,7 +1802,10 @@ async function addNoteToAnki() {
       }
     });
     resetClozeIndex();
-    if (!stickyFields['Tags']) document.getElementById('tags-input').value = '';
+    // Chỉ xóa tags input nếu feature được bật và không phải sticky
+    if (isTagsEnabled && !stickyFields['Tags'] && document.getElementById('tags-input')) {
+      document.getElementById('tags-input').value = '';
+    }
   } catch (error) {
     showStatus(`Lỗi khi thêm note: ${error.message}`, true);
   }

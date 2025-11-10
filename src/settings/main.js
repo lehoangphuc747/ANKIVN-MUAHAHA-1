@@ -24,8 +24,30 @@ function showStatus(message, type = 'info') {
 
 function showAllSections(shouldShow) {
     document.querySelectorAll('.settings-section').forEach(section => {
+        // Không ẩn feature-toggles-section vì nó không phụ thuộc vào model
+        if (section.id === 'feature-toggles-section') return;
         section.style.display = shouldShow ? 'block' : 'none';
     });
+}
+
+async function loadFeatureToggles() {
+    try {
+        const stored = await chrome.storage.local.get(['featureToggles']);
+        const featureToggles = stored.featureToggles || { tags: true }; // Mặc định bật Tags
+        
+        // Áp dụng giá trị cho các checkbox
+        document.getElementById('toggle-tags').checked = featureToggles.tags !== false;
+        updateToggleItemState('toggle-tags-item', featureToggles.tags !== false);
+    } catch (error) {
+        console.error('[AnkiVN Settings] Error loading feature toggles:', error);
+    }
+}
+
+function updateToggleItemState(itemId, isChecked) {
+    const item = document.getElementById(itemId);
+    if (item) {
+        item.classList.toggle('checked', isChecked);
+    }
 }
 
 async function loadFieldsForSettings(modelName) {
@@ -184,61 +206,71 @@ function populateContextMenuDefaults(fieldNames, defaults) {
 
 async function saveSettings() {
     const modelName = document.getElementById('settings-model-search').value;
-    if (!modelName || !allModelsForSettings.includes(modelName)) {
-        showStatus('Tên Note Type không hợp lệ.', 'error');
-        return;
-    }
+    const hasValidModel = modelName && allModelsForSettings.includes(modelName);
 
     try {
         const settingsToSave = {};
 
-        // Hidden Fields
-        const hiddenFields = {};
-        document.querySelectorAll('#settings-fields-list-container input[type="checkbox"]').forEach(cb => {
-            hiddenFields[cb.dataset.fieldName] = cb.checked;
-        });
-        settingsToSave[`hiddenFields_${modelName}`] = hiddenFields;
-
-        // Sticky Fields
-        const stickyFields = {};
-        document.querySelectorAll('#settings-sticky-fields-list-container input[type="checkbox"]').forEach(cb => {
-            stickyFields[cb.dataset.fieldName] = cb.checked;
-        });
-        settingsToSave[`stickyFields_${modelName}`] = stickyFields;
-
-        // Random ID Field
-        settingsToSave[`randomIdField_${modelName}`] = document.getElementById('random-id-field-select').value;
-
-        // Field Order
-        const fieldOrder = [...document.querySelectorAll('#field-order-list-container .draggable-item')]
-            .map(item => item.dataset.fieldName);
-        settingsToSave[`fieldOrder_${modelName}`] = fieldOrder;
-
-        // Context Menu Defaults
-        const contextMenuDefaults = {};
-        document.querySelectorAll('.context-default-select').forEach(select => {
-            const contextType = select.dataset.contextType;
-            const selectedValue = select.value;
-            console.log('[AnkiVN Settings] Saving context default:', {
-                contextType: contextType,
-                value: selectedValue
+        // Lưu settings theo model chỉ khi có model hợp lệ
+        if (hasValidModel) {
+            // Hidden Fields
+            const hiddenFields = {};
+            document.querySelectorAll('#settings-fields-list-container input[type="checkbox"]').forEach(cb => {
+                hiddenFields[cb.dataset.fieldName] = cb.checked;
             });
-            if (selectedValue) {
-                contextMenuDefaults[contextType] = selectedValue;
-            }
-        });
-        
-        console.log('[AnkiVN Settings] Saving contextMenuDefaults:', {
-            modelName: modelName,
-            contextMenuDefaults: contextMenuDefaults,
-            key: `contextMenuDefaults_${modelName}`
-        });
-        
-        settingsToSave[`contextMenuDefaults_${modelName}`] = contextMenuDefaults;
+            settingsToSave[`hiddenFields_${modelName}`] = hiddenFields;
+
+            // Sticky Fields
+            const stickyFields = {};
+            document.querySelectorAll('#settings-sticky-fields-list-container input[type="checkbox"]').forEach(cb => {
+                stickyFields[cb.dataset.fieldName] = cb.checked;
+            });
+            settingsToSave[`stickyFields_${modelName}`] = stickyFields;
+
+            // Random ID Field
+            settingsToSave[`randomIdField_${modelName}`] = document.getElementById('random-id-field-select').value;
+
+            // Field Order
+            const fieldOrder = [...document.querySelectorAll('#field-order-list-container .draggable-item')]
+                .map(item => item.dataset.fieldName);
+            settingsToSave[`fieldOrder_${modelName}`] = fieldOrder;
+
+            // Context Menu Defaults
+            const contextMenuDefaults = {};
+            document.querySelectorAll('.context-default-select').forEach(select => {
+                const contextType = select.dataset.contextType;
+                const selectedValue = select.value;
+                console.log('[AnkiVN Settings] Saving context default:', {
+                    contextType: contextType,
+                    value: selectedValue
+                });
+                if (selectedValue) {
+                    contextMenuDefaults[contextType] = selectedValue;
+                }
+            });
+            
+            console.log('[AnkiVN Settings] Saving contextMenuDefaults:', {
+                modelName: modelName,
+                contextMenuDefaults: contextMenuDefaults,
+                key: `contextMenuDefaults_${modelName}`
+            });
+            
+            settingsToSave[`contextMenuDefaults_${modelName}`] = contextMenuDefaults;
+        }
+
+        // Feature Toggles (global, không phụ thuộc vào model - luôn lưu được)
+        const featureToggles = {
+            tags: document.getElementById('toggle-tags').checked
+        };
+        settingsToSave['featureToggles'] = featureToggles;
 
         await chrome.storage.local.set(settingsToSave);
 
-        showStatus('Đã lưu cài đặt cho Note Type: ' + modelName, 'success');
+        if (hasValidModel) {
+            showStatus('Đã lưu cài đặt cho Note Type: ' + modelName, 'success');
+        } else {
+            showStatus('Đã lưu cài đặt chức năng', 'success');
+        }
     } catch (error) {
         showStatus('Lỗi khi lưu cài đặt: ' + error.message, 'error');
     }
@@ -306,6 +338,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         showStatus('Không thể tải danh sách Note Types.', 'error');
     }
+
+    // Load feature toggles
+    await loadFeatureToggles();
+
+    // Setup feature toggle checkboxes
+    document.getElementById('toggle-tags').addEventListener('change', (e) => {
+        updateToggleItemState('toggle-tags-item', e.target.checked);
+    });
 
     document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
     document.getElementById('select-all-fields').addEventListener('click', () => setAllCheckboxes('settings-fields-list-container', true));

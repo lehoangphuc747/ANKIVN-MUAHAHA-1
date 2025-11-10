@@ -1,0 +1,44 @@
+/* Status Message Styles */
+.status-message {
+    margin-top: 1rem;
+    padding: 0.85rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    text-align: center;
+    font-weight: 500;
+    border: 1.5px solid transparent;
+    display: none;
+    min-height: 1.5em;
+    box-sizing: border-box;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    animation: slideIn 0.3s ease-out;
+}
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.status-message:not(:empty) { 
+    display: block; 
+}
+.status-message.info { 
+    background-color: var(--info-bg); 
+    color: var(--info-text); 
+    border-color: var(--info-border); 
+}
+.status-message.success { 
+    background-color: var(--success-bg); 
+    color: var(--success-text); 
+    border-color: var(--success-border); 
+}
+.status-message.error { 
+    background-color: var(--error-bg); 
+    color: var(--error-text); 
+    border-color: var(--error-border); 
+}
+

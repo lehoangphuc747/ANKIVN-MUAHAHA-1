@@ -1,0 +1,413 @@
+/* Toolbar Styles */
+#sticky-toolbar-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--sticky-toolbar-bg);
+    padding: 10px 16px;
+    border-bottom: 2px solid var(--border-color-light);
+    margin: 0 -16px 1.2rem -16px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+#format-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 4px 0;
+}
+
+/* Toolbar Groups */
+.toolbar-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Base button styles */
+#format-toolbar button {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 0.9em;
+    line-height: 1;
+    color: var(--button-secondary-text);
+    transition: all 0.2s ease;
+    min-width: 32px;
+    height: 32px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+#format-toolbar button:hover:not(:disabled) {
+    background-color: var(--toolbar-button-hover-bg);
+    border-color: var(--button-secondary-hover-border);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#format-toolbar button:active:not(:disabled) {
+    background-color: var(--button-secondary-border);
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+#format-toolbar button:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Toolbar Separator */
+#format-toolbar .toolbar-separator {
+    color: var(--border-color);
+    margin: 0 4px;
+    font-size: 1.1em;
+    line-height: 1;
+    vertical-align: middle;
+    opacity: 0.4;
+    font-weight: 300;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+}
+
+/* Color Picker Wrapper */
+.color-picker-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+/* Color Button */
+.color-btn {
+    position: relative;
+    padding: 6px 10px !important;
+    min-width: 36px !important;
+    background: linear-gradient(135deg, rgba(249, 250, 251, 0.9) 0%, rgba(243, 244, 246, 0.9) 100%) !important;
+    border: 1.5px solid var(--border-color-light) !important;
+}
+
+.color-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(239, 246, 255, 0.95) 0%, rgba(219, 234, 254, 0.95) 100%) !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.2) !important;
+}
+
+.color-btn.active {
+    background: linear-gradient(135deg, rgba(219, 234, 254, 0.95) 0%, rgba(191, 219, 254, 0.95) 100%) !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.3), 0 2px 8px rgba(52, 152, 219, 0.25) !important;
+}
+
+/* Color Swatch */
+.color-swatch {
+    position: absolute;
+    bottom: 3px;
+    right: 3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1.5px solid rgba(255, 255, 255, 0.95);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    pointer-events: none;
+    transition: all 0.2s ease;
+    z-index: 1;
+}
+
+.color-btn:hover .color-swatch {
+    transform: scale(1.15);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+/* Color Picker Dropdown */
+.color-picker-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    background: #ffffff;
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 12px;
+    min-width: 200px;
+    z-index: 1000;
+    display: none;
+    animation: slideDown 0.2s ease-out;
+}
+
+.color-picker-wrapper.active .color-picker-dropdown {
+    display: block;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.color-picker-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+/* Saved Colors Section */
+.saved-colors-section {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color-light);
+}
+
+.saved-colors-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-color-light);
+    margin-bottom: 8px;
+}
+
+.saved-colors-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    max-height: 80px;
+    overflow-y: auto;
+}
+
+.saved-color-item {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--border-color-light);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.saved-color-item:hover {
+    transform: scale(1.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 6px rgba(52, 152, 219, 0.4);
+    z-index: 1;
+}
+
+.saved-color-item:active {
+    transform: scale(0.95);
+}
+
+.saved-color-item.selected {
+    border-color: var(--primary-color);
+    border-width: 3px;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+/* Scrollbar for saved colors grid */
+.saved-colors-grid::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+}
+
+.saved-colors-grid::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.saved-colors-grid::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 2px;
+}
+
+.saved-colors-grid::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+.color-picker-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+/* Color Picker Input */
+.color-picker-dropdown input[type="color"] {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--border-color-light);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+.color-picker-dropdown input[type="color"]:hover {
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+    box-shadow: 0 3px 8px rgba(52, 152, 219, 0.3);
+}
+
+.color-picker-dropdown input[type="color"]:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-color: var(--primary-color);
+}
+
+.color-picker-dropdown input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-picker-dropdown input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* HEX Color Input in Dropdown */
+.color-picker-dropdown .hex-color-input {
+    flex: 1;
+    width: auto;
+    padding: 8px 10px;
+    font-size: 0.9em;
+    border: 1.5px solid var(--border-color-light);
+    border-radius: 6px;
+    text-align: center;
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    background-color: #ffffff;
+    height: 40px;
+    box-sizing: border-box;
+}
+
+.color-picker-dropdown .hex-color-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    background-color: #f8f9fa;
+}
+
+.color-picker-dropdown .hex-color-input:hover:not(:focus) {
+    border-color: var(--hover-border-color);
+    background-color: #fafbfc;
+}
+
+.color-picker-dropdown .hex-color-input::placeholder {
+    color: #9ca3af;
+    opacity: 0.6;
+}
+
+/* Apply Color Button in Dropdown */
+.color-picker-dropdown .apply-color-btn {
+    width: 100%;
+    padding: 8px 16px !important;
+    background: linear-gradient(135deg, var(--success-bg) 0%, #c6f6d5 100%) !important;
+    border: 1.5px solid var(--success-border) !important;
+    color: var(--success-text) !important;
+    font-weight: 600 !important;
+    font-size: 0.9em !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    min-width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+}
+
+.color-picker-dropdown .apply-color-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%) !important;
+    border-color: var(--success-text) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 8px rgba(34, 197, 94, 0.3) !important;
+}
+
+.color-picker-dropdown .apply-color-btn:active:not(:disabled) {
+    transform: translateY(0) !important;
+    box-shadow: 0 1px 3px rgba(34, 197, 94, 0.2) !important;
+}
+
+.color-picker-dropdown .apply-color-btn:focus {
+    outline: 2px solid var(--success-text) !important;
+    outline-offset: 2px;
+}
+
+/* Cloze Group */
+.cloze-group {
+    gap: 3px;
+}
+
+/* Định dạng các nút Cloze */
+#format-toolbar .cloze-button {
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    padding: 5px 10px;
+    min-width: 36px;
+    height: 32px;
+    background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1.5px solid var(--border-color);
+    font-size: 0.9em;
+}
+
+#format-toolbar .cloze-button:hover:not(:disabled) {
+    background: linear-gradient(180deg, #e9ecef 0%, #dee2e6 100%);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+#format-toolbar .cloze-button:active:not(:disabled) {
+    background: #dee2e6;
+    transform: translateY(0);
+}
+
+/* Style cho các nút apply color mới */
+#apply-forecolor-btn,
+#apply-backcolor-btn {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    line-height: 1;
+    color: var(--success-text); /* Dùng màu success cho dấu tick */
+    transition: all 0.15s ease;
+    min-width: 26px;
+    text-align: center;
+    margin-left: 2px; /* Thêm chút khoảng cách với hex input */
+    margin-right: 2px;
+}
+
+#apply-forecolor-btn:hover:not(:disabled),
+#apply-backcolor-btn:hover:not(:disabled) {
+    background-color: var(--toolbar-button-hover-bg);
+    border-color: var(--button-secondary-hover-border);
+}
+
+#apply-forecolor-btn:active:not(:disabled),
+#apply-backcolor-btn:active:not(:disabled) {
+    background-color: var(--button-secondary-border);
+}
+
+#toggle-source-view.active {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+#toggle-source-view.active:hover {
+    background-color: var(--primary-color-dark) !important;
+}
+

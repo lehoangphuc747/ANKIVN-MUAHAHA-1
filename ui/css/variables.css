@@ -1,0 +1,43 @@
+/* CSS Variables */
+:root {
+  /* Color Variables */
+  --primary-color: #3498db;
+  --primary-color-dark: #2980b9;
+  --primary-color-darker: #1f618d;
+  --button-text-color: #ffffff;
+  --text-color: #2c3e50;
+  --text-color-light: #7f8c8d;
+  --bg-color: #f5f7fa;
+  --bg-color-alt: #ffffff;
+  --border-color: #dcdfe6;
+  --border-color-light: #e4e7ed;
+  --hover-bg-color: #eaf6ff;
+  --hover-border-color: #aed6f1;
+  --checked-bg-color: #fff0f0;
+  --checked-border-color: #f5b7b1;
+  --checked-text-color: #c0392b;
+  --info-bg: #d6eaf8;
+  --info-text: #2874a6;
+  --info-border: #aed6f1;
+  --success-bg: #d5f4e6;
+  --success-text: #27ae60;
+  --success-border: #a3e4d7;
+  --error-bg: #fadbd8;
+  --error-text: #c0392b;
+  --error-border: #f5b7b1;
+  --button-secondary-bg: #f8f9fa;
+  --button-secondary-text: #495057;
+  --button-secondary-border: #dee2e6;
+  --button-secondary-hover-bg: #e9ecef;
+  --button-secondary-hover-border: #ced4da;
+  --sticky-bg-color: #fffbeb;
+  --sticky-border-color: #fde68a;
+  --sticky-text-color: #b45309;
+  --toolbar-bg: #e9ecef;
+  --toolbar-border: var(--border-color);
+  --toolbar-button-hover-bg: #ced4da;
+  --sticky-toolbar-bg: #ffffff; /* Nền trắng cho toolbar khi sticky */
+  --rendered-view-bg: #fdfdfd; /* Nền cho rendered view */
+  --rendered-view-border: #e4e7ed; /* Viền cho rendered view */
+}
+

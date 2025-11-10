@@ -1,0 +1,39 @@
+/* Base Styles */
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  min-width: 350px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar cho toàn bộ extension */
+body::-webkit-scrollbar,
+.container::-webkit-scrollbar {
+    width: 10px;
+}
+body::-webkit-scrollbar-track,
+.container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+body::-webkit-scrollbar-thumb,
+.container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 5px;
+    transition: background 0.2s ease;
+}
+body::-webkit-scrollbar-thumb:hover,
+.container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.container {
+  padding: 0 16px 80px 16px;
+  height: 100vh; /* Chiều cao tối đa */
+  overflow-y: auto; /* Thêm cuộn dọc nếu nội dung vượt quá */
+  box-sizing: border-box;
+}
+

@@ -1,0 +1,163 @@
+/* Form Styles */
+.form-group { 
+    margin-bottom: 1.2rem; 
+}
+label { 
+    display: block; 
+    font-size: 0.9rem; 
+    font-weight: 500; 
+    color: var(--text-color-light); 
+    margin-bottom: 0.5rem; 
+    letter-spacing: 0.01em;
+}
+
+/* Layout inline cho Deck/Note/Preset */
+.inline-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    gap: 6px;
+}
+/* Tối ưu hóa không gian cho header */
+#non-sticky-header-content .inline-group {
+    margin-bottom: 0.5rem; /* Giảm margin */
+    gap: 4px; /* Giảm khoảng cách */
+}
+
+.inline-label {
+    flex: 0 0 auto; /* Không co giãn */
+    width: 50px; /* Chiều rộng cố định cho label Deck/Note */
+    margin-right: 4px;
+    margin-bottom: 0;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-color);
+    text-align: left;
+}
+/* Tối ưu hóa không gian cho header */
+#non-sticky-header-content .inline-label {
+    width: 45px;
+    margin-right: 2px;
+}
+
+.inline-input-container {
+    flex: 1 1 auto; /* Input chiếm phần còn lại */
+    position: relative; /* Cho suggestion container */
+}
+/* Preset Group specific */
+.preset-group .inline-label { width: 60px; } /* Label "Cấu hình:" rộng hơn */
+/* Tối ưu hóa không gian cho header */
+#non-sticky-header-content .preset-group .inline-label {
+    width: 55px;
+}
+
+/* --- Nút bấm Icon (Save/Delete Preset) --- */
+.btn-icon {
+    flex-shrink: 0; /* Không co lại */
+    padding: 0.4rem 0.6rem;
+    font-size: 1rem;
+    line-height: 1;
+}
+/* Tối ưu hóa không gian cho header */
+#non-sticky-header-content .btn-icon {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.9rem;
+}
+.btn-icon-danger { color: var(--error-text); border-color: var(--error-border); }
+.btn-icon-danger:hover { background-color: var(--error-bg); }
+
+/* --- Input và Autocomplete --- */
+.form-control {
+    width: 100%;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    box-sizing: border-box; /* Quan trọng */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: var(--bg-color-alt);
+    line-height: 1.4;
+    color: var(--text-color);
+}
+/* Tối ưu hóa không gian cho header */
+#non-sticky-header-content .form-control {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.9rem;
+}
+.form-control::placeholder { 
+    color: #aaa; 
+    opacity: 0.7;
+}
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+    background-color: #ffffff;
+}
+.form-control:hover:not(:focus) {
+    border-color: var(--hover-border-color);
+}
+/* Autocomplete container */
+.autocomplete-container { position: relative; }
+.suggestions-container {
+    display: none;
+    position: absolute;
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    width: 100%;
+    box-sizing: border-box;
+    max-height: 200px; /* Tăng chiều cao để hiển thị nhiều hơn */
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1001;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+    margin-top: -1px; /* Kết nối với input border */
+    scroll-behavior: smooth; /* Smooth scrolling */
+}
+/* Custom scrollbar cho suggestions */
+.suggestions-container::-webkit-scrollbar {
+    width: 8px;
+}
+.suggestions-container::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+.suggestions-container::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+.suggestions-container::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+.suggestion-item {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border-color-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background-color 0.15s ease, padding-left 0.15s ease;
+    position: relative;
+}
+.suggestion-item:last-child { 
+    border-bottom: none; 
+    border-radius: 0 0 8px 8px;
+}
+.suggestion-item:hover { 
+    background-color: var(--hover-bg-color);
+    padding-left: 1rem; /* Slight shift on hover for better UX */
+}
+.suggestion-item.active { 
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 500;
+}
+.suggestion-item.active:hover {
+    background-color: var(--primary-color-dark);
+    padding-left: 0.85rem; /* Reset padding khi active */
+}
+

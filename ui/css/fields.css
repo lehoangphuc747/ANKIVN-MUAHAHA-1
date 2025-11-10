@@ -1,0 +1,264 @@
+/* Fields Styles */
+.fields-container {
+    margin-bottom: 0.5rem; /* Giảm margin dưới */
+    border: none;          /* Xóa border */
+    border-radius: 0;      /* Xóa bo góc */
+    padding: 0;            /* Xóa padding */
+    background-color: transparent; /* Xóa màu nền */
+}
+.field-group { /* margin-bottom: 0.8rem; */ position: relative; } /* Thêm position: relative để nút toggle view định vị */
+.field-header {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    padding: 8px 6px;
+    user-select: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid transparent;
+    margin-bottom: -1px;
+    position: relative;
+}
+/* Border dưới header chỉ hiện khi field mở */
+.field-group:not(.collapsed) .field-header {
+    border-bottom: 2px solid var(--border-color-light);
+    margin-bottom: 0;
+    background: linear-gradient(to bottom, rgba(249,250,251,0.5), transparent);
+}
+.field-header:hover { 
+    background-color: var(--hover-bg-color);
+    padding-left: 8px;
+    transform: translateX(2px);
+}
+.field-header:active {
+    transform: translateX(0);
+}
+.collapse-toggle {
+    display: inline-block;
+    font-size: 10px;
+    margin-right: 6px;
+    width: 12px; /* Đảm bảo icon thẳng hàng */
+    text-align: center;
+    transition: transform 0.2s ease;
+    color: #777;
+}
+.field-header label {
+    flex-grow: 1; /* Chiếm hết phần còn lại */
+    display: block;
+    margin-bottom: 0;
+    vertical-align: middle;
+    font-weight: 500;
+    color: var(--text-color);
+    transition: opacity 0.2s ease;
+    white-space: nowrap; /* Không xuống dòng */
+    overflow: hidden; /* Ẩn phần thừa */
+    text-overflow: ellipsis; /* Thêm dấu ... */
+    font-size: 0.95rem;
+}
+/* Trạng thái collapsed */
+.field-group.collapsed .field-header label { opacity: 0.7; color: var(--text-color-light); }
+.field-group.collapsed .field-input-area { display: none; } /* Ẩn toàn bộ input area */
+/* Field bị ẩn bởi setting */
+.field-group.field-hidden-by-setting { display: none !important; }
+
+/* --- Nút Toggle View (Show Code/Show Rendered) --- */
+.btn-toggle-view {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 2px 6px;
+    cursor: pointer;
+    font-size: 0.85em;
+    line-height: 1;
+    color: var(--button-secondary-text);
+    transition: all 0.15s ease;
+    margin-left: 8px; /* Khoảng cách với label */
+    flex-shrink: 0; /* Không co lại */
+}
+.btn-toggle-view:hover:not(:disabled) {
+    background-color: var(--toolbar-button-hover-bg);
+    border-color: var(--button-secondary-hover-border);
+}
+.btn-toggle-view:active:not(:disabled) {
+    background-color: var(--button-secondary-border);
+}
+.btn-toggle-view:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* --- Field Input Area (chứa div, preview) --- */
+.field-input-area {
+    position: relative;
+    padding-top: 0.5rem; /* Khoảng cách với header */
+    padding-bottom: 0.2rem;
+}
+
+/* Style cho div contenteditable */
+.field-input-div {
+    min-height: calc(1.5em + 0.6rem + 2px);
+    height: auto;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-y: auto;
+    max-height: 300px;
+    padding: 0.7rem 0.9rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 8px;
+    margin: 0;
+    background-color: var(--bg-color-alt);
+    display: block;
+    transition: all 0.2s ease;
+}
+/* Custom scrollbar cho field input */
+.field-input-div::-webkit-scrollbar {
+    width: 8px;
+}
+.field-input-div::-webkit-scrollbar-track {
+    background: transparent;
+}
+.field-input-div::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+.field-input-div::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+.field-input-div:empty::before {
+    content: attr(data-placeholder);
+    color: #aaa;
+    pointer-events: none;
+    opacity: 0.6;
+}
+.field-input-div:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
+    background-color: #ffffff;
+}
+.field-input-div:hover:not(:focus) {
+    border-color: var(--hover-border-color);
+}
+
+/* Style for drag-over state */
+.field-input-div.drag-over {
+    border-color: var(--primary-color);
+    background-color: var(--hover-bg-color);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25), inset 0 2px 8px rgba(52, 152, 219, 0.1);
+    transform: scale(1.01);
+    border-width: 2px;
+}
+
+/* Style cho rendered view */
+.rendered-field-view {
+    min-height: calc(1.5em * 2 + 1.2rem + 2px); /* Giống textarea rows=2 */
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--rendered-view-border);
+    border-radius: 4px;
+    background-color: var(--rendered-view-bg);
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-y: auto;
+    max-height: 300px;
+    white-space: pre-wrap;
+    font-family: inherit; /* Dùng font mặc định */
+}
+
+/* Style mô phỏng thẻ [sound:...] trong rendered view */
+.rendered-field-view .sound-placeholder {
+    display: inline-block;
+    padding: 2px 6px;
+    background-color: #e0f7fa;
+    border: 1px solid #80deea;
+    border-radius: 3px;
+    font-size: 0.85em;
+    color: #00838f;
+    margin: 2px 0;
+}
+
+/* Ẩn/Hiện rendered view dựa trên data-view-mode */
+.field-group[data-view-mode="code"] .rendered-field-view { display: none; }
+.field-group[data-view-mode="rendered"] .field-input-div,
+.field-group[data-view-mode="rendered"] .media-preview-container { display: none; } /* Ẩn cả div và preview khi xem rendered */
+.field-group[data-view-mode="rendered"] .rendered-field-view { display: block; }
+
+/* Source Code View */
+.field-source-textarea {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace !important;
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+    tab-size: 2 !important;
+    width: 100% !important;
+    min-height: 150px !important;
+    padding: 8px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 4px !important;
+    background: #f8f9fa !important;
+    color: #2c3e50 !important;
+    resize: vertical !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    box-sizing: border-box !important;
+    margin-top: 4px !important;
+}
+
+.field-source-textarea:focus {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: 2px !important;
+    border-color: var(--primary-color) !important;
+    background: #ffffff !important;
+}
+
+/* Field Selector Modal Styles */
+.field-selector-item {
+    padding: 12px;
+    margin-bottom: 8px;
+    border: 2px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+    font-size: 0.95rem;
+    user-select: none;
+}
+
+.field-selector-item:hover {
+    border-color: var(--primary-color);
+    background: var(--hover-bg-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.field-selector-item:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+#alt-selection-field-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color-light);
+    border-radius: 4px;
+    padding: 8px;
+    background: #fafbfc;
+}
+
+#alt-selection-field-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+#alt-selection-field-list::-webkit-scrollbar-track {
+    background: #f1f3f5;
+    border-radius: 4px;
+}
+
+#alt-selection-field-list::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+
+#alt-selection-field-list::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
