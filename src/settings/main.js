@@ -33,11 +33,14 @@ function showAllSections(shouldShow) {
 async function loadFeatureToggles() {
     try {
         const stored = await chrome.storage.local.get(['featureToggles']);
-        const featureToggles = stored.featureToggles || { tags: true }; // Mặc định bật Tags
+        const featureToggles = stored.featureToggles || { tags: true, toolbar: true }; // Mặc định bật Tags và Toolbar
         
         // Áp dụng giá trị cho các checkbox
         document.getElementById('toggle-tags').checked = featureToggles.tags !== false;
         updateToggleItemState('toggle-tags-item', featureToggles.tags !== false);
+        
+        document.getElementById('toggle-toolbar').checked = featureToggles.toolbar !== false;
+        updateToggleItemState('toggle-toolbar-item', featureToggles.toolbar !== false);
     } catch (error) {
         console.error('[AnkiVN Settings] Error loading feature toggles:', error);
     }
@@ -260,7 +263,8 @@ async function saveSettings() {
 
         // Feature Toggles (global, không phụ thuộc vào model - luôn lưu được)
         const featureToggles = {
-            tags: document.getElementById('toggle-tags').checked
+            tags: document.getElementById('toggle-tags').checked,
+            toolbar: document.getElementById('toggle-toolbar').checked
         };
         settingsToSave['featureToggles'] = featureToggles;
 
@@ -345,6 +349,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Setup feature toggle checkboxes
     document.getElementById('toggle-tags').addEventListener('change', (e) => {
         updateToggleItemState('toggle-tags-item', e.target.checked);
+    });
+    
+    document.getElementById('toggle-toolbar').addEventListener('change', (e) => {
+        updateToggleItemState('toggle-toolbar-item', e.target.checked);
     });
 
     document.getElementById('save-settings-btn').addEventListener('click', saveSettings);

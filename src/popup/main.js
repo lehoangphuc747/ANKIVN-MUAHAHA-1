@@ -1719,7 +1719,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function applyFeatureToggles() {
   try {
     const stored = await chrome.storage.local.get(['featureToggles']);
-    const featureToggles = stored.featureToggles || { tags: true }; // Mặc định bật Tags
+    const featureToggles = stored.featureToggles || { tags: true, toolbar: true }; // Mặc định bật Tags và Toolbar
     
     // Ẩn/hiện Tags
     const tagsInput = document.getElementById('tags-input');
@@ -1728,6 +1728,12 @@ async function applyFeatureToggles() {
       if (tagsContainer) {
         tagsContainer.style.display = featureToggles.tags !== false ? 'block' : 'none';
       }
+    }
+    
+    // Ẩn/hiện Formatting Toolbar
+    const toolbarWrapper = document.getElementById('sticky-toolbar-wrapper');
+    if (toolbarWrapper) {
+      toolbarWrapper.style.display = featureToggles.toolbar !== false ? '' : 'none';
     }
   } catch (error) {
     console.error('[AnkiVN] Error applying feature toggles:', error);
